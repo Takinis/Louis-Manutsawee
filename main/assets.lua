@@ -68,9 +68,41 @@ Assets = {
 
     Asset("IMAGE", "bigportraits/manutsawee.tex"),
     Asset("ATLAS", "bigportraits/manutsawee.xml"),
+
     Asset("IMAGE", "bigportraits/manutsawee_none.tex"),
     Asset("ATLAS", "bigportraits/manutsawee_none.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_sailor.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_sailor.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_yukata.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_yukata.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_yukatalong.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_yukatalong.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_miko.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_miko.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_qipao.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_qipao.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_fuka.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_fuka.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_maid.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_maid.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_jinbei.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_jinbei.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_shinsengumi.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_shinsengumi.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_taohuu.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_taohuu.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_uniform_black.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_uniform_black.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_bocchi.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_bocchi.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_lycoris.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_lycoris.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_maid_m.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_maid_m.xml"),
+
+    Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_dev_cemetery.xml"),
+	Asset("PKGREF", "images/bg_loading_loading_dev_cemetery.tex"),
 }
 
-AddMinimapAtlas("images/map_icons/m_minimaps.xml")
+GlassicAPI.InitMinimapAtlas("map_icons/m_minimaps")
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")

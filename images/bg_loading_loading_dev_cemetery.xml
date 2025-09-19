@@ -1,0 +1,6 @@
+<Atlas>
+    <Texture filename="bg_loading_loading_dev_cemetery.tex"/>
+    <Elements>
+        <Element name="loading_dev_cemetery.tex" u1="0.000244140625" u2="0.888427734375" v1="0.5" v2="1"/>
+    </Elements>
+</Atlas>

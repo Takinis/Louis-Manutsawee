@@ -27,6 +27,9 @@ Assets = {
     Asset("ATLAS", "images/names_gold_manutsawee.xml"),
     Asset("IMAGE", "images/names_gold_cn_manutsawee.tex"),
     Asset("ATLAS", "images/names_gold_cn_manutsawee.xml"),
+
+    Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_dev_cemetery.xml"),
+	Asset("PKGREF", "images/bg_loading_loading_dev_cemetery.tex"),
 }
 
 PreloadAssets = {}
@@ -39,12 +42,15 @@ modimport("main/characters")
 modimport("main/prefabskin")
 
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
-AssetUtil.LoadAnimAssets(ENV.modname, {
+AssetUtil.LoadAssets(ENV.modname, {
     Asset("ANIM", "anim/player_idles_wortox_nice.zip"), -- fuck
-    Asset("ANIM", "anim/player_idles_bocchi.zip")
+    Asset("ANIM", "anim/player_idles_bocchi.zip"),
+
+    Asset("DYNAMIC_ANIM", "anim/dynamic/loading_dev_cemetery.zip"),
+	Asset("PKGREF", "anim/dynamic/loading_dev_cemetery.dyn"),
 })
 
 if ENV.is_mim_enabled then
     modimport("postinit/widgets/skinspuppet")
+    modimport("postinit/widgets/loadingwidget")
 end
-

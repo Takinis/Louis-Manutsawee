@@ -7,11 +7,7 @@ local Skill_Settings = {
         mindpower = 3,
         cooldown_effect = "ghostlyelixir_retaliation_dripfx",
         fn = function(inst)
-            local target = inst.components.combat.target
-
-            inst:DoTaskInTime(skilltime, function()
-                inst.sg:GoToState("ichimonji", target)
-            end)
+            inst:PushEventInTime(skilltime, "ichimonji")
 
             -- local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
             -- local target = inst.components.combat.target
@@ -198,7 +194,7 @@ local Skill_Settings = {
         end
     },
     HeavenlyStrike = {
-        tag = "                  ",
+        tag = "heavenlystrike",
         time = M_CONFIG.SKILL2_COOLDOWN - 30,
         mindpower = 5,
         cooldown_effect = "fx_book_birds",
@@ -395,6 +391,7 @@ local Skill_Settings = {
     Soryuha = {
         tag = "soryuha",
         time = M_CONFIG.SKILL3_COOLDOWN,
+        cooldown_effect = "thunderbird_fx_idle",
         mindpower = 20,
         fn = function(inst, weapon)
 

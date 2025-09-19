@@ -15,7 +15,6 @@ en_zh("- Original author：#ffffff", "原作者：ffffff", "原作者：ffffff")
 
 author = "Sydney  " .. en_zh("Version：", "版本：", "版本：") .. version
 
-
 forumthread = ""
 
 api_version = 10

@@ -50,6 +50,10 @@ local assets = {
     Asset("ANIM", "anim/m_hb.zip"),
     Asset("ANIM", "anim/bocchi_ahoge.zip"),
 
+    Asset("ANIM", "anim/wortox_actions_nabbag.zip"),
+    Asset("ANIM", "anim/player_idles_wortox_nice.zip"),
+    Asset("ANIM", "anim/player_idles_wortox_naughty.zip"),
+
     Asset("ANIM", "anim/player_idles_bocchi.zip"),
     Asset("ANIM", "anim/player_idles_walter.zip"),
     Asset("ANIM", "anim/player_idles_winona.zip"),
@@ -63,8 +67,9 @@ local assets = {
 }
 
 local prefabs = {
-    "m_battlesong_instant_electric_fx",
+    "battlesong_instant_attack_fx",
     "fx_book_light_upgraded",
+    "abigail_rising_twinkles_fx",
 }
 
 local Idle_Anim = {
@@ -74,10 +79,10 @@ local Idle_Anim = {
     manutsawee_shinsengumi = "idle_wathgrithr",
     manutsawee_fuka = "idle_wathgrithr",
     manutsawee_sailor = "idle_walter",
-    manutsawee_jinbei = "idle_wortox",
+    manutsawee_jinbei = "idle_wortox", -- "idle_naughty" "idle_nice"
     manutsawee_maid = "idle_wanda",
     manutsawee_maid_m = "idle_wanda",
-    manutsawee_lycoris = "idle_wanda",
+    manutsawee_lycoris = "idle_naughty",
     manutsawee_uniform_black = "idle_wanda",
     manutsawee_taohuu = "idle_winona",
     manutsawee_miko = "emote_impatient",
@@ -88,25 +93,13 @@ local Funny_Idle_Anim = {
     manutsawee_bocchi = "idle_bocchi",
 }
 
-local skill_cooldown_effects = {
-    ichimonji = "ghostlyelixir_retaliation_dripfx",
-    flip = "ghostlyelixir_shield_dripfx",
-    thrust = "ghostlyelixir_speed_dripfx",
-    counter_attack = "battlesong_instant_panic_fx",
-    isshin = "monkey_deform_pre_fx",
-    heavenlystrike = "fx_book_birds",
-    ryusen = "fx_book_birds",
-    susanoo = "fx_book_birds",
-    soryuha = "thunderbird_fx_idle",
-}
-
 local SkinsHeaddress = {
     manutsawee_maid = "maid_hb",
     manutsawee_shinsengumi = "m_hb",
     manutsawee_yukata = "m_sfoxmask_swap",
     manutsawee_yukatalong = "m_sfoxmask_swap",
     manutsawee_maid_m = "maid_hb",
-    manutsawee_bocchi = "bocchi_ahoge"
+    manutsawee_bocchi = "bocchi_ahoge",
 }
 
 local LouisManutsawee = "LouisManutsawee"
@@ -120,14 +113,16 @@ end
 prefabs = FlattenTree({prefabs, start_inv}, true)
 
 local function OnRegenMindPower(inst, mindpower)
-    inst:FollwerFx("m_battlesong_instant_electric_fx"):SetScale(.7)
+    inst:FollwerFx("battlesong_instant_attack_fx"):SetScale(.7)
     if mindpower >= 3 then
         inst.components.talker:Say("󰀈: ".. mindpower .."\n", 1, true)
     end
 end
 
 local function OnDeath(inst)
-    inst:SpawnPrefabInPos("fx_book_light_upgraded").Transform:SetScale(.9, 2.5, 1)
+    local fx_book_light_upgraded = SpawnPrefab("fx_book_light_upgraded")
+    fx_book_light_upgraded.entity:SetParent(inst.entity)
+    fx_book_light_upgraded.Transform:SetScale(.9, 2.5, 1)
 end
 
 local function OnEquip(inst, data)
@@ -158,8 +153,7 @@ local function OnDroped(inst, data)
 end
 
 local function OnLevelUpSpawnFx(inst)
-    local fx_book_light_upgraded = inst:FollwerFx("fx_book_light_upgraded")
-    fx_book_light_upgraded.Transform:SetScale(.9, 2.5, 1)
+    OnDeath(inst)
 end
 
 local OnLevelUp = {
@@ -218,6 +212,46 @@ local OnLevelUp = {
     },
 }
 
+local Skill = {
+    {
+        tag = "ichimonji",
+        script = "",
+        skill_range = 3.5,
+        require_level = 1,
+        require_mindpower = 3,
+        cooldown_time = M_CONFIG.SKILL1_COOLDOWN,
+        cooldown_effect = "ghostlyelixir_retaliation_dripfx",
+        cb = function(inst, target)
+            inst:PushEventInTime(.05, "ichimonji")
+        end,
+    },
+}
+
+
+            -- local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+            -- local target = inst.components.combat.target
+            -- inst.inspskill = true
+
+            -- if weapon ~= nil and weapon.IsUnsheath ~= nil and weapon:IsUnsheath() then
+            --     skilltime = .3
+            --     if inst.components.kenjutsuka:GetMindpower() >= 5 then
+            --         inst.components.kenjutsuka:SetMindpower(inst.components.kenjutsuka:GetMindpower() - 2)
+            --         inst.doubleichimonjistart = true
+            --     end
+            -- end
+
+            -- inst:DoTaskInTime(skilltime, function()
+            --     inst.sg:GoToState("ichimonji", target)
+            -- end)
+
+            -- if inst.doubleichimonjistart then
+            --     inst:DoTaskInTime(1, function()
+            --         if weapon ~= nil then
+            --             inst.sg:GoToState("ichimonji", target)
+            --         end
+            --     end)
+            -- end
+
 local function OnKilled(inst, data)
     local target = data.victim
     local target_scale = (target:HasTag("smallcreature") and 1) or (target:HasTag("largecreature") and 4) or 2
@@ -227,6 +261,10 @@ local function OnKilled(inst, data)
             inst.components.sanity:DoDelta(target_scale)
         end
     end
+end
+
+local OnStartAttack = function(inst, target)
+    inst.components.playerskillcontroller:ReleaseSkill(target)
 end
 
 local common_postinit = function(inst)
@@ -252,9 +290,9 @@ local common_postinit = function(inst)
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, "LevelCheckKey")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, "PutGlassesKey")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
+    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
+    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
+    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
 
     -- inst.components.playerkeyhandler:AddCombinationKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "PutGlassesKey")
     -- inst.components.playerkeyhandler:AddSequentialKeyHandler(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
@@ -267,21 +305,24 @@ local common_postinit = function(inst)
     -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL_COUNTER_ATK_KEY, "CounterAttack")
     -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.QUICK_SHEATH_KEY, "QuickSheath")
     -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL_CANCEL_KEY, "SkillCancel")
-
-    inst:SetComponent("dodger", M_CONFIG.EnableDodge)
 end
 
 local master_postinit = function(inst)
     inst.starting_inventory = start_inv[TheNet:GetServerGameMode()] or start_inv.default
 
-    -- inst.AnimState:SetScale(0.88, 0.9, 1)
+    inst.AnimState:SetScale(0.88, 0.9, 1)
+
+    -- for test cmp
+    inst:AddComponent("nilcmp")
+
+    inst:SetComponent("dodger", M_CONFIG.EnableDodge)
 
     inst:AddComponent("hair")
     inst.components.hair:SetUpHair()
 
     inst:AddComponent("playerskillcontroller")
-    for k, v in pairs(skill_cooldown_effects) do
-        inst.components.playerskillcontroller:RegisterSkillCooldownDoneEffect(k, v)
+    for k, v in pairs(Skill) do
+        inst.components.playerskillcontroller:AddSkill(k, v)
     end
 
     inst:AddComponent("skinheaddress")
@@ -300,6 +341,7 @@ local master_postinit = function(inst)
     inst.components.kenjutsuka:SetOnRegenMindPower(OnRegenMindPower)
     inst.components.kenjutsuka:AddOnLevelUp(OnLevelUp)
     inst.components.kenjutsuka:AddSpawnFx(OnLevelUpSpawnFx)
+    inst.components.kenjutsuka:OnPostInit()
 
     inst:AddComponent("houndedtarget")
     inst.components.houndedtarget.target_weight_mult:SetModifier(inst, TUNING.WES_HOUND_TARGET_MULT, "misfortune")
@@ -322,6 +364,7 @@ local master_postinit = function(inst)
     inst.components.hunger:SetRate(TUNING.WILSON_HUNGER_RATE * 1.3)
 
     inst.components.combat.damagemultiplier = 1
+    inst.components.combat:SetStartAttack(OnStartAttack)
     inst.components.grogginess.decayrate = TUNING.WES_GROGGINESS_DECAY_RATE
     inst.components.temperature.inherentinsulation = -TUNING.INSULATION_TINY
     inst.components.temperature.inherentsummerinsulation = -TUNING.INSULATION_TINY
@@ -342,6 +385,7 @@ local master_postinit = function(inst)
 
     inst.soundsname = "wortox"
     inst.skeleton_prefab = nil
+    inst.Skill = Skill
 
     inst:ListenForEvent("killed", OnKilled)
     inst:ListenForEvent("death", OnDeath)

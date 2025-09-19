@@ -16,6 +16,7 @@ local modules = {
     "prefabskin",
     "commands",
     "loadingtips",
+    "glassicapi",
 }
 
 for i = 1, #modules do

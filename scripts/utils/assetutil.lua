@@ -20,15 +20,13 @@ local function RegisterImageAtlas(atlas_path)
     end
 end
 
-local function LoadAnimAssets(modname, assets)
-    if modname and assets then
-        local _prefab = Prefab("MOD_LOAD_" .. modname, nil, assets, nil)
-        RegisterSinglePrefab(_prefab)
-        TheSim:LoadPrefabs({_prefab.name})
-    end
+local function LoadAssets(name, assets)
+    local _prefab = Prefab("MOD_LOAD_" .. name, nil, assets, nil)
+    RegisterSinglePrefab(_prefab)
+    TheSim:LoadPrefabs({_prefab.name})
 end
 
 return {
     RegisterImageAtlas = RegisterImageAtlas,
-    LoadAnimAssets = LoadAnimAssets,
+    LoadAssets = LoadAssets,
 }

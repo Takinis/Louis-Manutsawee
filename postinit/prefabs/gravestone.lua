@@ -6,14 +6,29 @@ AddPrefabPostInit("gravestone", function(inst)
         return
     end
 
+    local Develpers = {
+        ffffff = function(inst)
+
+        end,
+        Sydney = function(inst)
+            inst.components.lootdropper:SpawnLootPrefab("m_pantsu")
+            inst.components.lootdropper:SpawnLootPrefab("tenseiga")
+        end,
+    }
+
+    local IsDevelper = function(setepitaph)
+        return Develpers[setepitaph] ~= nil
+    end
+
     local mound = inst.mound
     if mound ~= nil and mound ~= nil then
         local _onfinish = mound.components.workable.onfinish
         local function OnFinishCallback(inst, worker, ...)
-            if inst.setepitaph == "Sydney" then
+            if IsDevelper(inst.setepitaph) then
                 inst.AnimState:PlayAnimation("dug")
                 inst:RemoveComponent("workable")
-                inst.components.lootdropper:SpawnLootPrefab("m_pantsu")
+
+                Develpers[inst.setepitaph](inst)
 
                 if worker ~= nil then
                     if worker.components.sanity ~= nil then
@@ -26,4 +41,8 @@ AddPrefabPostInit("gravestone", function(inst)
         end
         mound.components.workable:SetOnFinishCallback(OnFinishCallback)
     end
+
+    inst.mound.Develpers = Develpers
+    inst.mound.IsDevelper = IsDevelper
+
 end)

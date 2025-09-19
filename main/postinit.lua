@@ -40,6 +40,7 @@ local postinit = {
     },
     widgets = {
         "skinspuppet",
+        "loadingwidget",
     },
     multipleprefabs = {
         "tradable",

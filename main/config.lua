@@ -2,12 +2,6 @@ local GetModConfigData = GetModConfigData
 local ENV = env
 GLOBAL.setfenv(1, GLOBAL)
 
-IA_ENABLED = rawget(_G, "IA_CONFIG") ~= nil
-PL_ENABLED = rawget(_G, "PL_CONFIG") ~= nil
-AD_ENABLED = KnownModIndex:IsModEnabled("workshop-1847959350")
-UM_ENABLED = KnownModIndex:IsModEnabled("workshop-2039181790")
-HOF_ENABLED = KnownModIndex:IsModEnabled("workshop-2334209327")
-
 M_CONFIG = {
     Locale = GetModConfigData("locale"),
     EnableSkill = GetModConfigData("enable_skill"),
@@ -21,7 +15,6 @@ M_CONFIG = {
     Skill4Cooldown = GetModConfigData("skill4_cooldown_time"),
     IsshinCooldown = GetModConfigData("isshin_skill_cooldown_time"),
     RyusenSusanooCooldown = GetModConfigData("ryusen_and_susanoo_skill_cooldown_time"),
-
 
     Skill1Key = GetModConfigData("skill1_key"),
     Skill2Key = GetModConfigData("skill2_key"),
@@ -43,9 +36,13 @@ M_CONFIG = {
     IdleAnimationMode = GetModConfigData("idle_animation_mode"),
 }
 
-ENV.IA_ENABLED = IA_ENABLED
-ENV.PL_ENABLED = PL_ENABLED
-ENV.AD_ENABLED = AD_ENABLED
-ENV.UM_ENABLED = UM_ENABLED
-ENV.HOF_ENABLED = HOF_ENABLED
 ENV.M_CONFIG = M_CONFIG
+ENV.MOD_ENABLED = {
+    IA = rawget(_G, "IA_CONFIG") ~= nil,
+    PL = rawget(_G, "PL_CONFIG") ~= nil,
+    AD = KnownModIndex:IsModEnabled("workshop-1847959350"),
+    UM = KnownModIndex:IsModEnabled("workshop-2039181790"),
+    HOF = KnownModIndex:IsModEnabled("workshop-2334209327"),
+}
+
+MOD_ENABLED = ENV.MOD_ENABLED

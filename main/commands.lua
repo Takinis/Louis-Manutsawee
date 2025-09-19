@@ -30,12 +30,6 @@ if not rawget(_G, "c_revealmap") then
     end
 end
 
-function c_printtable(t)
-    if type(t) == "table" then
-        print(PrintTable(t))
-    end
-end
-
 function c_debug()
     local player = ConsoleCommandPlayer()
     c_supergodmode(player)

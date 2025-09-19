@@ -13,14 +13,14 @@ local balloon_color = {
     "yellow"
 }
 
-local M_Idle_Anim = {
+local Idle_Anim = {
     ["manutsawee"] = "idle_wilson",
     ["manutsawee_shinsengumi"] = "idle_wathgrithr",
     ["manutsawee_fuka"] = "idle_wathgrithr",
     ["manutsawee_sailor"] = "idle_walter",
-    ["manutsawee_jinbei"] = "idle_nice",
     ["manutsawee_taohuu"] = "idle_winona",
     ["manutsawee_miko"] = "emote_impatient",
+    ["manutsawee_jinbei"] = "idle_nice",
     ["manutsawee_bocchi"] = "idle_bocchi_loop",
     ["manutsawee_yukatalong"] = {
         fn = function(self)
@@ -36,7 +36,6 @@ local M_Idle_Anim = {
         end,
         anim = "idle_wendy"
     },
-
     ["manutsawee_qipao"] = {
         fn = function(self)
             self.override_build = "player_idles_wes"
@@ -80,7 +79,7 @@ function SkinsPuppet:DoIdleEmote(...)
     local r = math.random()
     if r > 0.3 then
         local skin = self.last_skins.base_skin
-        local emote_anim = M_Idle_Anim[skin]
+        local emote_anim = Idle_Anim[skin]
         if self.prefabname == "manutsawee" and emote_anim ~= nil then
             if checkentity(emote_anim) then
                 local fn = emote_anim.fn

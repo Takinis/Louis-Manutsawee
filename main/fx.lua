@@ -17,7 +17,7 @@ local function SetSortOrder(inst)
     inst.AnimState:SetSortOrder(2)
 end
 
-local m_fx = {
+local fx = {
     {
         name = "thunderbird_fx_idle",
         bank = "thunderbird_fx",
@@ -108,6 +108,6 @@ local m_fx = {
 
 local fx = require("fx")
 
-for _, v in ipairs(m_fx) do
+for _, v in ipairs(fx) do
     table.insert(fx, v)
 end

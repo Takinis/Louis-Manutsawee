@@ -82,17 +82,6 @@ return {
                         ["data.setepitaph"] = "ffffff"
                     }
                 },
-                {
-                    name = "",
-                    type = "tenseiga",
-                    shape = "rectangle",
-                    x = 22,
-                    y = 22,
-                    width = 0,
-                    height = 0,
-                    visible = true,
-                    properties = {}
-                },
             }
         }
     }
