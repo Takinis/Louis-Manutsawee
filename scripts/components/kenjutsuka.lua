@@ -1,57 +1,29 @@
 local _config = M_CONFIG
-local damage_multiplier = 1
-local damage_critical = 0.1
-local critical_rate = 5
 
-local Critical_Fx = {
-    "round_puff_attack_fx",
-    "fx_attack_pop",
-    "slingshotammo_hitfx_stinger",
-    "balloon_attack_pop",
-    "purebrilliance_mark_attack_fx",
-    "chester_transform_attack_fx",
-}
-
-local CANT_TAG = {"prey", "bird", "insect", "wall"}
-local function OnAttackOther(inst, data)
+local function OnAttackOther(self, inst, data)
     local target = data.target
     local weapon = data.weapon
-    local kenjutsuka = inst.components.kenjutsuka
 
-    if target ~= nil and weapon ~= nil and kenjutsuka ~= nil and not weapon:HasTag("projectile") and not weapon:HasTag("rangedweapon") and not inst.sg:HasStateTag("skilling") then
+    if target ~= nil and weapon ~= nil and not weapon:HasTag("projectile") and not weapon:HasTag("rangedweapon") and not inst.sg:HasStateTag("skilling") then
         if not inst.components.timer:TimerExists("hit_cd") and weapon:HasTag("katana") then
             inst.components.timer:StartTimer("hit_cd", .5)
-            kenjutsuka:SetExp(1 * (_config.KenjutsuExpMultiple or 1))
-        end
-
-        if not target:HasOneOfTags(CANT_TAG) then
-            if not inst.components.timer:TimerExists("critical_cd") then
-                if math.random(1, 100) <= critical_rate + kenjutsuka:GetLevel() then
-                    local crit_cd_time = 15 - (kenjutsuka:GetLevel() / 2)
-                    inst.components.timer:StartTimer("critical_cd", crit_cd_time > 1 and crit_cd_time or 1)
-                    if target.components.health and not target.components.health:IsDead() then
-                        target:SpawnPrefabInPos(GetRandomItem(Critical_Fx))
-                    end
-                    inst.components.combat.damagemultiplier = (damage_multiplier + (damage_critical * kenjutsuka:GetLevel()))
-                    inst:DoTaskInTime(1, function(inst)
-                        inst.components.combat.damagemultiplier = damage_multiplier
-                    end)
-                end
-            end
-
-            if not inst.components.timer:TimerExists("heart_cd") then
-                inst.components.timer:StartTimer("heart_cd", .3)
-                kenjutsuka.hitcount = kenjutsuka.hitcount + 1
-                if kenjutsuka.hitcount >= (_config.RegenMindPowerCount or 10) then
-                    inst:PushEvent("ms_regenmindpower")
-                    if inst.components.sanity then
-                        inst.components.sanity:DoDelta(1)
-                    end
-                    kenjutsuka.hitcount = 0
-                end
-            end
+            self:SetExp(1 * (_config.KenjutsuExpMultiple or 1))
         end
     end
+end
+
+local function LevelNotReached(inst, requirelevel)
+    local str = STRINGS.SKILL.UNLOCK_SKILL .. requirelevel
+    inst.components.talker:Say(str, 1, true)
+
+    inst:PushEvent("ms_deactiveskill")
+end
+
+local function MindpowerNotEnough(inst, requiremindpower)
+    local str = STRINGS.SKILL.MINDPOWER_NOT_ENOUGH .. inst.components.kenjutsuka:GetMindpower() .. "/" .. requiremindpower .. "\n "
+    inst.components.talker:Say(str, 1, true)
+
+    inst:PushEvent("ms_deactiveskill")
 end
 
 local Kenjutsuka = Class(function(self, inst)
@@ -81,12 +53,32 @@ local Kenjutsuka = Class(function(self, inst)
     self._OnLevelUpHandler = function(_, data) self:OnLevelUp(data) end
     self._OnExpDeltaHandler = function(_, data) self:OnExpDelta(data) end
     self._RegenMindPowerHandler = function() self:RegenMindPower() end
+    self._OnAttackOtherHandler = function(_, data) OnAttackOther(self, inst, data) end
 
-    self.inst:ListenForEvent("onattackother", OnAttackOther)
+    self.inst:ListenForEvent("onattackother", self._OnAttackOtherHandler)
     self.inst:ListenForEvent("ms_levelup", self._OnLevelUpHandler)
     self.inst:ListenForEvent("ms_expdelta", self._OnExpDeltaHandler)
     self.inst:ListenForEvent("ms_regenmindpower", self._RegenMindPowerHandler)
+
+    self.inst:ListenForEvent("level_not_reached", LevelNotReached)
+    self.inst:ListenForEvent("mindpower_not_enough", MindpowerNotEnough)
 end)
+
+function Kenjutsuka:IsLevelReached(level)
+    local is_level_reached = (self:GetLevel() >= level)
+    if not is_level_reached then
+        self.inst:PushEvent("level_not_reached", level)
+    end
+    return is_level_reached
+end
+
+function Kenjutsuka:IsMindpowerEnough(inst, mindpower)
+    local is_mindpower_enough = (self:GetMindpower() >= mindpower)
+    if not is_mindpower_enough then
+        self.inst:PushEvent("mindpower_not_enough", mindpower)
+    end
+    return is_mindpower_enough
+end
 
 function Kenjutsuka:OnPostInit()
     local max_level = self:GetMaxLevel()
@@ -141,10 +133,10 @@ function Kenjutsuka:OnExpDelta(data)
         local current_total_exp = data.exp
         local has_spawned_fx = false
 
+        -- So stupid
         local i = 0
         while not self:IsMaxLevel() do
             i = i + 1
-            print(i)
             local next_level = self:GetLevel() + 1
             local level_data = self:IndexLevel(next_level)
 

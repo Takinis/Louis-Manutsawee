@@ -157,6 +157,23 @@ function PlayerSkillController:IsActiveSkill()
     return self.is_active_skill
 end
 
+function PlayerSkillController:CanActivateSkill(level, mindpower, timer_name)
+    if self.inst.components.kenjutsuka:IsLevelReached(level) or
+        self.inst.components.kenjutsuka:IsHasMindpowerEnough(mindpower) or
+        self.inst:IsTimerExists(timer_name) or
+        not self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or
+        self.inst.components.inventory:IsHeavyLifting() or
+        self.inst.components.inventory:IsHeavyLifting() or
+        self.inst.components.sleeper:IsAsleep() or
+        self.inst.components.freezable:IsFrozen() or
+        self.inst.components.rider:IsRiding() or
+        self.inst.components.health:IsDead()
+    then
+        return false
+    end
+    return true
+end
+
 function PlayerSkillController:IsTierSkill(skill)
     local skill_data = self:GetSkillData(skill)
     return skill_data.is_tier_skill

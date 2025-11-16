@@ -27,6 +27,17 @@ function EntityScript:SetComponent(name, condition)
     end
 end
 
+function EntityScript:GetHandsEquip()
+    return self.components.inventory ~= nil and self.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+end
+
+function EntityScript:GetBodyEquip()
+    return self.components.inventory ~= nil and self.components.inventory:GetEquippedItem(EQUIPSLOTS.BODY) or nil
+end
+
+function EntityScript:GetHeadEquip()
+    return self.components.inventory ~= nil and self.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD) or nil
+end
 
 --[[
 
@@ -82,7 +93,10 @@ function EntityScript:SetScale(scale)
     end
 end
 
+local i = 1
 function EntityScript:FollwerFx(fx, GUID, symbol, x, y, z)
+    print("EntityScript:FollwerFx: ", fx .. tostring(i))
+    i = i + 1
     if type(fx) == "string" then
         fx = SpawnPrefab(fx)
     end
@@ -93,8 +107,16 @@ function EntityScript:FollwerFx(fx, GUID, symbol, x, y, z)
     end
 end
 
-function EntityScript:SpawnPrefabInPos(prefab)
+function EntityScript:SpawnPrefabInPos(prefab, scale)
     local prefab = SpawnPrefab(prefab)
     prefab.Transform:SetPosition(self:GetPosition():Get())
+    if scale ~= nil then
+        self:SetSacle(scale)
+    end
     return prefab
+end
+
+
+function EntityScript:IsTimerExists(inst, name)
+    return self.inst.components.timer ~= nil and not self.inst.components.timer:TimerExists(name) or nil
 end

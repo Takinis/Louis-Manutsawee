@@ -29,7 +29,10 @@ local Dodger = Class(function(self, inst)
     self.last_dodge_time = GetTime()
     self._ismastersim = TheWorld.ismastersim
 
-    inst:ListenForEvent("setowner", OnSetOwner)
+    self._OnSetOwnerHandler = function(_) OnSetOwner(inst) end
+
+    inst:ListenForEvent("setowner", self._OnSetOwnerHandler)
+
     if not self._ismastersim then
         inst:ListenForEvent("dodgetimedirty", GetLastDodgeTime, self)
     end

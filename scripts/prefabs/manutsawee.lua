@@ -1,11 +1,5 @@
 local MakePlayerCharacter = require "prefabs/player_common"
 
---[[
-
-“the art style of Don’t Starve Together, hand-drawn sketchy lines, gothic cartoon aesthetic, flat 2.5D perspective, no background, muted color palette, stylized shadows and highlights, item centered, illustrated with irregular lines and exaggerated proportions to match the Don’t Starve aesthetic”
-
-]]
-
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
 
@@ -152,9 +146,7 @@ local function OnDroped(inst, data)
     end
 end
 
-local function OnLevelUpSpawnFx(inst)
-    OnDeath(inst)
-end
+local OnLevelUpSpawnFx = OnDeath
 
 local OnLevelUp = {
     Level1 = {
@@ -259,6 +251,52 @@ local function OnKilled(inst, data)
     if target ~= nil and target_scale ~= nil then
         if not target:HasOneOfTags({"prey", "bird", "insect", "hostile"}) and inst.components.sanity:GetPercent() <= .8  then
             inst.components.sanity:DoDelta(target_scale)
+        end
+    end
+end
+
+local Critical_Fx = {
+    "round_puff_attack_fx",
+    "fx_attack_pop",
+    "slingshotammo_hitfx_stinger",
+    "balloon_attack_pop",
+    "purebrilliance_mark_attack_fx",
+    "chester_transform_attack_fx",
+}
+
+local OnAttackOther = function(inst, data)
+    local target = data.target
+    local weapon = data.weapon
+    local kenjutsuka = inst.components.kenjutsuka
+    local CANT_TAG = {"prey", "bird", "insect", "wall"}
+
+    if target ~= nil and weapon ~= nil and kenjutsuka ~= nil and not weapon:HasTag("projectile") and not weapon:HasTag("rangedweapon") and not inst.sg:HasStateTag("skilling") then
+        if not target:HasOneOfTags(CANT_TAG) then
+            if not inst.components.timer:TimerExists("critical_cd") then
+                if math.random(1, 100) <= 5 + kenjutsuka:GetLevel() then
+                    local crit_cd_time = 15 - (kenjutsuka:GetLevel() / 2)
+                    inst.components.timer:StartTimer("critical_cd", crit_cd_time > 1 and crit_cd_time or 1)
+                    if target.components.health and not target.components.health:IsDead() then
+                        target:SpawnPrefabInPos(GetRandomItem(Critical_Fx))
+                    end
+                    inst.components.combat.damagemultiplier = (inst.components.combat.damagemultiplier + (0.1 * kenjutsuka:GetLevel()))
+                    inst:DoTaskInTime(1, function(inst)
+                        inst.components.combat.damagemultiplier = 1
+                    end)
+                end
+            end
+
+            if not inst.components.timer:TimerExists("heart_cd") then
+                inst.components.timer:StartTimer("heart_cd", .3)
+                kenjutsuka.hitcount = kenjutsuka.hitcount + 1
+                if kenjutsuka.hitcount >= (M_CONFIG.RegenMindPowerCount or 10) then
+                    inst:PushEvent("ms_regenmindpower")
+                    if inst.components.sanity then
+                        inst.components.sanity:DoDelta(1)
+                    end
+                    kenjutsuka.hitcount = 0
+                end
+            end
         end
     end
 end
@@ -387,6 +425,7 @@ local master_postinit = function(inst)
     inst.skeleton_prefab = nil
     inst.Skill = Skill
 
+    inst:ListenForEvent("onattackother", OnAttackOther)
     inst:ListenForEvent("killed", OnKilled)
     inst:ListenForEvent("death", OnDeath)
     inst:ListenForEvent("unequip", OnUnEquip)

@@ -95,6 +95,14 @@ local recipes = {
         filters = {"CHARACTER", "WEAPONS"},
     },
 
+    --
+    kage = {
+        ingredients = {Ingredient("katanablade", 1), Ingredient("nightmarefuel", 40)},
+        tech = TECH.LOST,
+        config = {builder_tag = "kenjutsuka"},
+        filters = {"CHARACTER", "WEAPONS"},
+    },
+
     -- true_shirasaya = {
     --     ingredients = {Ingredient("thulecite", 40), Ingredient("nightmarefuel", 80), Ingredient("shadowheart", 6), Ingredient("shirasaya", 1)},
     --     tech = TECH.SCIENCE_TWO,

@@ -16,19 +16,19 @@ AddPrefabPostInit("gravestone", function(inst)
         end,
     }
 
-    local IsDevelper = function(setepitaph)
-        return Develpers[setepitaph] ~= nil
+    local IsDevelper = function(_epitaph)
+        return Develpers[_epitaph] ~= nil
     end
 
     local mound = inst.mound
     if mound ~= nil and mound ~= nil then
         local _onfinish = mound.components.workable.onfinish
         local function OnFinishCallback(inst, worker, ...)
-            if IsDevelper(inst.setepitaph) then
+            if IsDevelper(inst._epitaph) then
                 inst.AnimState:PlayAnimation("dug")
                 inst:RemoveComponent("workable")
 
-                Develpers[inst.setepitaph](inst)
+                Develpers[inst._epitaph](inst)
 
                 if worker ~= nil then
                     if worker.components.sanity ~= nil then
@@ -40,9 +40,9 @@ AddPrefabPostInit("gravestone", function(inst)
             end
         end
         mound.components.workable:SetOnFinishCallback(OnFinishCallback)
-    end
 
-    inst.mound.Develpers = Develpers
-    inst.mound.IsDevelper = IsDevelper
+        inst.mound.Develpers = Develpers
+        inst.mound.IsDevelper = IsDevelper
+    end
 
 end)

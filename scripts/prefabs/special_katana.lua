@@ -130,6 +130,24 @@ local function kage_master_postinit(inst)
     inst.TryStartFx = TryStartFx
     inst.StopFx = StopFx
 
+    local _OnFinished =inst.components.finiteuses.onfinished
+    local function OnFinished(inst)
+        local owner = inst.components.inventoryitem:GetGrandOwner()
+        local item = SpawnPrefab("katanablade")
+        if owner ~= nil then
+            owner.components.inventory:GiveItem(item)
+        else
+            local x, y, z = inst.Transform:GetWorldPosition()
+            item.Transform:SetPosition(x, y, z)
+        end
+
+        if _OnFinished ~= nil then
+            _OnFinished(inst)
+        end
+    end
+
+    inst.components.finiteuses:SetOnFinished(OnFinished)
+
     inst.onequip_fn = function(inst, owner)
         inst.TryStartFx(inst, owner)
     end

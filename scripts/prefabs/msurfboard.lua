@@ -74,6 +74,33 @@ local function OnWorked(inst)
     inst.AnimState:PushAnimation("run_loop", true)
 end
 
+
+
+local function surfboard_pickupfn(inst, guy)
+    local item = SpawnPrefab(inst.boat_item)
+    if item then
+        local value = inst.boatname:value()
+        local name = value and value ~= "" and value or ""
+        item.components.writeable:SetText(name)
+        item.boatname:set(name)
+
+        guy.components.inventory:GiveItem(item)
+        item.components.pocket:GiveItem(inst.prefab, inst)
+    end
+
+    return true
+end
+
+local function onworked(inst, worker)
+    inst.components.lootdropper:DropLoot()
+    if inst.components.container ~= nil then
+        inst.components.container:DropEverything()
+    end
+    SpawnAt("collapse_small", inst)
+    inst.SoundEmitter:PlaySound("dontstarve/common/destroy_wood")
+    inst:Remove()
+end
+
 local function common()
     local inst = CreateEntity()
     inst.entity:AddTransform()
@@ -92,6 +119,16 @@ local function common()
     inst.AnimState:SetFinalOffset(FINALOFFSET_MIN) --has some visual glitches but looks much better than the boat being infront of the player on a disembark
 
     inst.Physics:SetCylinder(0.25,2)
+
+    inst:AddTag("surfboard")
+
+    inst.boat_item = "msurfboard_item"
+
+    inst.AnimState:SetBank("mraft")
+    inst.AnimState:SetBuild("raft_msurfboard_build")
+    inst.AnimState:PlayAnimation("run_loop", true)
+
+    inst.MiniMapEntity:SetIcon("boat_msurfboard.tex")
 
     inst.no_wet_prefix = true
 
@@ -201,42 +238,23 @@ local function common()
 
     inst:AddComponent("boatvisualmanager")
 
-    return inst
-end
-
-local function surfboard_pickupfn(inst, guy)
-    local item = SpawnPrefab(inst.boat_item)
-    if item then
-        local value = inst.boatname:value()
-        local name = value and value ~= "" and value or ""
-        item.components.writeable:SetText(name)
-        item.boatname:set(name)
-
-        guy.components.inventory:GiveItem(item)
-        item.components.pocket:GiveItem(inst.prefab, inst)
-    end
-
-    return true
-end
-
-local function surfboard_common()
-    local inst = common()
-
-    inst:AddTag("surfboard")
-
-    if not TheWorld.ismastersim then
-        function inst.OnEntityReplicated(_inst)
-            _inst.replica.sailable.creaksound = "ia/common/boat/creaks/creaks"
-            _inst.replica.sailable.sailsound = "ia/common/sail_LP/surfboard"
-            _inst.replica.sailable.sailloopanim = "surf_loop"
-            _inst.replica.sailable.sailstartanim = "surf_pre"
-            _inst.replica.sailable.sailstopanim = "surf_pst"
-            _inst.replica.sailable.alwayssail = true
-        end
-        return inst
-    end
 
     inst.board = nil
+
+    inst.components.container:WidgetSetup("boat_msurfboard")
+
+    inst.waveboost = TUNING.SURFBOARD_WAVEBOOST
+    inst.wavesanityboost = TUNING.SURFBOARD_WAVESANITYBOOST
+
+
+
+    inst.perishtime = TUNING.SURFBOARD_PERISHTIME
+    inst.components.boathealth.maxhealth = TUNING.MSURFBOARD_HEALTH
+    inst.components.boathealth:SetHealth(TUNING.MSURFBOARD_HEALTH, inst.perishtime)
+
+    inst.components.boathealth.damagesound = "ia/common/boat/damage/surfboard"
+
+    inst.components.flotsamspawner.flotsamprefab = "flotsam_surfboard"
 
     inst.components.boathealth.hitfx = nil
 
@@ -265,38 +283,6 @@ local function surfboard_common()
     return inst
 end
 
-local function surfboardfn()
-    local inst = surfboard_common()
-
-    inst.boat_item = "msurfboard_item"
-
-    inst.AnimState:SetBank("mraft")
-    inst.AnimState:SetBuild("raft_msurfboard_build")
-    inst.AnimState:PlayAnimation("run_loop", true)
-
-    inst.MiniMapEntity:SetIcon("boat_msurfboard.tex")
-
-    if not TheWorld.ismastersim then
-        return inst
-    end
-
-    inst.components.container:WidgetSetup("boat_msurfboard")
-
-    inst.waveboost = TUNING.SURFBOARD_WAVEBOOST
-    inst.wavesanityboost = TUNING.SURFBOARD_WAVESANITYBOOST
-
-
-
-    inst.perishtime = TUNING.SURFBOARD_PERISHTIME
-    inst.components.boathealth.maxhealth = TUNING.MSURFBOARD_HEALTH
-    inst.components.boathealth:SetHealth(TUNING.MSURFBOARD_HEALTH, inst.perishtime)
-
-    inst.components.boathealth.damagesound = "ia/common/boat/damage/surfboard"
-
-    inst.components.flotsamspawner.flotsamprefab = "flotsam_surfboard"
-
-    return inst
-end
 
 local function item_ondropped(inst)
     --If this is a valid place to be deployed, auto deploy yourself.
@@ -409,6 +395,6 @@ local function surfboarditemfn()
     return inst
 end
 
-return Prefab("boat_msurfboard", surfboardfn, msurfboardassets, prefabs),
+return Prefab("boat_msurfboard", common, msurfboardassets, prefabs),
         Prefab("msurfboard_item", surfboarditemfn, msurfboardassets, prefabs),
         MakePlacer("msurfboard_item_placer", "mraft", "raft_msurfboard_build", "run_loop", nil, nil, nil, nil, nil, nil, nil, 2)

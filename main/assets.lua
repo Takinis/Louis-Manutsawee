@@ -25,6 +25,26 @@ PrefabFiles = {
     "lightningspike",
 }
 
+local IslandAdventruePrefabFiles = {
+
+}
+
+local PorkLandPrefabFiles = {
+    "oinc1000000",
+}
+
+if MOD_ENABLED.IA then
+    for k, v in pairs(IslandAdventruePrefabFiles) do
+        table.insert(PrefabFiles, v)
+    end
+end
+
+if MOD_ENABLED.PL then
+    for k, v in pairs(PorkLandPrefabFiles) do
+        table.insert(PrefabFiles, v)
+    end
+end
+
 Assets = {
     -- player_lunge_blue.zip from The Combat Overhaul
     -- https://steamcommunity.com/sharedfiles/filedetails/?id=2317339651
