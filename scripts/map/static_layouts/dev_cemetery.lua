@@ -66,7 +66,7 @@ return {
                     height = 0,
                     visible = true,
                     properties = {
-                        ["data.setepitaph"] = "Sydney"
+                        ["data._epitaph"] = "Sydney"
                     }
                 },
                 {
@@ -79,7 +79,20 @@ return {
                     height = 0,
                     visible = true,
                     properties = {
-                        ["data.setepitaph"] = "ffffff"
+                        ["data._epitaph"] = "ffffff"
+                    }
+                },
+                {
+                    name = "Kirishima Tōko",
+                    type = "gravestone",
+                    shape = "rectangle",
+                    x = 44,
+                    y = 44,
+                    width = 0,
+                    height = 0,
+                    visible = true,
+                    properties = {
+                        ["data._epitaph"] = "\"Kirishima Tōko\" \n \"When I had finished reading the novel, I felt deeply unsettled — and then I realised that you had already gone.\""
                     }
                 },
             }

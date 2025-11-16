@@ -20,7 +20,7 @@ local function fn()
     inst.entity:AddNetwork()
 
     inst:AddTag("NOCLICK")
-    -- inst:AddTag("FX")
+    inst:AddTag("FX")
     inst:AddTag("CLASSIFIED") --unfortunately, in DST, "FX" still makes it mouseover when parented
 
     inst.Transform:SetFourFaced()
