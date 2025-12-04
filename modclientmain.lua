@@ -46,6 +46,9 @@ AssetUtil.LoadAssets(ENV.modname, {
     Asset("ANIM", "anim/player_idles_wortox_nice.zip"), -- fuck
     Asset("ANIM", "anim/player_idles_bocchi.zip"),
 
+    Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_dev_cemetery.xml"),
+	Asset("PKGREF", "images/bg_loading_loading_dev_cemetery.tex"),
+
     Asset("DYNAMIC_ANIM", "anim/dynamic/loading_dev_cemetery.zip"),
 	Asset("PKGREF", "anim/dynamic/loading_dev_cemetery.dyn"),
 })
