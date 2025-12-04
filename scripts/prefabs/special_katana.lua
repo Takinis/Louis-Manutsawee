@@ -169,7 +169,7 @@ local kage_onattack = function(inst, owner, target)
     spark:Setup(owner, target, nil, hitsparks_fx_colouroverride)
     spark.black:set(true)
 
-    local radius = 20
+    local radius = TUNING.KAGE_ATTACK_RADIUS
     local x, y, z = owner.Transform:GetWorldPosition()
     local MUST_TAGS = {"_health"}
     local CANT_TAGS = {"CLASSIFIED", "FX", "NOCLICK", "player", "INLIMBO", "_inventoryitem", "structure", "companion", "abigial", "bird", "prey", "wall", "boat"}
@@ -177,13 +177,22 @@ local kage_onattack = function(inst, owner, target)
     for _, v in pairs(Ents) do
         if v ~= nil and v:IsValid() and v.components.health ~= nil and not v.components.health:IsDead() then
             local fx = v:SpawnPrefabInPos(weighted_random_choice(Spawn_Shadow_Fx))
-            fx:SetScale(2)
-            -- v.AnimState:SetMultColour(0, 0, 0, 1)
+            if v:HasTag("largecreature") then
+                fx:SetScale(2)
+            end
             if v ~= target then
                 v.components.health:DoDelta(-math.random(TUNING.KATANA.DAMAGE, TUNING.KATANA.TRUE_DAMAGE))
             end
         end
     end
+end
+
+local function bakusaiga_master_postinit()
+
+end
+
+local function bakusaiga_onattack()
+
 end
 
 local katana_data = {
@@ -206,7 +215,12 @@ local katana_data = {
         master_postinit = kage_master_postinit,
         onattack = kage_onattack,
         damage = TUNING.KATANA.TRUE_DAMAGE,
-    }
+    },
+    bakusaiga = {
+        master_postinit = bakusaiga_master_postinit,
+        onattack = bakusaiga_onattack,
+        damage = TUNING.KATANA.TRUE_DAMAGE,
+    },
 }
 
 local ret = {}

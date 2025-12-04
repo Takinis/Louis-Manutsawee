@@ -69,9 +69,10 @@ local tuning = {
     DEFAULT_DODGE_COOLDOWN_TIME = 1.2,
     DEFAULT_DODGE_TIMEOUT = 0.25,
 
+    KAGE_ATTACK_RADIUS = 20,
 }
 
-if IA_ENABLED then
+if MOD_ENABLED.IA then
     tuning.MSURFBOARD_HEALTH = 300
     tuning.MSURFBOARD_SPEED = 4
 end
