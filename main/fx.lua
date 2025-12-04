@@ -1,9 +1,7 @@
-local fx = {
+for _, v in pairs({
     "m_shadowhand_fx",
     "mforcefield",
-}
-
-for _, v in pairs(fx) do
+}) do
     table.insert(PrefabFiles, v)
 end
 
@@ -17,7 +15,7 @@ local function SetSortOrder(inst)
     inst.AnimState:SetSortOrder(2)
 end
 
-local fx = {
+local m_fx = {
     {
         name = "thunderbird_fx_idle",
         bank = "thunderbird_fx",
@@ -108,6 +106,6 @@ local fx = {
 
 local fx = require("fx")
 
-for _, v in ipairs(fx) do
+for _, v in ipairs(m_fx) do
     table.insert(fx, v)
 end
