@@ -75,7 +75,6 @@ local Idle_Anim = {
     manutsawee_sailor = "idle_walter",
     manutsawee_jinbei = "idle_wortox", -- "idle_naughty" "idle_nice"
     manutsawee_maid = "idle_wanda",
-    manutsawee_maid_m = "idle_wanda",
     manutsawee_lycoris = "idle_naughty",
     manutsawee_uniform_black = "idle_wanda",
     manutsawee_taohuu = "idle_winona",
@@ -92,7 +91,6 @@ local SkinsHeaddress = {
     manutsawee_shinsengumi = "m_hb",
     manutsawee_yukata = "m_sfoxmask_swap",
     manutsawee_yukatalong = "m_sfoxmask_swap",
-    manutsawee_maid_m = "maid_hb",
     manutsawee_bocchi = "bocchi_ahoge",
 }
 
@@ -302,7 +300,9 @@ local OnAttackOther = function(inst, data)
 end
 
 local OnStartAttack = function(inst, target)
-    inst.components.playerskillcontroller:ReleaseSkill(target)
+    if inst.components.playerskillcontroller ~= nil then
+        inst.components.playerskillcontroller:ReleaseSkill(target)
+    end
 end
 
 local common_postinit = function(inst)
@@ -322,27 +322,18 @@ local common_postinit = function(inst)
     inst:AddTag("slingshot_sharpshooter")
     inst:AddTag("pebblemaker")
 
-    inst:SetTag("surfer", IA_ENABLED)
+    inst:SetTag("surfer", MOD_ENABLED.IA)
+    inst:SetTag("msurfer", MOD_ENABLED.IA)
 
     inst:AddComponent("playerkeyhandler")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, "LevelCheckKey")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, "PutGlassesKey")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
-    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
-    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
-    -- inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
+    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
 
     -- inst.components.playerkeyhandler:AddCombinationKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "PutGlassesKey")
     -- inst.components.playerkeyhandler:AddSequentialKeyHandler(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
     -- inst.components.playerkeyhandler:AddCombinationKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
-
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL1_KEY, "Skill1")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL2_KEY, "Skill2")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL3_KEY, "Skill3")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL4_KEY, "Skill4")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL_COUNTER_ATK_KEY, "CounterAttack")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.QUICK_SHEATH_KEY, "QuickSheath")
-    -- inst.components.keyhandler:AddActionListener(LouisManutsawee, M_CONFIG.SKILL_CANCEL_KEY, "SkillCancel")
 end
 
 local master_postinit = function(inst)
@@ -358,10 +349,10 @@ local master_postinit = function(inst)
     inst:AddComponent("hair")
     inst.components.hair:SetUpHair()
 
-    inst:AddComponent("playerskillcontroller")
-    for k, v in pairs(Skill) do
-        inst.components.playerskillcontroller:AddSkill(k, v)
-    end
+    -- inst:AddComponent("playerskillcontroller")
+    -- for k, v in pairs(Skill) do
+    --     inst.components.playerskillcontroller:AddSkill(k, v)
+    -- end
 
     inst:AddComponent("skinheaddress")
     for k, v in pairs(SkinsHeaddress) do
@@ -374,6 +365,12 @@ local master_postinit = function(inst)
     inst:AddComponent("glasses")
     inst.components.glasses:AddGlass("manutsawee_bocchi", "starglasses")
     inst.components.glasses:AddGlass("manutsawee_uniform_black", "sunglasses")
+
+    inst:AddComponent("efficientuser")
+    inst.components.efficientuser:AddMultiplier(ACTIONS.CHOP,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
+    inst.components.efficientuser:AddMultiplier(ACTIONS.MINE,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
+    inst.components.efficientuser:AddMultiplier(ACTIONS.HAMMER, TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
+    inst.components.efficientuser:AddMultiplier(ACTIONS.ATTACK, TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
 
     inst:AddComponent("kenjutsuka")
     inst.components.kenjutsuka:SetOnRegenMindPower(OnRegenMindPower)
@@ -414,12 +411,6 @@ local master_postinit = function(inst)
     inst.components.workmultiplier:AddMultiplier(ACTIONS.CHOP,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
     inst.components.workmultiplier:AddMultiplier(ACTIONS.MINE,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
     inst.components.workmultiplier:AddMultiplier(ACTIONS.HAMMER, TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
-
-    inst:AddComponent("efficientuser")
-    inst.components.efficientuser:AddMultiplier(ACTIONS.CHOP,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
-    inst.components.efficientuser:AddMultiplier(ACTIONS.MINE,   TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
-    inst.components.efficientuser:AddMultiplier(ACTIONS.HAMMER, TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
-    inst.components.efficientuser:AddMultiplier(ACTIONS.ATTACK, TUNING.WES_WORKEFFECTIVENESS_MODIFIER, inst)
 
     inst.soundsname = "wortox"
     inst.skeleton_prefab = nil

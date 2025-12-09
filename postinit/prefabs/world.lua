@@ -7,5 +7,4 @@ AddPrefabPostInit("world", function(inst)
     end
 
     inst:AddComponent("katanaspawner")
-    inst:AddComponent("datingmanager")
 end)

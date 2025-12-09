@@ -7,7 +7,6 @@ modimport("postinit/input")
 local postinit = {
     prefabs = {
         "nightmarefissure",
-        "trap",
         "winter_tree",
         "world",
         "humanmeat",
@@ -32,7 +31,6 @@ local postinit = {
         "combat",
         "cursable",
         "trader",
-        "trap",
         "curseditem",
         "stewer",
         "teacher",
@@ -40,7 +38,7 @@ local postinit = {
     },
     widgets = {
         "skinspuppet",
-        "loadingwidget",
+        "redux/loadingwidget",
     },
     multipleprefabs = {
         "tradable",

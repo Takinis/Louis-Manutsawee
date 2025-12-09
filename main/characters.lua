@@ -10,6 +10,6 @@ local skin_modes = {{
 }}
 
 AddModCharacter("manutsawee", "FEMALE", skin_modes)
-AddModCharacter("kiritzuka", "FEMALE", skin_modes)
-AddModCharacter("inoue", "FEMALE", skin_modes)
-AddModCharacter("Iraiza", "FAMALE", skin_modes)
+-- AddModCharacter("kiritzuka", "FEMALE", skin_modes)
+-- AddModCharacter("inoue", "FEMALE", skin_modes)
+-- AddModCharacter("Iraiza", "FAMALE", skin_modes)

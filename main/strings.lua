@@ -25,7 +25,6 @@ local languages = {
 }
 
 local strings = {
-    MOMO = StringUtil.ImportStringsFile("momo", ENV),
     CHARACTERS = {
         GENERIC = StringUtil.ImportStringsFile("generic", ENV),
         MANUTSAWEE = StringUtil.ImportStringsFile("manutsawee", ENV),
