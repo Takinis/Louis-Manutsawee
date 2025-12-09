@@ -1105,7 +1105,7 @@ local states = {
 
             local motor_speed = 20
 			inst.components.locomotor:Stop()
-            if is_katana_equip then
+            if is_katana_equip and (equip:HasTag("tokijin") or equip.weaponstatus) then
                 inst.AnimState:PlayAnimation("atk_leap_pre")
                 motor_speed = 30
             else
