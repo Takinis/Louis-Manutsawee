@@ -93,10 +93,7 @@ function EntityScript:SetScale(scale)
     end
 end
 
-local i = 1
 function EntityScript:FollwerFx(fx, GUID, symbol, x, y, z)
-    print("EntityScript:FollwerFx: ", fx .. tostring(i))
-    i = i + 1
     if type(fx) == "string" then
         fx = SpawnPrefab(fx)
     end
