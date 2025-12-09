@@ -27,7 +27,7 @@ local MAX_UPVALUE_SEARCH_DEPTH = 3
 ---
 --- ```lua
 --- local telestaff_constructor = Prefabs["telestaff"].fn
---- local teleport_start, teleport_func, i = ToolUtil.GetUpvalue(telestaff_constructor, "teleport_func.teleport_start")
+--- local teleport_start, teleport_func, i = GetUpvalue(telestaff_constructor, "teleport_func.teleport_start")
 --- debug.setupvalue(teleport_func, i, function(...) print("hooked") return teleport_start(...) end)
 --- ```
 ---@param fn function
@@ -50,7 +50,7 @@ local function GetUpvalue(fn, path, depth)
             if depth < MAX_UPVALUE_SEARCH_DEPTH then
                 for _, value in upvalue_iter(fn) do
                     if type(value) == "function" then
-                        local value, scope_fn, index = ToolUtil.GetUpvalue(value, path, depth + 1)
+                        local value, scope_fn, index = GetUpvalue(value, path, depth + 1)
                         if value then
                             return value, scope_fn, index
                         end
