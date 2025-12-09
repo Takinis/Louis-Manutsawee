@@ -1,0 +1,43 @@
+    -- SKILL = {
+    --     COOLDOWN = "Cooldown",
+    --     HAIRTOOSHORT = "My hair isn't long enough for this.",
+    --     MINDPOWER_NOT_ENOUGH = "Not now!\n󰀈: ",
+    --     REFUSE_RELEASE = "I don't wanna do this.",
+    --     REJECTED = "It won't collaborate to let me release the move.",
+    --     SKILL1ATTACK = "ICHIMONJI",
+    --     SKILL1START = "ICHI NO KATA!\n󰀈: ",
+    --     SKILL2ATTACK = "HABAKIRI!!",
+    --     SKILL2START = "NI NO KATA!\n󰀈: ",
+    --     SKILL3ATTACK = "ONIKIRI!!",
+    --     SKILL3START = "SAN NO KATA! \n󰀈: ",
+    --     SKILL4ATTACK = "ISSHIN!!",
+    --     SKILL4START = "SHI NO KATA!\n󰀈: ",
+    --     SKILL5ATTACK = "SHINDEN ISSEN!!",
+    --     SKILL5START = "GO NO KATA!\n󰀈: ",
+    --     SKILL6ATTACK = "RYUSEN!!",
+    --     SKILL6START = "ROKU NO KATA!\n󰀈: ",
+    --     SKILL7ATTACK = "SUSANOO!!",
+    --     SKILL7START = "SHICHI NO KATA!\n󰀈: ",
+    --     SKILL8ATTACK = "IMMORTAL SLASH!!!",
+    --     SKILL8START = "IMMORTAL SLASH NO KATA!\n󰀈: ",
+    --     SKILL9ATTACK = "SORYUHA !!!",
+    --     SKILL9START = "SORYUHA NO KATA!\n󰀈: ",
+    --     SKILL_CANCEL = "Maybe next time",
+    --     SKILL_LATER = "Later...",
+    --     TIER2_COOLDOWN = "Tier2: Cooldown",
+    --     TIER3_COOLDOWN = "Tier3: Cooldown",
+    --     UNLOCK_SKILL = "[UNLOCK] 󰀍: ",
+    -- }
+    --     manutsawee_maid_m = "Maid's outfit",
+
+    --         Asset("IMAGE", "bigportraits/manutsawee_maid_m.tex"),
+    -- Asset("ATLAS", "bigportraits/manutsawee_maid_m.xml"),
+
+    --     ["manutsawee_maid_m"] = {
+    --     fn = function(self)
+    --         self.override_build = "player_idles_wanda"
+    --         self.animstate:AddOverrideBuild(self.override_build)
+    --     end,
+    --     anim = "idle_wanda"
+    -- },
+    --     -- "manutsawee_maid_m",
