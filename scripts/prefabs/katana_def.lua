@@ -20,7 +20,7 @@ local function SheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build)
     inst.AnimState:SetBuild(inst.build)
 
-    if IA_ENABLED or PL_ENABLED then
+    if MOD_ENABLED.IA or MOD_ENABLED.PL then
         if inst.components.tool ~= nil then
             inst:RemoveComponent("tool")
         end
@@ -50,7 +50,7 @@ local function UnsheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build .. "2")
     inst.AnimState:SetBuild(inst.build .. "2")
 
-    if IA_ENABLED or PL_ENABLED then
+    if MOD_ENABLED.IA or MOD_ENABLED.PL then
         if inst.components.tool == nil then
             inst:AddComponent("tool")
             inst.components.tool:SetAction(ACTIONS.HACK, 3)
@@ -223,6 +223,7 @@ local MakeKatana = function(data)
         Asset("ANIM", "anim/sc_" .. build .. ".zip"),
         Asset("ANIM", "anim/sc_" .. build .. "2.zip"),
     }
+
     local prefabs = {}
 
     local function OnAttack(inst, attacker, target)

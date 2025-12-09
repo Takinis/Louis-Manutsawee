@@ -110,7 +110,7 @@ local tenseiga_master_postinit = function(inst)
     inst:RemoveComponent("finiteuses")
 end
 
-local Spawn_Shadow_Fx = {
+local ShadowFxs = {
     wanda_attack_shadowweapon_old_fx = 1,
     wanda_attack_pocketwatch_old_fx = 1,
     shadow_merm_spawn_poof_fx = 1,
@@ -124,6 +124,17 @@ local Spawn_Shadow_Fx = {
     cavehole_flick = 1,
     slurper_respawn = 1,
     fused_shadeling_spawn_fx = 1,
+    mining_ice_fx = 1,
+    wood_splinter_jump = 1,
+    fallingswish_lines = 1,
+    yotb_confetti = 1,
+}
+
+local ReplaceColorFxs = {
+    "mining_ice_fx",
+    "wood_splinter_jump",
+    "fallingswish_lines",
+    "yotb_confetti",
 }
 
 local function kage_master_postinit(inst)
@@ -133,13 +144,17 @@ local function kage_master_postinit(inst)
     local _OnFinished =inst.components.finiteuses.onfinished
     local function OnFinished(inst)
         local owner = inst.components.inventoryitem:GetGrandOwner()
+        local x, y, z = inst.Transform:GetWorldPosition()
+        local fx = SpawnPrefab("sanity_raise")
         local item = SpawnPrefab("katanablade")
         if owner ~= nil then
+            x, y, z = owner.Transform:GetWorldPosition()
             owner.components.inventory:GiveItem(item)
         else
-            local x, y, z = inst.Transform:GetWorldPosition()
             item.Transform:SetPosition(x, y, z)
         end
+
+        fx.Transform:SetPosition(x, y, z)
 
         if _OnFinished ~= nil then
             _OnFinished(inst)
@@ -156,7 +171,7 @@ local function kage_master_postinit(inst)
         inst.StopFx(inst)
     end
 
-    inst.Spawn_Shadow_Fx = Spawn_Shadow_Fx
+    inst.ShadowFxs = ShadowFxs
 end
 
 local kage_onattack = function(inst, owner, target)
@@ -172,13 +187,15 @@ local kage_onattack = function(inst, owner, target)
     local radius = TUNING.KAGE_ATTACK_RADIUS
     local x, y, z = owner.Transform:GetWorldPosition()
     local MUST_TAGS = {"_health"}
-    local CANT_TAGS = {"CLASSIFIED", "FX", "NOCLICK", "player", "INLIMBO", "_inventoryitem", "structure", "companion", "abigial", "bird", "prey", "wall", "boat"}
+    local CANT_TAGS = {"CLASSIFIED", "FX", "NOCLICK", "player", "INLIMBO", "_inventoryitem", "structure", "companion", "abigial", "prey", "wall", "boat"}
     local Ents = TheSim:FindEntities(x, y, z, radius, MUST_TAGS, CANT_TAGS)
     for _, v in pairs(Ents) do
         if v ~= nil and v:IsValid() and v.components.health ~= nil and not v.components.health:IsDead() then
-            local fx = v:SpawnPrefabInPos(weighted_random_choice(Spawn_Shadow_Fx))
-            if v:HasTag("largecreature") then
-                fx:SetScale(2)
+            local fx = v:SpawnPrefabInPos(weighted_random_choice(ShadowFxs))
+            fx:SetScale(v:HasTag("largecreature") and 2 or v:HasTag("smallcreature") and 0.5 or 1)
+            print(tostring(ReplaceColorFxs[fx.prefab]))
+            if ReplaceColorFxs[fx.prefab] ~= nil and fx.AnimState ~= nil then
+                fx.AnimState:SetMultColour(0, 0, 0, 1)
             end
             if v ~= target then
                 v.components.health:DoDelta(-math.random(TUNING.KATANA.DAMAGE, TUNING.KATANA.TRUE_DAMAGE))
@@ -195,7 +212,7 @@ local function bakusaiga_onattack()
 
 end
 
-local katana_data = {
+local data = {
     shusui = {
         -- master_postinit = shusui_master_postinit,
         -- onattack = shusui_onattack,
@@ -224,16 +241,15 @@ local katana_data = {
 }
 
 local ret = {}
-for k, v in pairs(katana_data) do
-    local data = {
+for k, v in pairs(data) do
+    table.insert(ret, MakeKatana({
         name = k,
         build = k,
         onattack = v.onattack,
         common_postinit = v.common_postinit,
         master_postinit = v.master_postinit,
         damage = v.damage
-    }
-    table.insert(ret, MakeKatana(data))
+    }))
 end
 
 return unpack(ret)

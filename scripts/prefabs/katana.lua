@@ -1,6 +1,6 @@
 local MakeKatana = require "prefabs/katana_def"
 
-local katana_data = {
+local data = {
     "hitokiri",
     "shirasaya",
     "raikiri",
@@ -8,13 +8,12 @@ local katana_data = {
 }
 
 local rets = {}
-for _, v in pairs(katana_data) do
-    local data = {
+for _, v in pairs(data) do
+    table.insert(rets, MakeKatana({
         name = v,
         build = v,
-        damage = TUNING.KATANA.DAMAGE
-    }
-    table.insert(rets, MakeKatana(data))
+        damage = TUNING.KATANA.DAMAGE,
+    }))
 end
 
 return unpack(rets)
