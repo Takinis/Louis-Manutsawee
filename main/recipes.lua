@@ -10,29 +10,12 @@ local recipes = {
         config = {builder_tag = "kenjutsuka"},
         filters = {"REFINE"},
     },
-    maid_hb = {
-        ingredients = {Ingredient("silk", 4)},
-        tech = TECH.SCIENCE_ONE,
-        config = {builder_tag = "kenjutsuka"},
-        filters = {"CHARACTER", "CLOTHING"},
-    },
-    m_foxmask = {
-        ingredients = {Ingredient("silk", 4)},
-        tech = TECH.SCIENCE_ONE,
-        config = {builder_tag = "kenjutsuka"},
-        filters = {"CHARACTER", "CLOTHING"},
-    },
-    m_scarf = {
-        ingredients = {Ingredient("silk", 4), Ingredient("beefalowool", 4)},
-        tech = TECH.SCIENCE_TWO,
-        config = {builder_tag = "kenjutsuka"},
-        filters = {"CHARACTER", "CLOTHING", "WINTER"},
-    },
 
     harakiri = {
         ingredients = {Ingredient("flint", 2), Ingredient("log", 2)},
         tech = TECH.SCIENCE_ONE,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "spear"},
         filters = {"CHARACTER", "WEAPONS"},
     },
     mmiko_armor = {
@@ -46,6 +29,7 @@ local recipes = {
         ingredients = {Ingredient("rope", 1), Ingredient("boards", 1)},
         tech = TECH.SCIENCE_ONE,
         config = {builder_tag = "kenjutsuka"},
+        sort = {after = "spear"},
         filters = {"CHARACTER", "WEAPONS"},
     },
 
@@ -53,6 +37,7 @@ local recipes = {
         ingredients = {Ingredient("spear", 1), Ingredient("goldnugget", 2)},
         tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "boomerang"},
         filters = {"CHARACTER", "WEAPONS"},
     },
 
@@ -60,31 +45,36 @@ local recipes = {
         ingredients = {Ingredient("rope", 1), Ingredient("katanabody", 1), Ingredient("cutstone", 1)},
         tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},
     },
 
     shirasaya = {
         ingredients = {Ingredient("cane", 1), Ingredient("katanablade", 1), Ingredient("rope", 2), Ingredient("goldnugget", 2)},
-        tech = TECH.SCIENCE_TWO,
+        tech = TECH.SCIENCEs_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "batbat", after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},
     },
     koshirae = {
         ingredients = {Ingredient("cane", 1), Ingredient("katanablade", 1), Ingredient("rope", 2), Ingredient("goldnugget", 2)},
         tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "batbat", after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},
     },
     hitokiri = {
         ingredients = {Ingredient("cane", 1), Ingredient("katanablade", 1), Ingredient("rope", 2), Ingredient("goldnugget", 2)},
         tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "batbat", after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},
     },
     raikiri = {
         ingredients = {Ingredient("cane", 1), Ingredient("katanablade", 1), Ingredient("rope", 2), Ingredient("goldnugget", 2)},
         tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
+        sort = {before = "batbat", after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},
     },
 
@@ -95,11 +85,9 @@ local recipes = {
         filters = {"CHARACTER", "WEAPONS"},
     },
 
-    --
     kage = {
         ingredients = {Ingredient("katanablade", 1), Ingredient("nightmarefuel", 40)},
         tech = TECH.LOST,
-        config = {builder_tag = "kenjutsuka"},
         filters = {"CHARACTER", "WEAPONS"},
     },
 
@@ -129,13 +117,24 @@ local recipes = {
     -- },
 }
 
+if MOD_ENABLED.IA then
+    recipes.msurfboard_item = {
+        ingredients = {Ingredient("boards", 1), Ingredient("seashell", 2)},
+        tech = TECH.NONE,
+        config = {builder_tag = "msurfer"},
+        filters = {"CHARACTER", "SEAFARING"},
+    }
+end
+
 for k, v in pairs(recipes) do
     AddRecipe2(k, v.ingredients, v.tech, v.config, v.filters)
 
-    -- if v.sort ~= nil and v.sort.before then
-    --     GlassicAPI.RecipeSortBefore(k, v.sort.before, v.filters[2])
-    -- end
-    -- if v.sort ~= nil and v.sort.after then
-    --     GlassicAPI.RecipeSortAfter(k, v.sort.after, v.filters[2])
-    -- end
+    if v.sort ~= nil and v.sort.before then
+        GlassicAPI.RecipeSortBefore(k, v.sort.before, v.filters[2])
+    end
+    if v.sort ~= nil and v.sort.after then
+        GlassicAPI.RecipeSortAfter(k, v.sort.after, v.filters[2])
+    end
 end
+
+
