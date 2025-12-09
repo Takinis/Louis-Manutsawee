@@ -6,11 +6,9 @@ PrefabFiles = {
     "manutsawee_none",
     "yari",
     "shinai",
-    "maid_hb",
-    "m_foxmask",
-    "m_scarf",
-    "momo_hat",
-    "momo",
+    -- "maid_hb",
+    -- "m_foxmask",
+    -- "m_scarf",
     "m_pantsu",
     "harakiri",
     "katanablade",
@@ -21,29 +19,28 @@ PrefabFiles = {
     "special_katana",
     "tokijin",
     "vscode",
-    "momocube",
     "lightningspike",
 }
 
-local IslandAdventruePrefabFiles = {
+-- local IslandAdventruePrefabFiles = {
 
-}
+-- }
 
-local PorkLandPrefabFiles = {
-    "oinc1000000",
-}
+-- local PorkLandPrefabFiles = {
+--     "oinc1000000",
+-- }
 
-if MOD_ENABLED.IA then
-    for k, v in pairs(IslandAdventruePrefabFiles) do
-        table.insert(PrefabFiles, v)
-    end
-end
+-- if MOD_ENABLED.IA then
+--     for k, v in pairs(IslandAdventruePrefabFiles) do
+--         table.insert(PrefabFiles, v)
+--     end
+-- end
 
-if MOD_ENABLED.PL then
-    for k, v in pairs(PorkLandPrefabFiles) do
-        table.insert(PrefabFiles, v)
-    end
-end
+-- if MOD_ENABLED.PL then
+--     for k, v in pairs(PorkLandPrefabFiles) do
+--         table.insert(PrefabFiles, v)
+--     end
+-- end
 
 Assets = {
     -- player_lunge_blue.zip from The Combat Overhaul
@@ -117,11 +114,12 @@ Assets = {
     Asset("ATLAS", "bigportraits/manutsawee_bocchi.xml"),
     Asset("IMAGE", "bigportraits/manutsawee_lycoris.tex"),
     Asset("ATLAS", "bigportraits/manutsawee_lycoris.xml"),
-    Asset("IMAGE", "bigportraits/manutsawee_maid_m.tex"),
-    Asset("ATLAS", "bigportraits/manutsawee_maid_m.xml"),
 
     Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_dev_cemetery.xml"),
 	Asset("PKGREF", "images/bg_loading_loading_dev_cemetery.tex"),
+
+    Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_night_for_four.xml"),
+	Asset("PKGREF", "images/bg_loading_loading_night_for_four.tex"),
 }
 
 GlassicAPI.InitMinimapAtlas("map_icons/m_minimaps")
