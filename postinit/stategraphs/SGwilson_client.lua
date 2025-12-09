@@ -21,10 +21,7 @@ end
 local katanarnd = 1
 
 local actionhandlers = {
-    ActionHandler(ACTIONS.MDODGE, function(inst, action)
-        local invobject = action.invobject
-        return invobject ~= nil and invobject:HasTag("katana") and "mdash" or "mdash2"
-    end),
+    ActionHandler(ACTIONS.MDODGE, "mdodge"),
 }
 
 local states = {
@@ -378,7 +375,7 @@ local states = {
 ----------------------------------------------------------------------------------------------
 
     State{
-        name = "mdash",
+        name = "mdodge",
         tags = {"busy", "nopredict", "nointerrupt", "nomorph" },
 
         onenter = function(inst, data)
@@ -421,7 +418,7 @@ local states = {
         end,
 
         ontimeout = function(inst)
-            inst.sg:GoToState("mdash_pst", inst.sg.statemem.is_katana_equip)
+            inst.sg:GoToState("mdodge_pst", inst.sg.statemem.is_katana_equip)
         end,
 
         onexit = function(inst)
@@ -433,7 +430,7 @@ local states = {
     },
 
     State{
-        name = "mdash_pst",
+        name = "mdodge_pst",
         tags = {"evade", "no_stun"},
 
         onenter = function(inst)

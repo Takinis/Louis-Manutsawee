@@ -53,7 +53,7 @@ local balloon_colors = {
 ----------------------------------------------------------------------------------------------
 
 local actionhandlers = {
-    ActionHandler(ACTIONS.MDODGE, "mdash"),
+    ActionHandler(ACTIONS.MDODGE, "mdodge"),
 }
 
 local events = {
@@ -303,7 +303,7 @@ local states = {
 
     State{
         name = "heavenlystrike",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "skilling","notalking","mdashing" },
+        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "skilling","notalking","mdodgeing" },
 
         onenter = function(inst)
             local x, y, z = inst.Transform:GetWorldPosition()
@@ -579,7 +579,7 @@ local states = {
 
     State{
         name = "ryusen",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdashing"},
+        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdodgeing"},
 
         onenter = function(inst, target)
             inst.components.locomotor:Stop()
@@ -977,7 +977,7 @@ local states = {
 
     State{
         name = "habakiri",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdashing"},
+        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdodgeing"},
 
         onenter = function(inst, target)
             inst.components.locomotor:Stop()
@@ -1084,7 +1084,7 @@ local states = {
     },
 
     State{
-        name = "mdash",
+        name = "mdodge",
         tags = {"busy", "nopredict", "nointerrupt", "nomorph" },
 
         onenter = function(inst, data)
@@ -1123,7 +1123,7 @@ local states = {
         end,
 
         ontimeout = function(inst)
-            inst.sg:GoToState("mdash_pst", inst.sg.statemem.is_katana_equip)
+            inst.sg:GoToState("mdodge_pst", inst.sg.statemem.is_katana_equip)
         end,
 
         onexit = function(inst)
@@ -1135,7 +1135,7 @@ local states = {
     },
 
     State{
-        name = "mdash_pst",
+        name = "mdodge_pst",
         tags = {"evade", "no_stun"},
 
         onenter = function(inst, is_katana_equip)

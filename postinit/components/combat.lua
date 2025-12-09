@@ -23,7 +23,7 @@ AddComponentPostInit("combat", function(self, inst)
             inst:ForceFacePoint(attacker.Transform:GetWorldPosition())
         end
 
-        if weapon ~= nil and (not inst.sg:HasStateTag("mdashing")) then
+        if weapon ~= nil and (not inst.sg:HasStateTag("mdodgeing")) then
             if blockcount > 0 then
                 blockcount = 0
                 BlockActive(inst)
@@ -44,7 +44,7 @@ AddComponentPostInit("combat", function(self, inst)
             end
         end
 
-        if inst.sg:HasStateTag("mdashing") or inst.inspskill then
+        if inst.sg:HasStateTag("mdodgeing") or inst.inspskill then
             SkillUtil.AddFollowerFx(inst, "electricchargedfx")
         elseif inst.sg:HasStateTag("counteractive") then
 
