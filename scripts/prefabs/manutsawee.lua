@@ -347,7 +347,6 @@ local master_postinit = function(inst)
     inst:SetComponent("dodger", M_CONFIG.EnableDodge)
 
     inst:AddComponent("hair")
-    inst.components.hair:SetUpHair()
 
     -- inst:AddComponent("playerskillcontroller")
     -- for k, v in pairs(Skill) do

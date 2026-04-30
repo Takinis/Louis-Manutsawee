@@ -32,9 +32,6 @@ end
 local master_postinit = function(inst)
     inst.AnimState:SetScale(0.88, 0.9, 1)
 
-    inst:AddComponent("momentum")
-    inst:AddComponent("memorable")
-
     inst.components.health:SetMaxHealth(TUNING.MANUTSAWEE.HEALTH)
     inst.components.hunger:SetMax(TUNING.MANUTSAWEE.HUNGER)
     inst.components.sanity:SetMax(TUNING.MANUTSAWEE.SANITY)

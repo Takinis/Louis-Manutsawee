@@ -32,14 +32,15 @@ local Kenjutsuka = Class(function(self, inst)
 
     self.inst = inst
     self.onlevelupcallback = {}
-    self.onregenindpower = nil
+    self.onregenmindpower = nil
     self.spawnfx = nil
 
     self.is_tatsujin = _config.IsTatsujin or false
 
     self.exp = 0
     self.level = 0
-	self.max_exp_for_max_level = 0
+    self.cached_max_level = 0
+    self.max_exp_for_max_level = 0
 
     self.hitcount = 0
 
@@ -65,7 +66,7 @@ local Kenjutsuka = Class(function(self, inst)
 end)
 
 function Kenjutsuka:IsLevelReached(level)
-    local is_level_reached = (self:GetLevel() >= level)
+    local is_level_reached = (self.level >= level)
     if not is_level_reached then
         self.inst:PushEvent("level_not_reached", level)
     end
@@ -80,8 +81,23 @@ function Kenjutsuka:IsMindpowerEnough(inst, mindpower)
     return is_mindpower_enough
 end
 
+function Kenjutsuka:CalculateMaxLevel()
+    local max_level = 0
+    if self.onlevelupcallback then
+        for k, _ in pairs(self.onlevelupcallback) do
+            local level = tonumber(string.match(k, "^Level(%d+)$"))
+            if level and level > max_level then
+                max_level = level
+            end
+        end
+    end
+    -- its fucking stuipd
+    self.cached_max_level = max_level
+    return max_level
+end
+
 function Kenjutsuka:OnPostInit()
-    local max_level = self:GetMaxLevel()
+    local max_level = self:CalculateMaxLevel()
     if max_level > 0 then
         local max_level_data = self:IndexLevel(max_level)
         if max_level_data and max_level_data.require_exp then
@@ -99,8 +115,8 @@ end
 function Kenjutsuka:RegenMindPower()
     if not self:IsMaxMindPower() then
         self:SetMindpower(self:GetMindpower() + 1)
-        if self.onregenindpower ~= nil then
-            self.onregenindpower(self.inst, self:GetMindpower())
+        if self.onregenmindpower ~= nil then
+            self.onregenmindpower(self.inst, self:GetMindpower())
         end
     end
     if self:IsEnableRegenMindpower() then
@@ -111,15 +127,15 @@ end
 function Kenjutsuka:OnLevelUp(data)
     if data == nil then return end
 
-    if data.level_to_reach ~= nil and data.level_to_reach > self:GetLevel() and data.level_to_reach <= self:GetMaxLevel() then
-        self:SetLevel(data.level_to_reach)
+    if data.level_to_reach ~= nil and data.level_to_reach > self.level and data.level_to_reach <= self:GetMaxLevel() then
+        self.level = data.level_to_reach
 
         if data.mindpower then
             self:SetMaxMindpower(data.mindpower)
         end
 
         if data.fn ~= nil then
-            data.fn(self.inst, self:GetLevel())
+            data.fn(self.inst, self.level)
         end
     end
 end
@@ -131,13 +147,11 @@ end
 function Kenjutsuka:OnExpDelta(data)
     if data ~= nil and data.exp ~= nil then
         local current_total_exp = data.exp
-        local has_spawned_fx = false
+        local leveled_up = false
+        local old_level = self.level
 
-        -- So stupid
-        local i = 0
-        while not self:IsMaxLevel() do
-            i = i + 1
-            local next_level = self:GetLevel() + 1
+        while self.level < self:GetMaxLevel() do
+            local next_level = self.level + 1
             local level_data = self:IndexLevel(next_level)
 
             if level_data == nil or level_data.require_exp == nil then
@@ -145,19 +159,27 @@ function Kenjutsuka:OnExpDelta(data)
             end
 
             if self:IsExpEligible(current_total_exp, level_data.require_exp) then
-                if not has_spawned_fx and self.spawnfx ~= nil then
-                    self.spawnfx(self.inst)
-                    has_spawned_fx = true
-                end
+                self.level = next_level
+                leveled_up = true
+                self:SetMaxMindpower(self.max_mindpower + 2)
 
-                self.inst:PushEvent("ms_levelup", {
-                    level_to_reach = next_level,
-                    mindpower = self:GetMaxMindpower() + 2,
-                    fn = level_data.fn
-                })
+                if level_data.fn ~= nil then
+                    level_data.fn(self.inst, self.level)
+                end
             else
                 break
             end
+        end
+
+        if leveled_up then
+            if not data.is_loading and self.spawnfx ~= nil then
+                self.spawnfx(self.inst)
+            end
+            -- Still trigger the event for UI or other components that might listen
+            self.inst:PushEvent("ms_levelup", {
+                level_to_reach = self.level,
+                mindpower = self.max_mindpower
+            })
         end
 
         -- After all potential level-ups, if at max level, cap EXP to that level's requirement.
@@ -175,7 +197,7 @@ function Kenjutsuka:GetExp()
 end
 
 -- 'force' is used for loading or special initializations to bypass certain checks.
-function Kenjutsuka:ExpDelta(new_exp_value, force)
+function Kenjutsuka:ExpDelta(new_exp_value, force, is_loading)
     if not force then
         if new_exp_value <= self.exp then
             return
@@ -187,7 +209,7 @@ function Kenjutsuka:ExpDelta(new_exp_value, force)
     end
 
     self.exp = new_exp_value
-    self.inst:PushEvent("ms_expdelta", {exp = self.exp})
+    self.inst:PushEvent("ms_expdelta", {exp = self.exp, is_loading = is_loading})
 end
 
 function Kenjutsuka:SetExp(amount)
@@ -195,7 +217,7 @@ function Kenjutsuka:SetExp(amount)
     if self:IsMaxLevel() and self.exp >= self.max_exp_for_max_level then
         return
     end
-    self:ExpDelta(self:GetExp() + amount, false) -- Call ExpDelta, not forcing
+    self:ExpDelta(self.exp + amount, false)
 end
 
 function Kenjutsuka:SetLevel(level)
@@ -209,8 +231,8 @@ function Kenjutsuka:SetLevel(level)
 end
 
 function Kenjutsuka:SetMindpower(power)
-    if power > self:GetMaxMindpower()then
-        power = self:GetMaxMindpower()
+    if power > self.max_mindpower then
+        power = self.max_mindpower
     end
     if power < 0 then
         power = 0
@@ -226,7 +248,7 @@ end
 
 function Kenjutsuka:AddOnLevelUp(onlevelupcallback)
     self.onlevelupcallback = onlevelupcallback or {}
-    local max_level = self:GetMaxLevel()
+    local max_level = self:CalculateMaxLevel()
     if max_level > 0 then
         local max_level_data = self:IndexLevel(max_level)
         if max_level_data and max_level_data.require_exp then
@@ -242,7 +264,7 @@ function Kenjutsuka:AddSpawnFx(spawnfx)
 end
 
 function Kenjutsuka:SetOnRegenMindPower(fn)
-    self.onregenindpower = fn
+    self.onregenmindpower = fn
 end
 
 function Kenjutsuka:GetMaxExpForMaxLevel()
@@ -254,16 +276,7 @@ function Kenjutsuka:GetLevel()
 end
 
 function Kenjutsuka:GetMaxLevel()
-    local max_level = 0
-    if self.onlevelupcallback then
-        for k, _ in pairs(self.onlevelupcallback) do
-            local level = tonumber(string.match(k, "^Level(%d+)$"))
-            if level and level > max_level then
-                max_level = level
-            end
-        end
-    end
-    return max_level
+    return self.cached_max_level
 end
 
 function Kenjutsuka:IndexLevel(level)
@@ -281,11 +294,11 @@ function Kenjutsuka:GetMaxMindpower()
 end
 
 function Kenjutsuka:IsMaxLevel()
-    return self:GetLevel() >= self:GetMaxLevel()
+    return self.level >= self:GetMaxLevel()
 end
 
 function Kenjutsuka:IsMaxMindPower()
-    return self:GetMindpower() >= self:GetMaxMindpower()
+    return self.mindpower >= self.max_mindpower
 end
 
 function Kenjutsuka:IsTatsujin()
@@ -325,34 +338,43 @@ end
 
 function Kenjutsuka:OnSave()
     local data = {
-        exp = self:GetExp(),
-        mindpower = self:GetMindpower(),
+        level = self.level,
+        exp = self.exp,
+        mindpower = self.mindpower,
         hitcount = self.hitcount,
-        enable_regen_mindpower = self:IsEnableRegenMindpower(),
+        enable_regen_mindpower = self.enable_regen_mindpower,
     }
     return data
 end
 
-local has_set_exp = false
 function Kenjutsuka:OnLoad(data)
     if data ~= nil then
-        -- self.exp = data.exp
+        -- Load level if it exists, otherwise default to 0
+        if data.level then
+            self.level = data.level
+        end
         self.mindpower = data.mindpower or 0
         self.hitcount = data.hitcount or 0
 
-        -- After setting raw EXP and Level, call SetExp with force=true.
-        -- This will trigger OnExpDelta, which will re-evaluate levels.
-        -- This is important if level definitions changed (e.g. mod update) or new levels were added.
-        -- The OnLevelUp functions (fn) will run for any *newly achieved* levels based on loaded EXP
-        -- compared to loaded Level.
-        self:ExpDelta(data.exp, true)
+        if data.enable_regen_mindpower ~= nil then
+            self:SetRegenMindPower(data.enable_regen_mindpower)
+        end
+
+        -- Call ExpDelta with is_loading flag to prevent visual effects and double-applying stats
+        -- If we already have the level, we just want to ensure our exp is set and we're synced.
+        if data.exp then
+             -- Reset level briefly so that OnExpDelta can re-apply all fn() logic statically
+            local target_exp = data.exp
+            self.level = 0
+            self:ExpDelta(target_exp, true, true)
+        end
     end
 end
 
 function Kenjutsuka:OnRemoveEntity()
     self:StopRegenMindPowerTask()
 
-    self.inst:RemoveEventCallback("onattackother", OnAttackOther)
+    self.inst:RemoveEventCallback("onattackother", self._OnAttackOtherHandler)
     self.inst:RemoveEventCallback("ms_levelup", self._OnLevelUpHandler)
     self.inst:RemoveEventCallback("ms_expdelta", self._OnExpDeltaHandler)
     self.inst:RemoveEventCallback("ms_regenmindpower", self._RegenMindPowerHandler)
@@ -364,11 +386,11 @@ function Kenjutsuka:GetDebugString()
     return string.format(
         "Is Tatsujin: %s, Level: %s/%s, Exp: %s (Req for MaxLvl: %s), Power: %s/%s, Regen MP: %s, Hitcount: %s",
         tostring(self:IsTatsujin()),
-        self:GetLevel(), self:GetMaxLevel(),
-        self:GetExp(),
+        self.level, self:GetMaxLevel(),
+        self.exp,
         tostring(self.max_exp_for_max_level),
-        self:GetMindpower(), self:GetMaxMindpower(),
-        tostring(self:IsEnableRegenMindpower()),
+        self.mindpower, self.max_mindpower,
+        tostring(self.enable_regen_mindpower),
         tostring(self.hitcount)
     )
 end
