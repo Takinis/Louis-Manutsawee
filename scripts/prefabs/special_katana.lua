@@ -204,8 +204,8 @@ local kage_onattack = function(inst, owner, target)
     end
 end
 
-local function bakusaiga_master_postinit()
-
+local function bakusaiga_master_postinit(inst)
+    inst:RemoveComponent("finiteuses")
 end
 
 local function bakusaiga_onattack()

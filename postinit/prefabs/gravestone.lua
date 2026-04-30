@@ -5,44 +5,44 @@ AddPrefabPostInit("gravestone", function(inst)
     if not TheWorld.ismastersim then
         return
     end
-
     local Develpers = {
-        ffffff = function(inst)
-
-        end,
         Sydney = function(inst)
             inst.components.lootdropper:SpawnLootPrefab("m_pantsu")
             inst.components.lootdropper:SpawnLootPrefab("tenseiga")
+            inst.components.lootdropper:SpawnLootPrefab("bakusaiga")
         end,
     }
 
-    local IsDevelper = function(_epitaph)
-        return Develpers[_epitaph] ~= nil
+    local IsDevelper = function(setepitaph)
+        return Develpers[setepitaph] ~= nil
     end
 
+    -- fuck
     local mound = inst.mound
-    if mound ~= nil and mound ~= nil then
-        local _onfinish = mound.components.workable.onfinish
-        local function OnFinishCallback(inst, worker, ...)
-            if IsDevelper(inst._epitaph) then
-                inst.AnimState:PlayAnimation("dug")
-                inst:RemoveComponent("workable")
+    inst:DoTaskInTime(0, function()
+        if mound ~= nil then
+            local _onfinish = mound.components.workable.onfinish
+            function mound.components.workable.onfinish(inst, worker, ...)
+                if Develpers[inst.dev_name] then
+                    inst.AnimState:PlayAnimation("dug")
+                    inst:RemoveComponent("workable")
 
-                Develpers[inst._epitaph](inst)
-
-                if worker ~= nil then
-                    if worker.components.sanity ~= nil then
-                        worker.components.sanity:DoDelta(-TUNING.SANITY_SMALL)
+                    if worker ~= nil then
+                        local fn = Develpers[inst.dev_name]
+                        fn(inst)
+                        if worker.components.sanity ~= nil then
+                            worker.components.sanity:DoDelta(-TUNING.SANITY_SMALL)
+                        end
                     end
+                else
+                    _onfinish(inst, worker, ...)
                 end
-            else
-                _onfinish(inst, worker, ...)
             end
-        end
-        mound.components.workable:SetOnFinishCallback(OnFinishCallback)
 
-        inst.mound.Develpers = Develpers
-        inst.mound.IsDevelper = IsDevelper
-    end
+            inst.mound.dev_name = inst.setepitaph
+            inst.mound.Develpers = Develpers
+            inst.mound.IsDevelper = IsDevelper
+        end
+    end)
 
 end)

@@ -26,11 +26,7 @@ return {
         TRUE_SHIRASAYA = "",
         VSCODE = "",
         YARI = "",
-        M_PANTSU = "",
-        MOMO_HAT = "",
-        MOMO = "",
-        MOMOCUBE = "",
-        MOMOAXE = "",
+
         TENSEIGA = "",
         DREADSTONE_STACK_TOMB = "",
     },

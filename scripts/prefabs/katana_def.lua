@@ -7,7 +7,7 @@ local IsUnsheath = function(inst)
 end
 
 local function SheathMode(inst, owner)
-    inst.spelltype = "PULLOUT"
+    inst.spelltype:set("PULLOUT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -37,7 +37,7 @@ local function SheathMode(inst, owner)
 end
 
 local function UnsheathMode(inst, owner)
-    inst.spelltype = "INSERT"
+    inst.spelltype:set("INSERT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -273,6 +273,9 @@ local MakeKatana = function(data)
         --weapon (from weapon component) added to pristine state for optimization
         inst:AddTag("weapon")
 
+        inst.spelltype = net_string(inst.GUID, name .. ".spelltype")
+        inst.spelltype:set("PULLOUT")
+
         MakeInventoryFloatable(inst, nil, 0.1)
 
         if data.common_postinit ~= nil then
@@ -285,7 +288,6 @@ local MakeKatana = function(data)
             return inst
         end
 
-        inst.spelltype = "PULLOUT"
 
         inst:AddComponent("inspectable")
 

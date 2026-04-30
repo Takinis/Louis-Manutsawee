@@ -66,7 +66,7 @@ return {
                     height = 0,
                     visible = true,
                     properties = {
-                        ["data._epitaph"] = "Sydney"
+                        ["data.setepitaph"] = "Sydney"
                     }
                 },
                 {
@@ -79,7 +79,7 @@ return {
                     height = 0,
                     visible = true,
                     properties = {
-                        ["data._epitaph"] = "ffffff"
+                        ["data.setepitaph"] = "ffffff"
                     }
                 },
                 {
@@ -92,7 +92,7 @@ return {
                     height = 0,
                     visible = true,
                     properties = {
-                        ["data._epitaph"] = "\"Kirishima Tōko\" \n \"When I had finished reading the novel, I felt deeply unsettled — and then I realised that you had already gone.\""
+                        ["data.setepitaph"] = "\"Kirishima Tōko\" \n \"When I had finished reading the novel, I felt deeply unsettled — and then I realised that you had already gone.\""
                     }
                 },
             }

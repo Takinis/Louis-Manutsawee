@@ -14,7 +14,7 @@ function Memorable:Record(name, damage, source, t)
         damage = damage,
         source = source,
         type = t,
-        time = GetTime(),  -- 或者你自己记录战斗内时间
+        time = GetTime(),
     }
     table.insert(self.memories[name], rec)
 end

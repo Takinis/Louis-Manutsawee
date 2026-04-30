@@ -2,6 +2,7 @@ local modimport = modimport
 
 local modules = {
     "config",
+    "util",
     "constants",
     "recipes",
     "assets",

@@ -6,10 +6,7 @@ PrefabFiles = {
     "manutsawee_none",
     "yari",
     "shinai",
-    -- "maid_hb",
-    -- "m_foxmask",
-    -- "m_scarf",
-    "m_pantsu",
+    "pantsu",
     "harakiri",
     "katanablade",
     "katana",
@@ -22,25 +19,6 @@ PrefabFiles = {
     "lightningspike",
 }
 
--- local IslandAdventruePrefabFiles = {
-
--- }
-
--- local PorkLandPrefabFiles = {
---     "oinc1000000",
--- }
-
--- if MOD_ENABLED.IA then
---     for k, v in pairs(IslandAdventruePrefabFiles) do
---         table.insert(PrefabFiles, v)
---     end
--- end
-
--- if MOD_ENABLED.PL then
---     for k, v in pairs(PorkLandPrefabFiles) do
---         table.insert(PrefabFiles, v)
---     end
--- end
 
 Assets = {
     -- player_lunge_blue.zip from The Combat Overhaul
@@ -124,3 +102,22 @@ Assets = {
 
 GlassicAPI.InitMinimapAtlas("map_icons/m_minimaps")
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
+
+local IslandAdventruePrefabFiles = {
+
+}
+
+AddOtherModPrefab(PrefabFiles, IslandAdventruePrefabFiles, MOD_ENABLED.IA)
+
+local PorkLandPrefabFiles = {
+    "oinc1000000",
+}
+
+AddOtherModPrefab(PrefabFiles, PorkLandPrefabFiles, MOD_ENABLED.PL)
+
+local IslandAdventrueAssets = {
+    "images/saveslot_portraits/manutsawee_ia.tex",
+    "images/saveslot_portraits/manutsawee_ia.xml",
+}
+
+AddOtherModAssets(Assets, IslandAdventrueAssets, MOD_ENABLED.IA)

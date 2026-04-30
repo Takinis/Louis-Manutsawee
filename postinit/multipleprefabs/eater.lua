@@ -1,7 +1,7 @@
 local AddPrefabPostInit = AddPrefabPostInit
 GLOBAL.setfenv(1, GLOBAL)
 
-local foods = {
+local eater_prefabs = {
     "phlegm",
     "rottenegg",
     "humanmeat",
@@ -15,8 +15,12 @@ local foods = {
     "minotaurhorn",
 }
 
-for _, v in ipairs(foods) do
+for _, v in ipairs(eater_prefabs) do
     AddPrefabPostInit(v, function(inst)
         inst:AddTag("terriblefood")
+
+        if not TheWorld.ismastersim then
+            return
+        end
     end)
 end

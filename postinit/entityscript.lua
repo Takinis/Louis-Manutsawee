@@ -39,54 +39,6 @@ function EntityScript:GetHeadEquip()
     return self.components.inventory ~= nil and self.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD) or nil
 end
 
---[[
-
-Mainly used for multiple component judgments, just looks more beautiful :D
-
-]]
-
-function EntityScript:HasComponent(cmp)
-    return self.components[cmp]
-end
-
-function EntityScript:HasAllComponents(...)
-    for i = 1, select("#", ...) do
-        local cmp = select(i, ...)
-        if not self:HasComponent(cmp) then
-            return false
-        end
-    end
-    return true
-end
-
-function EntityScript:HasAnyComponent(...)
-    for i = 1, select("#", ...) do
-        local cmp = select(i, ...)
-        if self:HasComponent(cmp) then
-            return true
-        end
-    end
-    return false
-end
-
-function EntityScript:HasComponents(...)
-    local cmps = select(1, ...)
-    if type(cmps) == "table" then
-        return self:HasAllComponents(unpack(cmps))
-    else
-        return self:HasAllComponents(...)
-    end
-end
-
-function EntityScript:HasOneOfComponents(...)
-    local cmps = select(1, ...)
-    if type(cmps) == "table" then
-        return self:HasAnyComponent(unpack(cmps))
-    else
-        return self:HasAnyComponent(...)
-    end
-end
-
 function EntityScript:SetScale(scale)
     if self.Transform ~= nil then
         self.Transform:SetScale(scale, scale, scale)
