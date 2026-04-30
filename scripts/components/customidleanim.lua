@@ -26,8 +26,8 @@ local CustomIdleAnim = Class(function(self, inst)
 
     self.inst = inst
 
-    self.inst.idle_anims = {}
-    self.inst.funny_idle_anims = {}
+    self.idle_anims = {}
+    self.funny_idle_anims = {}
 
     inst.AnimState:AddOverrideBuild("player_idles_wes")
     inst.AnimState:AddOverrideBuild("player_idles_wendy")
@@ -35,15 +35,14 @@ local CustomIdleAnim = Class(function(self, inst)
 
     inst.customidleanim = CustomIdleAnimFn
     inst.customidlestate = CustomIdleStateFn
-
 end)
 
 function CustomIdleAnim:SetIdleAnim(idle_anim, funny_idle_anim)
     if idle_anim ~= nil and type(idle_anim) == "table" then
-        self.inst.idle_anims = idle_anim
+        self.idle_anims = idle_anim
     end
     if funny_idle_anim ~= nil and type(funny_idle_anim) == "table" then
-        self.inst.funny_idle_anims = funny_idle_anim
+        self.funny_idle_anims = funny_idle_anim
     end
 end
 
