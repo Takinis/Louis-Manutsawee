@@ -20,7 +20,7 @@ end
 local function OnEquip(inst, data)
     local eslot = data.eslot
     if eslot ~= nil and eslot == EQUIPSLOTS.HEAD then
-        self:ChangeHairOverrideSymbol()
+        inst.components.hair:ChangeHairOverrideSymbol()
     end
 end
 
@@ -41,7 +41,9 @@ local Hair = Class(function(self, inst)
     beard:AddCallback(Hair_Growth_Lengths.long.days,   function() self:ChangeHairGrowthLength("long")   end)
 
     inst:ListenForEvent("equip", OnEquip)
-    inst:ListenForEvent("death", self.ChangeCutOverrideSymbol)
+    inst:ListenForEvent("death", function()
+        self:ChangeCutOverrideSymbol()
+    end)
 end)
 
 function Hair:ChangeCutOverrideSymbol()
