@@ -1,4 +1,4 @@
-GLBOAL.setfenv(1, GLOBAL)
+GLOBAL.setfenv(1, GLOBAL)
 
 function AddOtherModPrefab(prefabfiles, prefabnames, condition)
     if condition then

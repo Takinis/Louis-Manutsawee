@@ -19,7 +19,6 @@ PrefabFiles = {
     "lightningspike",
 }
 
-
 Assets = {
     -- player_lunge_blue.zip from The Combat Overhaul
     -- https://steamcommunity.com/sharedfiles/filedetails/?id=2317339651
@@ -103,21 +102,21 @@ Assets = {
 GlassicAPI.InitMinimapAtlas("map_icons/m_minimaps")
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
 
-local IslandAdventruePrefabFiles = {
+-- local IslandAdventruePrefabFiles = {
 
-}
+-- }
 
-AddOtherModPrefab(PrefabFiles, IslandAdventruePrefabFiles, MOD_ENABLED.IA)
+-- AddOtherModPrefab(PrefabFiles, IslandAdventruePrefabFiles, MOD_ENABLED.IA)
 
-local PorkLandPrefabFiles = {
-    "oinc1000000",
-}
+-- local PorkLandPrefabFiles = {
+--     "oinc1000000",
+-- }
 
-AddOtherModPrefab(PrefabFiles, PorkLandPrefabFiles, MOD_ENABLED.PL)
+-- AddOtherModPrefab(PrefabFiles, PorkLandPrefabFiles, MOD_ENABLED.PL)
 
-local IslandAdventrueAssets = {
-    "images/saveslot_portraits/manutsawee_ia.tex",
-    "images/saveslot_portraits/manutsawee_ia.xml",
-}
+-- local IslandAdventrueAssets = {
+--     "images/saveslot_portraits/manutsawee_ia.tex",
+--     "images/saveslot_portraits/manutsawee_ia.xml",
+-- }
 
-AddOtherModAssets(Assets, IslandAdventrueAssets, MOD_ENABLED.IA)
+-- AddOtherModAssets(Assets, IslandAdventrueAssets, MOD_ENABLED.IA)
