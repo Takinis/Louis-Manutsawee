@@ -40,8 +40,8 @@ local Hair = Class(function(self, inst)
     beard:AddCallback(Hair_Growth_Lengths.medium.days, function() self:ChangeHairGrowthLength("medium") end)
     beard:AddCallback(Hair_Growth_Lengths.long.days,   function() self:ChangeHairGrowthLength("long")   end)
 
-    inst:ListenForEvent("equip", OnEquip)
-    inst:ListenForEvent("death", function()
+    self.inst:ListenForEvent("equip", OnEquip)
+    self.inst:ListenForEvent("death", function()
         self:ChangeCutOverrideSymbol()
     end)
 end)
@@ -63,17 +63,17 @@ function Hair:ChangeHairOverrideSymbol()
     self.inst.components.beard.insulation_factor = (self.hair_style <= 2) and 1 or 0.1
 end
 
-function Hair:ChangeHairGrowthLength(inst, length)
+function Hair:ChangeHairGrowthLength(length)
     self.hair_length = GetHairLengthIndex(length) or 1
-    inst.components.beard.bits = Hair_Growth_Lengths[length].bits
+    self.inst.components.beard.bits = Hair_Growth_Lengths[length].bits
     self:ChangeHairOverrideSymbol()
 end
 
-function Hair:OnResetHair(inst)
+function Hair:OnResetHair()
     if self.hair_length > 2 then
         self.hair_length = self.hair_length - 1
         local length = Hair_Lengths[self.hair_length]
-        inst.components.beard.daysgrowth = Hair_Growth_Lengths[length].days
+        self.inst.components.beard.daysgrowth = Hair_Growth_Lengths[length].days
         self:ChangeHairGrowthLength()
     else
         self:ChangeCutOverrideSymbol()
