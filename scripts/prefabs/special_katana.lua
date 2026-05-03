@@ -193,7 +193,6 @@ local kage_onattack = function(inst, owner, target)
         if v ~= nil and v:IsValid() and v.components.health ~= nil and not v.components.health:IsDead() then
             local fx = v:SpawnPrefabInPos(weighted_random_choice(ShadowFxs))
             fx:SetScale(v:HasTag("largecreature") and 2 or v:HasTag("smallcreature") and 0.5 or 1)
-            print(tostring(ReplaceColorFxs[fx.prefab]))
             if ReplaceColorFxs[fx.prefab] ~= nil and fx.AnimState ~= nil then
                 fx.AnimState:SetMultColour(0, 0, 0, 1)
             end
