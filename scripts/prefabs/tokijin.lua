@@ -284,6 +284,7 @@ local function fn()
     inst:AddTag("waterproofer")
     inst:AddTag("katana")
     inst:AddTag("tokijin")
+    inst:AddTag("onikiba")
 
     --weapon (from weapon component) added to pristine state for optimization
     inst:AddTag("weapon")

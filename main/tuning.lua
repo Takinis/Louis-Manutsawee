@@ -64,7 +64,7 @@ local tuning = {
     KAGE_ATTACK_RADIUS = 20,
 }
 
-if MOD_ENABLED.IA then
+if IA_ENABLED then
     tuning.MSURFBOARD_HEALTH = 300
     tuning.MSURFBOARD_SPEED = 4
 end

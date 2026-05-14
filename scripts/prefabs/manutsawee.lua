@@ -1,4 +1,5 @@
 local MakePlayerCharacter = require "prefabs/player_common"
+local SkillUtil = require("utils/skillutil")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -64,6 +65,10 @@ local prefabs = {
     "battlesong_instant_attack_fx",
     "fx_book_light_upgraded",
     "abigail_rising_twinkles_fx",
+    "lightningspike_fx",
+    "electricchargedfx",
+    "electrichitsparks",
+    "thunderbird_fx_idle",
 }
 
 local Idle_Anim = {
@@ -106,9 +111,10 @@ prefabs = FlattenTree({prefabs, start_inv}, true)
 
 local function OnRegenMindPower(inst, mindpower)
     inst:FollwerFx("battlesong_instant_attack_fx"):SetScale(.7)
-    if mindpower >= 3 then
-        inst.components.talker:Say("󰀈: ".. mindpower .."\n", 1, true)
-    end
+    -- mtfc
+    -- if mindpower >= 3 then
+    --     inst.components.talker:Say("󰀈: ".. mindpower .."\n", 1, true)
+    -- end
 end
 
 local function OnDeath(inst)
@@ -202,46 +208,6 @@ local OnLevelUp = {
     },
 }
 
-local Skill = {
-    {
-        tag = "ichimonji",
-        script = "",
-        skill_range = 3.5,
-        require_level = 1,
-        require_mindpower = 3,
-        cooldown_time = M_CONFIG.SKILL1_COOLDOWN,
-        cooldown_effect = "ghostlyelixir_retaliation_dripfx",
-        cb = function(inst, target)
-            inst:PushEventInTime(.05, "ichimonji")
-        end,
-    },
-}
-
-
-            -- local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-            -- local target = inst.components.combat.target
-            -- inst.inspskill = true
-
-            -- if weapon ~= nil and weapon.IsUnsheath ~= nil and weapon:IsUnsheath() then
-            --     skilltime = .3
-            --     if inst.components.kenjutsuka:GetMindpower() >= 5 then
-            --         inst.components.kenjutsuka:SetMindpower(inst.components.kenjutsuka:GetMindpower() - 2)
-            --         inst.doubleichimonjistart = true
-            --     end
-            -- end
-
-            -- inst:DoTaskInTime(skilltime, function()
-            --     inst.sg:GoToState("ichimonji", target)
-            -- end)
-
-            -- if inst.doubleichimonjistart then
-            --     inst:DoTaskInTime(1, function()
-            --         if weapon ~= nil then
-            --             inst.sg:GoToState("ichimonji", target)
-            --         end
-            --     end)
-            -- end
-
 local function OnKilled(inst, data)
     local target = data.victim
     local target_scale = (target:HasTag("smallcreature") and 1) or (target:HasTag("largecreature") and 4) or 2
@@ -305,6 +271,448 @@ local OnStartAttack = function(inst, target)
     end
 end
 
+local function IsSheathedKatana(weapon)
+    return weapon ~= nil and weapon.IsUnsheath ~= nil and not weapon:IsUnsheath()
+end
+
+local function CastEquippedWeapon(inst)
+    local weapon = inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+    if weapon ~= nil and weapon.components.spellcaster ~= nil then
+        weapon.components.spellcaster:CastSpell(inst)
+        local fx = SpawnPrefab("sparks")
+        fx.Transform:SetPosition(inst:GetPosition():Get())
+    end
+end
+
+local function GoToSkillState(inst, state, target, delay)
+    inst:DoTaskInTime(delay or .1, function(inst)
+        if inst:IsValid() then
+            inst.sg:GoToState(state, target)
+            SkillUtil.GroundPoundFx(inst, .6)
+        end
+    end)
+end
+
+local function GoToStateLater(inst, state, target, delay)
+    inst:DoTaskInTime(delay or 0, function(inst)
+        if inst:IsValid() then
+            inst.sg:GoToState(state, target)
+        end
+    end)
+end
+
+local function GetSoryuhaWarningDay()
+    return TheWorld ~= nil and TheWorld.state ~= nil and TheWorld.state.cycles or 0
+end
+
+local function IsSoryuhaCarrier(weapon)
+    return weapon ~= nil and (weapon:HasTag("onikiba") or weapon:HasTag("tokijin") or weapon.prefab == "tokijin")
+end
+
+local function ShouldInterruptSoryuha(inst, weapon)
+    if weapon == nil or not weapon:HasTag("katana") or IsSoryuhaCarrier(weapon) then
+        return false
+    end
+
+    local day = GetSoryuhaWarningDay()
+    if inst._soryuha_fragile_warning_day ~= day then
+        inst._soryuha_fragile_warning_day = day
+        if inst.components.talker ~= nil then
+            inst.components.talker:Say(STRINGS.SKILL.SORYUHA_FRAGILE, 2, true)
+        end
+        inst:ClearBufferedAction()
+        inst.sg:GoToState("idle")
+        return true
+    end
+
+    return false
+end
+
+local function IsSoryuhaLevelReady(inst)
+    local kenjutsuka = inst.components.kenjutsuka
+    if kenjutsuka == nil then
+        return false
+    end
+    return kenjutsuka:IsMaxLevel()
+end
+
+local function CreateSkillData()
+    local skills = {
+        {
+            id = SKILL_ID.ICHIMONJI,
+            tag = SKILL_ID.ICHIMONJI,
+            state = SG_STATE.ICHIMONJI,
+            level = 0,
+            mindpower = 3,
+            cooldown_name = SKILL_ID.ICHIMONJI,
+            cooldown_time = M_CONFIG.IchimonjiCooldown,
+            cooldown_effect = "ghostlyelixir_retaliation_dripfx",
+            range = 3.5,
+            start_message = STRINGS.SKILL.SKILL1START,
+            release = function(inst, target)
+                GoToStateLater(inst, SG_STATE.ICHIMONJI, target, .05)
+            end,
+        },
+
+        {
+            id = SKILL_ID.FLIP,
+            tag = SKILL_ID.FLIP,
+            state = SG_STATE.FLIP,
+            states = {SG_STATE.FLIP, SG_STATE.HABAKIRI},
+            level = 0,
+            mindpower = 4,
+            cooldown_name = SKILL_ID.FLIP,
+            cooldown_time = M_CONFIG.FlipCooldown,
+            cooldown_effect = "ghostlyelixir_shield_dripfx",
+            range = 3.5,
+            start_message = STRINGS.SKILL.SKILL2START,
+            release = function(inst, target)
+                local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                local sheathed = IsSheathedKatana(weapon)
+                local state = sheathed and SG_STATE.HABAKIRI or SG_STATE.FLIP
+                GoToSkillState(inst, state, target, sheathed and .05 or .1)
+            end,
+        },
+
+        {
+            id = SKILL_ID.THRUST,
+            tag = SKILL_ID.THRUST,
+            state = SG_STATE.THRUST,
+            states = {SG_STATE.THRUST, SG_STATE.HEAVENLYSTRIKE},
+            level = 0,
+            mindpower = 4,
+            cooldown_name = SKILL_ID.THRUST,
+            cooldown_time = M_CONFIG.ThrustCooldown,
+            cooldown_effect = "ghostlyelixir_speed_dripfx",
+            range = 3,
+            start_message = STRINGS.SKILL.SKILL3START,
+            release = function(inst, target)
+                local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+                local sheathed = IsSheathedKatana(weapon)
+                GoToSkillState(inst, SG_STATE.THRUST, target, sheathed and .05 or .1)
+
+                if sheathed then
+                    inst:DoTaskInTime(.7, function(inst)
+                        inst:PushEvent(SG_STATE.HEAVENLYSTRIKE)
+                        CastEquippedWeapon(inst)
+                    end)
+
+                    inst:DoTaskInTime(.9, function(inst)
+                        SkillUtil.SlashFx(inst, inst, "shadowstrike_slash_fx", 3)
+                        SkillUtil.AoeAttack(inst, 1, 6.5)
+                        inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+                        inst.components.talker:Say(STRINGS.SKILL.SKILL3ATTACK, 2, true)
+                        SkillUtil.GroundPoundFx(inst, .8)
+                    end)
+                end
+            end,
+        },
+
+        {
+            id = SKILL_ID.ISSHIN,
+            tag = SKILL_ID.ISSHIN,
+            state = SG_STATE.MONEMIND,
+            level = UNLOCK_LEVEL.ISSHIN,
+            mindpower = 7,
+            cooldown_name = SKILL_ID.ISSHIN,
+            cooldown_time = M_CONFIG.IsshinCooldown,
+            cooldown_message = STRINGS.SKILL.TIER2_COOLDOWN,
+            cooldown_effect = "monkey_deform_pre_fx",
+            range = 3,
+            start_message = STRINGS.SKILL.SKILL4START,
+            release = function(inst, target)
+                inst:DoTaskInTime(.1, function(inst)
+                    inst.components.talker:Say(STRINGS.SKILL.SKILL4ATTACK, 2, true)
+                    SkillUtil.GroundPoundFx(inst, .6)
+                    SkillUtil.SlashFx(inst, target, "shadowstrike_slash_fx", 3)
+                    inst.inspskill = true
+                    inst.sg:GoToState(SG_STATE.MONEMIND, target)
+
+                    for i, t in ipairs({.6, .8, 1.1, 1.4, 1.8, 1.9}) do
+                        inst:DoTaskInTime(t, function(inst)
+                            SkillUtil.GroundPoundFx(inst, i % 2 == 0 and .6 or .8)
+                            SkillUtil.SlashFx(inst, i % 2 == 0 and inst or target, i % 2 == 0 and "wanda_attack_shadowweapon_normal_fx" or "wanda_attack_shadowweapon_old_fx", 3 + (i % 2))
+                            SkillUtil.AoeAttack(inst, 1, 6.5)
+                        end)
+                    end
+
+                    inst:DoTaskInTime(1.9, function(inst)
+                        if inst.components.playercontroller ~= nil then
+                            inst.components.playercontroller:Enable(true)
+                        end
+                        inst.inspskill = nil
+                        inst:PushEvent(SG_STATE.HEAVENLYSTRIKE)
+                        CastEquippedWeapon(inst)
+                    end)
+
+                    inst:DoTaskInTime(2.1, function(inst)
+                        SkillUtil.GroundPoundFx(inst, .6)
+                        SkillUtil.AoeAttack(inst, 1, 4)
+                        inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+                    end)
+                end)
+            end,
+        },
+
+        {
+            id = SKILL_ID.HEAVENLYSTRIKE,
+            tag = SKILL_ID.HEAVENLYSTRIKE,
+            state = SG_STATE.HEAVENLYSTRIKE,
+            level = UNLOCK_LEVEL.HEAVENLYSTRIKE,
+            mindpower = 5,
+            cooldown_name = SKILL_ID.ISSHIN,
+            cooldown_time = M_CONFIG.IsshinCooldown,
+            cooldown_message = STRINGS.SKILL.TIER2_COOLDOWN,
+            cooldown_effect = "fx_book_birds",
+            range = 3,
+            start_message = STRINGS.SKILL.SKILL5START,
+            release = function(inst, target)
+                inst:DoTaskInTime(.1, function(inst)
+                    inst.components.talker:Say(STRINGS.SKILL.SKILL5ATTACK, 2, true)
+                end)
+
+                inst.sg:AddStateTag("skilling")
+                inst:DoTaskInTime(.3, function(inst)
+                    inst:PushEvent(SG_STATE.HEAVENLYSTRIKE)
+                    SkillUtil.AddFollowerFx(inst, "mossling_spin_fx")
+                    SkillUtil.AddFollowerFx(inst, "electricchargedfx")
+                    SkillUtil.GroundPoundFx(inst, .8)
+                    SkillUtil.SlashFx(inst, inst, "shadowstrike_slash_fx", 3)
+                    SkillUtil.AoeAttack(inst, 1, 6.5)
+
+                    inst:DoTaskInTime(.2, function(inst)
+                        SkillUtil.AoeAttack(inst, 2.5, 6.5)
+                        SkillUtil.SlashFx(inst, inst, "shadowstrike_slash2_fx", 3)
+                        SkillUtil.GroundPoundFx(inst, .8)
+                    end)
+
+                    inst:DoTaskInTime(.3, function(inst)
+                        SkillUtil.AoeAttack(inst, 4, 6.5)
+                        SkillUtil.SlashFx(inst, inst, "shadowstrike_slash_fx", 3)
+                        SkillUtil.GroundPoundFx(inst, .8)
+                    end)
+                end)
+            end,
+        },
+
+        {
+            id = SKILL_ID.RYUSEN,
+            tag = SKILL_ID.RYUSEN,
+            state = SG_STATE.RYUSEN,
+            level = UNLOCK_LEVEL.RYUSEN,
+            mindpower = 8,
+            cooldown_name = SKILL_ID.RYUSEN,
+            cooldown_time = M_CONFIG.RyusenSusanooCooldown,
+            cooldown_message = STRINGS.SKILL.TIER3_COOLDOWN,
+            cooldown_effect = "fx_book_birds",
+            range = 10,
+            start_message = STRINGS.SKILL.SKILL6START,
+            release = function(inst, target)
+                inst:DoTaskInTime(.1, function(inst)
+                    inst.components.talker:Say(STRINGS.SKILL.SKILL6ATTACK, 2, true)
+                    inst.sg:GoToState(SG_STATE.RYUSEN, target)
+                    inst:DoTaskInTime(.2, function(inst) SkillUtil.SlashFx(inst, target, "wanda_attack_shadowweapon_old_fx", 2) end)
+                    inst:DoTaskInTime(.4, function(inst) SkillUtil.SlashFx(inst, target, "wanda_attack_shadowweapon_normal_fx", 2) end)
+                    inst:DoTaskInTime(.6, function(inst) SkillUtil.SlashFx(inst, target, "wanda_attack_shadowweapon_old_fx", 2.5) end)
+                    inst:DoTaskInTime(.8, function(inst)
+                        SkillUtil.SlashFx(inst, target, "wanda_attack_shadowweapon_normal_fx", 2.5)
+                        SkillUtil.GroundPoundFx(target, .7)
+                    end)
+                    inst:DoTaskInTime(1, function(inst) SkillUtil.GroundPoundFx(inst, .6) end)
+                    inst:DoTaskInTime(1.5, function(inst)
+                        SkillUtil.SlashFx(inst, target, "shadowstrike_slash_fx", 3)
+                        SkillUtil.GroundPoundFx(target, .7)
+                    end)
+                end)
+            end,
+        },
+
+        {
+            id = SKILL_ID.SUSANOO,
+            tag = SKILL_ID.SUSANOO,
+            state = SG_STATE.MONEMIND,
+            level = UNLOCK_LEVEL.SUSANOO,
+            mindpower = 10,
+            cooldown_name = SKILL_ID.RYUSEN,
+            cooldown_time = M_CONFIG.RyusenSusanooCooldown,
+            cooldown_message = STRINGS.SKILL.TIER3_COOLDOWN,
+            cooldown_effect = "fx_book_birds",
+            range = 3,
+            start_message = STRINGS.SKILL.SKILL7START,
+            release = function(inst, target)
+                inst:DoTaskInTime(.1, function(inst)
+                    inst.components.talker:Say(STRINGS.SKILL.SKILL7ATTACK, 2, true)
+                    SkillUtil.GroundPoundFx(inst, .6)
+                    SkillUtil.SlashFx(inst, target, "shadowstrike_slash_fx", 3)
+                    inst.inspskill = true
+                    inst.sg:GoToState(SG_STATE.MONEMIND, target)
+
+                    for _, t in ipairs({.6, .8, 1.1, 1.2, 1.4, 1.8, 1.9}) do
+                        inst:DoTaskInTime(t, function(inst)
+                            SkillUtil.GroundPoundFx(inst, .8)
+                            SkillUtil.SlashFx(inst, inst, "fence_rotator_fx", 3.5)
+                            SkillUtil.AoeAttack(inst, 1, 6.5)
+                        end)
+                    end
+
+                    inst:DoTaskInTime(1.9, function(inst)
+                        if inst.components.playercontroller ~= nil then
+                            inst.components.playercontroller:Enable(true)
+                        end
+                        inst.inspskill = nil
+                        inst:PushEvent(SG_STATE.HEAVENLYSTRIKE)
+                        CastEquippedWeapon(inst)
+                    end)
+
+                    inst:DoTaskInTime(2.1, function(inst)
+                        SkillUtil.SlashFx(inst, inst, "shadowstrike_slash_fx", 3)
+                        SkillUtil.AoeAttack(inst, 2, 4)
+                        inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+                    end)
+                end)
+            end,
+        },
+
+        {
+            id = SKILL_ID.SORYUHA,
+            tag = SKILL_ID.SORYUHA,
+            state = SKILL_ID.SORYUHA,
+            level = UNLOCK_LEVEL.SORYUHA,
+            mindpower = 50,
+            display_mindpower = 50,
+            cooldown_name = SKILL_ID.SORYUHA,
+            cooldown_time = M_CONFIG.SoryuhaCooldown,
+            cooldown_effect = "thunderbird_fx_idle",
+            range = 12,
+            start_message = STRINGS.SKILL.SKILL9START,
+            release = function(inst, target)
+                if not IsSoryuhaLevelReady(inst) then
+                    if inst.components.talker ~= nil then
+                        inst.components.talker:Say("需要满级才能释放苍龙破。", 2, true)
+                    end
+                    return false
+                end
+
+                local weapon = inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+                if ShouldInterruptSoryuha(inst, weapon) then
+                    return false
+                end
+
+                inst:DoTaskInTime(.1, function(inst)
+                    if inst:IsValid() then
+                        if inst.components.talker ~= nil then
+                            if weapon ~= nil and weapon:HasTag("katana") and not IsSoryuhaCarrier(weapon) then
+                                inst.components.talker:Say("奥义·苍龙破！！！", 2, true)
+                            else
+                                inst.components.talker:Say(STRINGS.SKILL.SKILL9ATTACK, 2, true)
+                            end
+                        end
+                        inst.sg:GoToState(SG_STATE.SORYUHA, target)
+                    end
+                end)
+                return true
+            end,
+        },
+    }
+
+    return {
+        skills = skills,
+        inputs = {
+            [SKILL_INPUT.ICHIMONJI] = {
+                {
+                    skill = SKILL_ID.ISSHIN,
+                    key_cooldown = INPUT_COOLDOWN.ICHIMONJI,
+                    input_level = UNLOCK_LEVEL.ICHIMONJI_INPUT,
+                    base_mindpower = 3,
+                    blocked_tags = {SKILL_ID.ICHIMONJI, SKILL_ID.ISSHIN, SKILL_ID.RYUSEN},
+                    requires_tags = {SKILL_ID.FLIP},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.ICHIMONJI,
+                    key_cooldown = INPUT_COOLDOWN.ICHIMONJI,
+                    input_level = UNLOCK_LEVEL.ICHIMONJI_INPUT,
+                    base_mindpower = 3,
+                    blocked_tags = {SKILL_ID.ICHIMONJI, SKILL_ID.ISSHIN, SKILL_ID.RYUSEN},
+                },
+            },
+            [SKILL_INPUT.FLIP] = {
+                {
+                    skill = SKILL_ID.RYUSEN,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.FLIP_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
+                    requires_tags = {SKILL_ID.ICHIMONJI},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.SUSANOO,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.FLIP_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
+                    requires_tags = {SKILL_ID.THRUST},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.FLIP,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.FLIP_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
+                },
+            },
+            [SKILL_INPUT.THRUST] = {
+                {
+                    skill = SKILL_ID.HEAVENLYSTRIKE,
+                    key_cooldown = INPUT_COOLDOWN.THRUST,
+                    input_level = UNLOCK_LEVEL.THRUST_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                    requires_tags = {SKILL_ID.FLIP},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.THRUST,
+                    key_cooldown = INPUT_COOLDOWN.THRUST,
+                    input_level = UNLOCK_LEVEL.THRUST_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                },
+            },
+            [SKILL_INPUT.SORYUHA] = {
+                {
+                    skill = SKILL_ID.SORYUHA,
+                    key_cooldown = INPUT_COOLDOWN.SORYUHA,
+                    input_level = UNLOCK_LEVEL.SORYUHA,
+                    base_mindpower = 50,
+                    blocked_tags = {SKILL_ID.SORYUHA},
+                    weapon_tags = {"katana"},
+                },
+            },
+        },
+    }
+end
+
+local function GetCooldownTime(inst, dodger)
+    return GetTime() - inst.components.dodger.last_dodge_time > inst.components.dodger.dodge_cooldown_time
+end
+
+local function GetPointSpecialActions(inst, pos, useitem, right)
+    local rider = inst.replica.rider
+    if inst:HasTag("dodger") and right and not rider:IsRiding() and GetCooldownTime(inst) and not inst:HasTag("sitting_on_chair") then
+        return {ACTIONS.MDODGE}
+    end
+    return {}
+end
+
+local function OnSetOwner(inst)
+    if inst.components.playeractionpicker ~= nil then
+        inst.components.playeractionpicker.pointspecialactionsfn = GetPointSpecialActions
+    end
+end
+
 local common_postinit = function(inst)
     inst.MiniMapEntity:SetIcon("manutsawee.tex")
 
@@ -322,8 +730,10 @@ local common_postinit = function(inst)
     inst:AddTag("slingshot_sharpshooter")
     inst:AddTag("pebblemaker")
 
-    inst:SetTag("surfer", MOD_ENABLED.IA)
-    inst:SetTag("msurfer", MOD_ENABLED.IA)
+    inst:SetTag("surfer", IA_ENABLED)
+    inst:SetTag("msurfer", IA_ENABLED)
+
+    inst:SetComponent("dodger", M_CONFIG.EnableDodge)
 
     inst:AddComponent("playerkeyhandler")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, "LevelCheckKey")
@@ -331,9 +741,28 @@ local common_postinit = function(inst)
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
     inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
 
-    -- inst.components.playerkeyhandler:AddCombinationKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "PutGlassesKey")
-    -- inst.components.playerkeyhandler:AddSequentialKeyHandler(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
-    -- inst.components.playerkeyhandler:AddCombinationKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
+    --[[
+        V = ICHIMONJI
+        B = FLIP
+        N = THRUST
+
+        B + V = ISSHIN
+        B + N = HEAVENLYSTRIKE
+        V + B = RYUSEN
+        V + N = ?
+        N + V = ?
+        N + B = SUSANOO
+    ]]
+    if M_CONFIG.EnableSkill then
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_INPUT.ICHIMONJI)
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_INPUT.FLIP)
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_INPUT.THRUST)
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SoryuhaKey, SKILL_INPUT.SORYUHA)
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
+        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
+    end
+
+    inst:ListenForEvent("setowner", OnSetOwner)
 end
 
 local master_postinit = function(inst)
@@ -344,14 +773,20 @@ local master_postinit = function(inst)
     -- for test cmp
     inst:AddComponent("nilcmp")
 
-    inst:SetComponent("dodger", M_CONFIG.EnableDodge)
-
     inst:AddComponent("hair")
 
-    -- inst:AddComponent("playerskillcontroller")
-    -- for k, v in pairs(Skill) do
-    --     inst.components.playerskillcontroller:AddSkill(k, v)
-    -- end
+    if M_CONFIG.EnableSkill then
+        inst:AddComponent("playerskillcontroller")
+        local Skill = CreateSkillData()
+        for _, skill in ipairs(Skill.skills) do
+            inst.components.playerskillcontroller:AddSkill(skill.id, skill)
+        end
+        for input_name, routes in pairs(Skill.inputs) do
+            for _, route in ipairs(routes) do
+                inst.components.playerskillcontroller:AddInputRoute(input_name, route)
+            end
+        end
+    end
 
     inst:AddComponent("skinheaddress")
     for k, v in pairs(SkinsHeaddress) do
@@ -413,7 +848,6 @@ local master_postinit = function(inst)
 
     inst.soundsname = "wortox"
     inst.skeleton_prefab = nil
-    inst.Skill = Skill
 
     inst:ListenForEvent("onattackother", OnAttackOther)
     inst:ListenForEvent("killed", OnKilled)

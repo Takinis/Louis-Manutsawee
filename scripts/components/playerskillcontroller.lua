@@ -1,251 +1,462 @@
+local INPUT_COOLDOWN_TIME = 1
+local COUNTER_ATTACK_COOLDOWN_TIME = .63
+local QUICK_SHEATH_LEVEL = 2
+local DEFAULT_COOLDOWN_EFFECT = "ghostlyelixir_retaliation_dripfx"
+
+local WEAPON_MUST_TAGS = {"tool", "sharp", "weapon", "katana"}
+local WEAPON_CANT_TAGS = {"projectile", "whip", "rangedweapon"}
+local INVALID_TARGET_TAGS = {"prey", "bird", "buzzard", "butterfly"}
+
 local function PushDeactivateSkillEvent(inst)
     inst:PushEvent("ms_deactivateskill")
 end
 
 local function OnUnEquip(inst, data)
-    local eslot = data.eslot
-    if eslot ~= nil and eslot == EQUIPSLOTS.HANDS then
+    if data ~= nil and data.eslot == EQUIPSLOTS.HANDS then
         PushDeactivateSkillEvent(inst)
     end
 end
 
 local function OnTimerDone(inst, data)
-    local name = data.name
-    if name ~= nil and inst.components.playerskillcontroller ~= nil then
-        local cooldown_effect = inst.components.playerskillcontroller:GetCooldownEffect(name)
-        if cooldown_effect ~= nil then
-            inst:SpawnPrefabInPos(cooldown_effect, .9)
+    local name = data ~= nil and data.name or nil
+    local controller = inst.components.playerskillcontroller
+    if name ~= nil and controller ~= nil then
+        local effect = controller:GetCooldownEffect(name)
+        if effect ~= nil then
+            inst:SpawnPrefabInPos(effect, .9)
         end
     end
 end
 
-local MUST_TAG = {"tool", "sharp", "weapon", "katana"}
-local CANT_TAG = {"projectile", "whip", "rangedweapon"}
+local function CopyTable(src)
+    local dst = {}
+    if src ~= nil then
+        for k, v in pairs(src) do
+            dst[k] = v
+        end
+    end
+    return dst
+end
+
+local function AddLookup(lookup, key, value)
+    if key ~= nil then
+        lookup[key] = value
+    end
+end
+
+local function AddLookupList(lookup, keys, value)
+    if keys ~= nil then
+        for _, key in ipairs(keys) do
+            AddLookup(lookup, key, value)
+        end
+    end
+end
+
+local function GetCooldownName(data)
+    if data.cooldown_name ~= nil then
+        return data.cooldown_name
+    end
+    if type(data.cooldown) == "table" then
+        return data.cooldown.timer
+    end
+    return data.timer or data.tag or data.name
+end
+
+local function GetCooldownTime(data)
+    if data.cooldown_time ~= nil then
+        return data.cooldown_time
+    end
+    if type(data.cooldown) == "number" then
+        return data.cooldown
+    end
+    return data.time or 0
+end
+
+local function GetCooldownMessage(data)
+    if data.cooldown_message ~= nil then
+        return data.cooldown_message
+    end
+    if type(data.cooldown) == "table" then
+        return data.cooldown.message
+    end
+    return STRINGS.SKILL.COOLDOWN
+end
+
+local function NormalizeSkill(name, data)
+    local skill = CopyTable(data)
+    skill.name = skill.name or name
+    skill.tag = skill.tag or name
+    skill.state = skill.state or skill.sg_state or skill.tag
+    skill.level = skill.level or skill.require_level or 0
+    skill.mindpower = skill.mindpower or skill.require_mindpower or 0
+    skill.display_mindpower = skill.display_mindpower or skill.mindpower
+    skill.range = skill.range or skill.skill_range or TUNING.DEFAULT_ATTACK_RANGE
+    skill.cooldown_name = GetCooldownName(skill)
+    skill.cooldown_time = GetCooldownTime(skill)
+    skill.cooldown_message = GetCooldownMessage(skill)
+    skill.cooldown_effect = skill.cooldown_effect or DEFAULT_COOLDOWN_EFFECT
+    skill.release = skill.release or skill.fn or skill.cb
+    return skill
+end
 
 local PlayerSkillController = Class(function(self, inst)
     self.inst = inst
-
-    self.current_active_skill = nil
-    self.is_active_skill = false
-
+    self.active_skill = nil
     self.skills = {}
+    self.skill_order = {}
+    self.tag_to_skill = {}
+    self.state_to_skill = {}
+    self.cooldown_to_skill = {}
+    self.cooldown_effects = {}
+    self.input_routes = {}
+    self.input_cooldowns = {
+        [SKILL_INPUT.ICHIMONJI] = INPUT_COOLDOWN.ICHIMONJI,
+        [SKILL_INPUT.FLIP] = INPUT_COOLDOWN.FLIP,
+        [SKILL_INPUT.THRUST] = INPUT_COOLDOWN.THRUST,
+        [SKILL_INPUT.SORYUHA] = INPUT_COOLDOWN.SORYUHA,
+        cancel = "skill_cancel_cd",
+    }
+    self.input_levels = {}
+    self.input_base_mindpower = {}
+    self._on_deactivate_skill = function() self:DeactivateSkill() end
 
-    -- Bound methods for reliable event removal
-    self._OnActivateSkill = function(_, data) self:ActivateSkill(data) end
-    self._OnDeactivateSkill = function(_) self:DeactivateSkill() end
-    self._OnToggleActivateSkill = function(_, data) self:ToggleActiveSkill(data) end
-
-    self.inst:ListenForEvent("unequip", OnUnEquip)
-    self.inst:ListenForEvent("timerdone", OnTimerDone)
-    self.inst:ListenForEvent("mounted", PushDeactivateSkillEvent)
-    self.inst:ListenForEvent("death", PushDeactivateSkillEvent)
-    self.inst:ListenForEvent("ms_playerreroll", PushDeactivateSkillEvent)
-
-    self.inst:ListenForEvent("ms_activeskill", self._OnActivateSkill)
-    self.inst:ListenForEvent("ms_deactivateskill", self._OnDeactivateSkill)
-    -- Also listen to the old name in case other parts of the mod still use it
-    self.inst:ListenForEvent("ms_deactiveskill", self._OnDeactivateSkill) 
-    self.inst:ListenForEvent("ms_toggleactiveskill", self._OnToggleActivateSkill)
+    inst:ListenForEvent("unequip", OnUnEquip)
+    inst:ListenForEvent("timerdone", OnTimerDone)
+    inst:ListenForEvent("mounted", PushDeactivateSkillEvent)
+    inst:ListenForEvent("death", PushDeactivateSkillEvent)
+    inst:ListenForEvent("ms_playerreroll", PushDeactivateSkillEvent)
+    inst:ListenForEvent("ms_deactivateskill", self._on_deactivate_skill)
 end)
 
-function PlayerSkillController:GetSkillCallback(skill)
-    local skill_data = self:GetSkillData(skill)
-    return function(inst, target)
-        if skill_data ~= nil then
-            skill_data.cb(inst, target)
-            inst:RemoveTag(skill_data.tag)
-            
-            if inst.components.kenjutsuka then
-                inst.components.kenjutsuka:SetMindpower(inst.components.kenjutsuka:GetMindpower() - skill_data.require_mindpower)
-            end
-            
-            if inst.components.timer then
-                inst.components.timer:StartTimer(skill, skill_data.cooldown_time)
-            end
-            
-            PushDeactivateSkillEvent(inst)
-        end
+function PlayerSkillController:Say(script, duration)
+    if self.inst.components.talker ~= nil and script ~= nil then
+        self.inst.components.talker:Say(script, duration or 1, true)
     end
+end
+
+function PlayerSkillController:ResolveSkillName(skill)
+    if type(skill) == "table" then
+        skill = skill.skill or skill.name or skill.tag or skill.state or skill.cooldown_name
+    end
+
+    return self.skills[skill] ~= nil and skill
+        or self.tag_to_skill[skill]
+        or self.state_to_skill[skill]
+        or self.cooldown_to_skill[skill]
 end
 
 function PlayerSkillController:GetSkillData(skill)
-    return self.skills[skill]
+    local name = self:ResolveSkillName(skill)
+    return name ~= nil and self.skills[name] or nil
 end
 
-function PlayerSkillController:GetCooldownEffect(skill)
-    local skill_data = self:GetSkillData(skill)
-    if skill_data ~= nil then
-        local cooldown_effect = skill_data.cooldown_effect
-        return cooldown_effect ~= nil and cooldown_effect or "ghostlyelixir_retaliation_dripfx"
+function PlayerSkillController:GetCooldownEffect(name)
+    if self.cooldown_effects[name] ~= nil then
+        local effect = self.cooldown_effects[name]
+        self.cooldown_effects[name] = nil
+        return effect
     end
-    return nil
+
+    local skill = self:GetSkillData(name)
+    return skill ~= nil and skill.cooldown_effect or nil
 end
 
-function PlayerSkillController:GetCurrentActiveSkill()
-    for k in pairs(self.skills) do
-        if self.inst:HasTag(k) then
-            self.current_active_skill = k
-            return k
-        end
-    end
-    self.current_active_skill = nil
-    return nil
+function PlayerSkillController:IsLimiterReleased()
+    local kenjutsuka = self.inst.components.kenjutsuka
+    return kenjutsuka ~= nil and kenjutsuka.IsTatsujin ~= nil and kenjutsuka:IsTatsujin()
 end
 
-function PlayerSkillController:IsEligibleForActiveSkill(weapon, skill_key, current_level, require_level, current_mindpower, require_mindpower)
-    local script = nil
-    local inst = self.inst
-    
-    if inst.components.timer ~= nil and inst.components.timer:TimerExists(skill_key .. "_cd") then
-        script = STRINGS.SKILL.COOLDOWN
-    end
-
-    if current_level < require_level then
-        script = STRINGS.SKILL.UNLOCK_SKILL .. require_level
-    end
-
-    if current_mindpower < require_mindpower then
-        script = STRINGS.SKILL.MINDPOWER_NOT_ENOUGH.. current_mindpower .. "/" .. require_mindpower .. "\n "
-    end
-
-    if script ~= nil and type(script) == "string" then
-        if inst.components.talker then
-            inst.components.talker:Say(script, 1, true)
-        end
-        return false
-    end
-
-    local IsAsleep = inst.components.sleeper ~= nil and inst.components.sleeper:IsAsleep()
-    local IsFrozen = inst.components.freezable ~= nil and inst.components.freezable:IsFrozen()
-    local IsRiding = inst.components.rider ~= nil and inst.components.rider:IsRiding()
-    local IsHeavyLifting = inst.components.inventory ~= nil and inst.components.inventory:IsHeavyLifting()
-    local IsDead = inst.components.health ~= nil and inst.components.health:IsDead()
-
-    if weapon == nil or IsAsleep or IsFrozen or IsRiding or IsHeavyLifting or IsDead then
-        return false
-    end
-
-    if weapon:HasOneOfTags(CANT_TAG) and not weapon:HasOneOfTags(MUST_TAG) then
-        return false
-    end
-
-    return true
-end
-
-function PlayerSkillController:IsActiveSkill()
-    return self.is_active_skill
-end
-
-function PlayerSkillController:CanActivateSkill(level, mindpower, timer_name)
-    local inst = self.inst
-    local kenjutsuka = inst.components.kenjutsuka
-    
-    if not kenjutsuka then return false end
-    
-    -- Inverted logic fixed: The original returned false if criteria were met! 
-    -- Now it checks if we DO NOT meet the criteria to return false.
-    if not kenjutsuka:IsLevelReached(level) or
-       not kenjutsuka:IsMindpowerEnough(inst, mindpower) or
-       (inst.components.timer and inst.components.timer:TimerExists(timer_name)) or
-       not inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or
-       inst.components.inventory:IsHeavyLifting() or
-       (inst.components.sleeper and inst.components.sleeper:IsAsleep()) or
-       (inst.components.freezable and inst.components.freezable:IsFrozen()) or
-       (inst.components.rider and inst.components.rider:IsRiding()) or
-       (inst.components.health and inst.components.health:IsDead())
-    then
-        return false
-    end
-    return true
-end
-
-function PlayerSkillController:IsTierSkill(skill)
-    local skill_data = self:GetSkillData(skill)
-    return skill_data and skill_data.is_tier_skill
-end
-
-function PlayerSkillController:ToggleActiveSkill(data)
-    if not data then 
-        -- If called with no data (e.g. from a raw key press), just deactivate
-        self:DeactivateSkill(true)
+function PlayerSkillController:AddSkill(name, data)
+    if name == nil or data == nil then
         return
     end
 
-    if self:IsActiveSkill() and self:IsTierSkill(data.skill) then
-        self:ActivateSkill(data)
-    else
-        self:DeactivateSkill(true)
+    local skill = NormalizeSkill(name, data)
+    if self.skills[name] == nil then
+        table.insert(self.skill_order, name)
+    end
+
+    self.skills[name] = skill
+    AddLookup(self.tag_to_skill, skill.tag, name)
+    AddLookup(self.state_to_skill, skill.state, name)
+    AddLookupList(self.state_to_skill, skill.states, name)
+    AddLookup(self.cooldown_to_skill, skill.cooldown_name, name)
+    AddLookup(self.cooldown_to_skill, skill.cooldown_name ~= nil and skill.cooldown_name .. "_cd" or nil, name)
+
+    if skill.inputs ~= nil then
+        for input_name, input_data in pairs(skill.inputs) do
+            self:AddInputRoute(input_name, input_data)
+        end
     end
 end
 
-function PlayerSkillController:ActivateSkill(data, force)
-    if not data then return end
-    
-    local weapon = self.inst.components.inventory and self.inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
+function PlayerSkillController:AddInputRoute(input_name, data)
+    if input_name == nil or data == nil then
+        return
+    end
+
+    if self.input_routes[input_name] == nil then
+        self.input_routes[input_name] = {}
+    end
+
+    table.insert(self.input_routes[input_name], data)
+    self.input_cooldowns[input_name] = data.key_cooldown or self.input_cooldowns[input_name] or string.lower(input_name) .. "_key_cd"
+    self.input_levels[input_name] = data.input_level or data.level or self.input_levels[input_name] or 0
+    self.input_base_mindpower[input_name] = data.base_mindpower or self.input_base_mindpower[input_name]
+end
+
+function PlayerSkillController:GetWeapon()
+    local inventory = self.inst.components.inventory
+    return inventory ~= nil and inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+end
+
+function PlayerSkillController:IsBodyBusy()
+    local inst = self.inst
+    local inventory = inst.components.inventory
+    return inventory == nil
+        or (inst.components.sleeper ~= nil and inst.components.sleeper:IsAsleep())
+        or (inst.components.freezable ~= nil and inst.components.freezable:IsFrozen())
+        or (inst.components.rider ~= nil and inst.components.rider:IsRiding())
+        or inventory:IsHeavyLifting()
+        or inst:HasTag("playerghost")
+        or (inst.components.health ~= nil and inst.components.health:IsDead())
+end
+
+function PlayerSkillController:CanUseWeapon()
+    local weapon = self:GetWeapon()
+    if weapon == nil or self:IsBodyBusy() then
+        return false
+    end
+
+    return not (weapon:HasOneOfTags(WEAPON_CANT_TAGS) and not weapon:HasOneOfTags(WEAPON_MUST_TAGS))
+end
+
+function PlayerSkillController:CanPerformIdleAction()
+    local inst = self.inst
+    return inst.components.inventory ~= nil
+        and not (inst.components.health ~= nil and inst.components.health:IsDead() and not inst:HasTag("playerghost"))
+        and inst:HasTag("idle")
+        and not (inst.sg:HasStateTag("doing") or inst.components.inventory:IsHeavyLifting())
+        and not (inst.sg:HasStateTag("moving") or inst:HasTag("moving"))
+end
+
+function PlayerSkillController:IsInputCoolingDown(input_name)
+    local timer = self.inst.components.timer
+    local cooldown = self.input_cooldowns[input_name]
+    return timer ~= nil and cooldown ~= nil and timer:TimerExists(cooldown)
+end
+
+function PlayerSkillController:StartInputCooldown(input_name, time)
+    local timer = self.inst.components.timer
+    local cooldown = self.input_cooldowns[input_name]
+    if timer ~= nil and cooldown ~= nil then
+        timer:StartTimer(cooldown, time or INPUT_COOLDOWN_TIME)
+    end
+end
+
+function PlayerSkillController:IsSkillActive(tag)
+    return tag ~= nil and self.inst:HasTag(tag)
+end
+
+function PlayerSkillController:HasAnyActiveSkill(tags)
+    if tags ~= nil then
+        for _, tag in ipairs(tags) do
+            if self:IsSkillActive(tag) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function PlayerSkillController:WeaponHasTags(tags)
+    if tags == nil then
+        return true
+    end
+
+    local weapon = self:GetWeapon()
+    if weapon == nil then
+        return false
+    end
+
+    for _, tag in ipairs(tags) do
+        if not weapon:HasTag(tag) then
+            return false
+        end
+    end
+
+    return true
+end
+
+function PlayerSkillController:RouteMatches(route)
+    if route.requires_tags ~= nil then
+        for _, tag in ipairs(route.requires_tags) do
+            if not self:IsSkillActive(tag) then
+                return false
+            end
+        end
+    end
+
+    return self:WeaponHasTags(route.weapon_tags)
+end
+
+function PlayerSkillController:CanPaySkill(skill)
     local kenjutsuka = self.inst.components.kenjutsuka
-    
-    if kenjutsuka ~= nil then
-        local current_level = kenjutsuka:GetLevel()
-        local current_mindpower = kenjutsuka:GetMindpower()
-        
-        if force or self:IsEligibleForActiveSkill(weapon, data.skill_key, current_level, data.require_level, current_mindpower, data.require_mindpower) then
-            self.inst:AddTag(data.tag)
-            if self.inst.components.combat and data.skill_range then
-                self.inst.components.combat:SetRange(data.skill_range)
+    if kenjutsuka == nil then
+        return false
+    end
+
+    if kenjutsuka:GetLevel() < skill.level then
+        self:Say(STRINGS.SKILL.UNLOCK_SKILL .. skill.level)
+        self:DeactivateSkill()
+        return false
+    end
+
+    if not self:IsLimiterReleased() and kenjutsuka:GetMindpower() < skill.mindpower then
+        self:Say(STRINGS.SKILL.MINDPOWER_NOT_ENOUGH .. kenjutsuka:GetMindpower() .. "/" .. skill.mindpower .. "\n ")
+        self:DeactivateSkill()
+        return false
+    end
+
+    if not self:IsLimiterReleased() and self.inst.components.timer ~= nil and skill.cooldown_name ~= nil and self.inst.components.timer:TimerExists(skill.cooldown_name) then
+        self:Say(skill.cooldown_message or STRINGS.SKILL.COOLDOWN)
+        self:DeactivateSkill()
+        return false
+    end
+
+    return true
+end
+
+function PlayerSkillController:ActivateSkill(skill_name)
+    local skill = self:GetSkillData(skill_name)
+    local kenjutsuka = self.inst.components.kenjutsuka
+    if skill == nil or kenjutsuka == nil or not self:CanPaySkill(skill) then
+        return false
+    end
+
+    self:DeactivateSkill()
+    self.inst:AddTag(skill.tag)
+    self.active_skill = skill.name
+
+    if self.inst.components.combat ~= nil then
+        self.inst.components.combat:SetRange(skill.range)
+    end
+
+    if skill.start_message ~= nil then
+        self:Say(skill.start_message .. kenjutsuka:GetMindpower() .. "/" .. skill.display_mindpower .. "\n ")
+    end
+
+    return true
+end
+
+function PlayerSkillController:HandleSkillInput(input_name)
+    if not self:CanUseWeapon() or self:IsInputCoolingDown(input_name) then
+        return true
+    end
+
+    local kenjutsuka = self.inst.components.kenjutsuka
+    local input_level = self.input_levels[input_name] or 0
+    if kenjutsuka == nil or kenjutsuka:GetLevel() < input_level then
+        self:Say(STRINGS.SKILL.UNLOCK_SKILL .. input_level)
+        return true
+    end
+
+    self:StartInputCooldown(input_name)
+
+    local base_mindpower = self.input_base_mindpower[input_name]
+    if not self:IsLimiterReleased() and base_mindpower ~= nil and kenjutsuka:GetMindpower() < base_mindpower then
+        self:Say(STRINGS.SKILL.MINDPOWER_NOT_ENOUGH .. kenjutsuka:GetMindpower() .. "/" .. base_mindpower .. "\n ")
+        self:DeactivateSkill()
+        return true
+    end
+
+    local routes = self.input_routes[input_name]
+    if routes ~= nil then
+        for _, route in ipairs(routes) do
+            if self:HasAnyActiveSkill(route.blocked_tags) then
+                self:DeactivateSkill(true)
+                return true
             end
-            if self.inst.components.talker and data.script then
-                self.inst.components.talker:Say(data.script .. current_mindpower .. "/" .. data.require_mindpower .. "\n ", 1, true)
+
+            if self:RouteMatches(route) then
+                return self:ActivateSkill(route.skill)
             end
-            self.is_active_skill = true
         end
     end
+
+    return true
 end
 
-function PlayerSkillController:DeactivateSkill(later)
-    if later and self.inst.components.talker then
-        self.inst.components.talker:Say(STRINGS.SKILL.SKILL_LATER, 1, true)
+function PlayerSkillController:CancelSkill()
+    if self:CanUseWeapon() and not self:IsInputCoolingDown("cancel") then
+        self:StartInputCooldown("cancel")
+        self:DeactivateSkill()
+        self:Say(STRINGS.SKILL.SKILL_CANCEL)
+    end
+    return true
+end
+
+function PlayerSkillController:CounterAttack()
+    if not self:CanUseWeapon() then
+        return true
     end
 
-    self.current_active_skill = nil
-    self.is_active_skill = false
+    local timer = self.inst.components.timer
+    if timer ~= nil and not timer:TimerExists("prepare_counter_attack") then
+        timer:StartTimer("prepare_counter_attack", (M_CONFIG ~= nil and M_CONFIG.CounterAtkCooldown) or COUNTER_ATTACK_COOLDOWN_TIME)
+        self:DeactivateSkill()
+        self.inst.sg:GoToState("start_counter_attack")
+    else
+        self:Say(STRINGS.SKILL.COOLDOWN)
+        self:DeactivateSkill()
+    end
 
-    for k, _ in pairs(self.skills) do
-        if self.inst:HasTag(k) then
-            self.inst:RemoveTag(k)
+    return true
+end
+
+function PlayerSkillController:QuickSheath()
+    if not self:CanUseWeapon() then
+        return true
+    end
+
+    local kenjutsuka = self.inst.components.kenjutsuka
+    if kenjutsuka == nil or kenjutsuka:GetLevel() < QUICK_SHEATH_LEVEL then
+        self:Say(STRINGS.SKILL.UNLOCK_SKILL .. QUICK_SHEATH_LEVEL)
+        return true
+    end
+
+    local timer = self.inst.components.timer
+    if timer ~= nil and timer:TimerExists("quick_sheath_cd") then
+        return true
+    end
+
+    local weapon = self:GetWeapon()
+    if timer ~= nil and weapon ~= nil and weapon:HasTag("katana") and not weapon:HasTag("tokijin") then
+        self.inst.sg:GoToState("quicksheath")
+    end
+
+    return true
+end
+
+function PlayerSkillController:GetCurrentActiveSkill()
+    for _, name in ipairs(self.skill_order) do
+        local skill = self.skills[name]
+        if skill ~= nil and self.inst:HasTag(skill.tag) then
+            self.active_skill = name
+            return name
         end
     end
 
-    if self.inst.components.combat then
-        self.inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-        self.inst.components.combat:EnableAreaDamage(false)
-    end
-    
-    if self.inst.AnimState then
-        self.inst.AnimState:SetDeltaTimeMultiplier(1)
-    end
+    self.active_skill = nil
+    return nil
 end
 
--- Legacy alias just in case
-PlayerSkillController.DeactiveSkill = PlayerSkillController.DeactivateSkill
-PlayerSkillController.ActiveSkill = PlayerSkillController.ActivateSkill
-
-function PlayerSkillController:AddSkill(skill, data)
-    self.skills[skill] = data
-end
-
-function PlayerSkillController:RemoveSkill(name)
-    self.skills[name] = nil
-end
-
-local HasOneOfTags = {"prey", "bird", "buzzard", "butterfly"}
 function PlayerSkillController:IsValidSkillTarget(target)
     if target ~= nil and target:IsValid() then
-        if target:HasOneOfTags(HasOneOfTags) then
+        if target:HasOneOfTags(INVALID_TARGET_TAGS) then
             self.inst.sg:GoToState("idle")
             self:DeactivateSkill()
-            if self.inst.components.talker then
-                self.inst.components.talker:Say(STRINGS.SKILL.REFUSE_RELEASE)
-            end
+            self:Say(STRINGS.SKILL.REFUSE_RELEASE)
             return false
         end
         return true
@@ -254,37 +465,81 @@ function PlayerSkillController:IsValidSkillTarget(target)
 end
 
 function PlayerSkillController:ReleaseSkill(target)
-    if self.inst:HasTag("kenjutsuka") then
-        if self:IsValidSkillTarget(target) then
-            -- GetSkillCallback requires the name of the skill currently active
-            local current_skill = self:GetCurrentActiveSkill()
-            if current_skill then
-                local fn = self:GetSkillCallback(current_skill)
-                if fn ~= nil then
-                    fn(self.inst, target)
-                end
-            end
+    if not self.inst:HasTag("kenjutsuka") then
+        return false
+    end
+
+    local skill = self:GetSkillData(self:GetCurrentActiveSkill())
+    if skill == nil then
+        -- No active skill: this is a normal attack, do not block it.
+        return true
+    end
+
+    if not self:IsValidSkillTarget(target) then
+        return false
+    end
+
+    local released = true
+    if skill.release ~= nil then
+        released = skill.release(self.inst, target, skill)
+    elseif skill.state ~= nil then
+        self.inst.sg:GoToState(skill.state, target)
+    end
+
+    if self.inst:HasTag(skill.tag) then
+        self.inst:RemoveTag(skill.tag)
+    end
+
+    if released == false then
+        PushDeactivateSkillEvent(self.inst)
+        return false
+    end
+
+    if not self:IsLimiterReleased() and self.inst.components.kenjutsuka ~= nil then
+        self.inst.components.kenjutsuka:SetMindpower(self.inst.components.kenjutsuka:GetMindpower() - skill.mindpower)
+    end
+
+    if not self:IsLimiterReleased() and self.inst.components.timer ~= nil and skill.cooldown_name ~= nil then
+        self.cooldown_effects[skill.cooldown_name] = skill.cooldown_effect
+        self.inst.components.timer:StartTimer(skill.cooldown_name, skill.cooldown_time)
+    end
+
+    PushDeactivateSkillEvent(self.inst)
+    return true
+end
+
+function PlayerSkillController:DeactivateSkill(later)
+    if later then
+        self:Say(STRINGS.SKILL.SKILL_LATER)
+    end
+
+    self.active_skill = nil
+
+    for _, name in ipairs(self.skill_order) do
+        local skill = self.skills[name]
+        if skill ~= nil and self.inst:HasTag(skill.tag) then
+            self.inst:RemoveTag(skill.tag)
         end
+    end
+
+    if self.inst.components.combat ~= nil then
+        self.inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
+        self.inst.components.combat:EnableAreaDamage(false)
+    end
+
+    if self.inst.AnimState ~= nil then
+        self.inst.AnimState:SetDeltaTimeMultiplier(1)
     end
 end
 
 function PlayerSkillController:OnRemoveEntity()
     self:DeactivateSkill()
-
-    for k, _ in pairs(self.skills) do
-        self:RemoveSkill(k)
-    end
-
     self.inst:RemoveEventCallback("unequip", OnUnEquip)
     self.inst:RemoveEventCallback("timerdone", OnTimerDone)
     self.inst:RemoveEventCallback("mounted", PushDeactivateSkillEvent)
     self.inst:RemoveEventCallback("death", PushDeactivateSkillEvent)
     self.inst:RemoveEventCallback("ms_playerreroll", PushDeactivateSkillEvent)
-
-    self.inst:RemoveEventCallback("ms_activeskill", self._OnActivateSkill)
-    self.inst:RemoveEventCallback("ms_deactivateskill", self._OnDeactivateSkill)
-    self.inst:RemoveEventCallback("ms_deactiveskill", self._OnDeactivateSkill)
-    self.inst:RemoveEventCallback("ms_toggleactiveskill", self._OnToggleActivateSkill)
+    self.inst:RemoveEventCallback("ms_deactivateskill", self._on_deactivate_skill)
 end
 
 PlayerSkillController.OnRemoveFromEntity = PlayerSkillController.OnRemoveEntity

@@ -86,45 +86,20 @@ local recipes = {
     },
 
     kage = {
-        ingredients = {Ingredient("katanablade", 1), Ingredient("nightmarefuel", 40)},
+        ingredients = {Ingredient("katanablade", 1), Ingredient("nightmarefuel", 80)},
         tech = TECH.LOST,
         filters = {"CHARACTER", "WEAPONS"},
     },
-
-    -- true_shirasaya = {
-    --     ingredients = {Ingredient("thulecite", 40), Ingredient("nightmarefuel", 80), Ingredient("shadowheart", 6), Ingredient("shirasaya", 1)},
-    --     tech = TECH.SCIENCE_TWO,
-    --     config = {builder_tag = "katanakaji"},
-    --     filters = {"CHARACTER", "WEAPONS"},
-    -- },
-    -- true_koshirae = {
-    --     ingredients = {Ingredient("thulecite", 40), Ingredient("nightmarefuel", 80), Ingredient("opalpreciousgem", 6), Ingredient("koshirae", 1)},
-    --     tech = TECH.SCIENCE_TWO,
-    --     config = {builder_tag = "katanakaji"},
-    --     filters = {"CHARACTER", "WEAPONS"},
-    -- },
-    -- true_hitokiri = {
-    --     ingredients = {Ingredient("thulecite", 40), Ingredient("nightmarefuel", 80), Ingredient("minotaurhorn", 4), Ingredient("hitokiri", 1)},
-    --     tech = TECH.SCIENCE_TWO,
-    --     config = {builder_tag = "katanakaji"},
-    --     filters = {"CHARACTER", "WEAPONS"},
-    -- },
-    -- true_raikiri = {
-    --     ingredients = {Ingredient("thulecite", 40), Ingredient("nightmarefuel", 80), Ingredient("lightninggoathorn", 12), Ingredient("raikiri", 1)},
-    --     tech = TECH.SCIENCE_TWO,
-    --     config = {builder_tag = "katanakaji"},
-    --     filters = {"CHARACTER", "WEAPONS"},
-    -- },
 }
 
-if MOD_ENABLED.IA then
-    recipes.msurfboard_item = {
-        ingredients = {Ingredient("boards", 1), Ingredient("seashell", 2)},
-        tech = TECH.NONE,
-        config = {builder_tag = "msurfer"},
-        filters = {"CHARACTER", "SEAFARING"},
-    }
-end
+-- if IA_ENABLED then
+--     recipes.msurfboard_item = {
+--         ingredients = {Ingredient("boards", 1), Ingredient("seashell", 2)},
+--         tech = TECH.NONE,
+--         config = {builder_tag = "msurfer"},
+--         filters = {"CHARACTER", "SEAFARING"},
+--     }
+-- end
 
 for k, v in pairs(recipes) do
     AddRecipe2(k, v.ingredients, v.tech, v.config, v.filters)

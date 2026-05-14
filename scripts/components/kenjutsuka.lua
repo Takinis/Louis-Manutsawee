@@ -16,14 +16,14 @@ local function LevelNotReached(inst, requirelevel)
     local str = STRINGS.SKILL.UNLOCK_SKILL .. requirelevel
     inst.components.talker:Say(str, 1, true)
 
-    inst:PushEvent("ms_deactiveskill")
+    inst:PushEvent("ms_deactivateskill")
 end
 
 local function MindpowerNotEnough(inst, requiremindpower)
     local str = STRINGS.SKILL.MINDPOWER_NOT_ENOUGH .. inst.components.kenjutsuka:GetMindpower() .. "/" .. requiremindpower .. "\n "
     inst.components.talker:Say(str, 1, true)
 
-    inst:PushEvent("ms_deactiveskill")
+    inst:PushEvent("ms_deactivateskill")
 end
 
 local Kenjutsuka = Class(function(self, inst)

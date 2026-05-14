@@ -3,6 +3,7 @@ local AddStategraphEvent = AddStategraphEvent
 local AddStategraphState = AddStategraphState
 local AddStategraphPostInit = AddStategraphPostInit
 local AddStategraphActionHandler= AddStategraphActionHandler
+local MODROOT = MODROOT
 GLOBAL.setfenv(1, GLOBAL)
 
 local SkillUtil = require("utils/skillutil")
@@ -63,18 +64,6 @@ local events = {
     EventHandler("change_hair_style", function(inst)
         inst.sg:GoToState("change_hair_style")
     end),
-    EventHandler("heavenlystrike", function(inst)
-        inst.sg:GoToState("heavenlystrike")
-    end),
-    EventHandler("blockparry", function(inst)
-        inst.sg:GoToState("blockparry")
-    end),
-    EventHandler("start_counter_attack", function(inst)
-        inst.sg:GoToState("start_counter_attack")
-    end),
-    EventHandler("ichimonji", function(inst)
-        inst.sg:GoToState("ichimonji")
-    end),
 }
 
 local states = {
@@ -115,7 +104,7 @@ local states = {
                     if katanarnd == 1 then
                         inst.AnimState:PlayAnimation("atk_prop_pre")
                         inst.AnimState:PushAnimation("atk", false)
-                        katanarnd = math.random(2, 3)
+                        katanarnd = math.random(2, 6)
                     elseif katanarnd == 2 then
                         inst.AnimState:SetDeltaTimeMultiplier(1.3)
                         inst.sg.statemem.lunge_pst = true
@@ -140,7 +129,7 @@ local states = {
                     else
                         inst.AnimState:PlayAnimation("atk_pre")
                         inst.AnimState:PushAnimation("atk", false)
-                        katanarnd = 1
+                        katanarnd = math.random(2, 6)
                     end
 
                     inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
@@ -181,6 +170,7 @@ local states = {
                     sharkboi_swipe_fx.AnimState:SetScale(0.88, 0.88, 0.88)
                     sharkboi_swipe_fx.entity:SetParent(inst.entity)
                     sharkboi_swipe_fx.Transform:SetPosition(1, 0, 0)
+                    sharkboi_swipe_fx.AnimState:SetMultColour(0, 0, 0, 1)
                     sharkboi_swipe_fx:Reverse()
                     inst.sg.statemem.sharkboi_swipe_fx = sharkboi_swipe_fx
                 end
@@ -301,787 +291,6 @@ local states = {
         end,
     },
 
-    State{
-        name = "heavenlystrike",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "skilling","notalking","mdodgeing" },
-
-        onenter = function(inst)
-            local x, y, z = inst.Transform:GetWorldPosition()
-            local pufffx = SpawnPrefab("dirt_puff")
-            pufffx.Transform:SetScale(.3, .3, .3)
-            pufffx.Transform:SetPosition(x, y, z)
-
-            SkillCollision(inst, true)
-
-            inst.components.locomotor:Stop()
-            if inst.components.playercontroller ~= nil then
-                inst.components.playercontroller:Enable(false)
-            end
-            inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            inst.AnimState:PlayAnimation("atk_leap_pre")
-            inst.Physics:SetMotorVelOverride(30,0,0)
-        end,
-
-        timeline = {
-            TimeEvent(0 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-            end),
-            TimeEvent(6 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                SkillCollision(inst, false)
-            end),
-            TimeEvent(11 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-            end),
-        },
-
-        events = {
-            EventHandler("animover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.playercontroller ~= nil then
-                inst.components.playercontroller:Enable(true)
-            end
-        end,
-    },
-
-    State{
-        name = "blockparry",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph"},
-
-        onenter = function(inst)
-            inst.components.locomotor:Stop()
-            inst.AnimState:PlayAnimation("atk")
-            --inst.AnimState:PushAnimation("parry_pst", false)
-            inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-        end,
-
-        timeline = {
-            TimeEvent(0.5*FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/hit")
-                inst.Physics:SetMotorVelOverride(-0.1,0,0)
-            end),
-
-            TimeEvent(1*FRAMES, function(inst)
-            local sparks = SpawnPrefab("sparks")
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                sparks.Transform:SetPosition(inst:GetPosition():Get())
-            end),
-        },
-
-        events = {
-            EventHandler("animover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            inst.Physics:ClearMotorVelOverride()
-        end,
-    },
-
-    State{
-        name = "start_counter_attack",
-        tags = {"busy", "nomorph", "notalking", "nopredict", "doing"},
-
-        onenter = function(inst)
-            inst.AnimState:PlayAnimation("parry_pre")
-            inst.AnimState:PushAnimation("parry_pst", false)
-            inst.components.locomotor:Stop()
-            inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-        end,
-
-        timeline = {
-            TimeEvent(.5 * FRAMES, function(inst)
-                inst.sg:AddStateTag("counteractive")
-            end),
-            TimeEvent(8 * FRAMES, function(inst)
-                inst.sg:RemoveStateTag("counteractive")
-                inst.sg:AddStateTag("startblockparry")
-            end),
-        },
-
-        events = {
-            EventHandler("animover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            inst.sg:RemoveStateTag("startblockparry")
-        end,
-    },
-
-    State{
-        name = "counter_attack",
-        tags = {"attack", "doing", "busy", "nointerrupt" ,"nopredict","nomorph"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-
-            local sparks = SpawnPrefab("sparks")
-            sparks.Transform:SetPosition(inst:GetPosition():Get())
-
-            if math.random(1, 3) > 1 then
-                inst.AnimState:OverrideSymbol("fx_lunge_streak", "player_lunge_blue", "fx_lunge_streak")
-                inst.AnimState:PlayAnimation("lunge_pst")
-            else
-                inst.AnimState:PlayAnimation("atk")
-            end
-
-            SkillUtil.GroundPoundFx(inst, .6)
-            inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-
-            inst.inspskill = true
-            inst.components.combat:SetRange(4)
-
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(3 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-                inst:PerformBufferedAction()
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-            end),
-
-            TimeEvent(4 * FRAMES, function(inst)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone()
-                and inst.components.health ~= nil
-                and not inst.components.health:IsDead()
-                and not inst.sg:HasStateTag("dead") then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end
-            inst.inspskill = nil
-            inst.components.timer:StartTimer("counter_attack", M_CONFIG.COUNTER_ATK_COOLDOWN)
-        end,
-    },
-
-    State{
-        name = "monemind",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-
-            if inst.components.playercontroller ~= nil then
-                inst.components.playercontroller:Enable(false)
-            end
-
-            inst.AnimState:PlayAnimation("atk")
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(3 * FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-                inst.Physics:SetMotorVelOverride(32,0,0)
-                if inst.sg.statemem.target then
-                    inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-                end
-            end),
-            TimeEvent(4 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-            end),
-            TimeEvent(9 * FRAMES, function(inst)
-                inst.sg:GoToState("idle")
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-    },
-
-    State{
-        name = "quicksheath",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling"},
-
-        onenter = function(inst)
-            inst.components.locomotor:Stop()
-            inst.AnimState:PlayAnimation("atk")
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            inst.components.timer:StartTimer("quick_sheath_cd", .4)
-        end,
-
-        timeline = {
-            TimeEvent(3 * FRAMES, function(inst)
-                local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if weapon ~= nil and weapon.components.spellcaster ~= nil then
-                    weapon.components.spellcaster:CastSpell(inst)
-                end
-            end),
-            TimeEvent(8 * FRAMES, function(inst)
-                inst.sg:GoToState("idle")
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-    },
-
-    State{
-        name = "ryusen",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdodgeing"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-            inst.components.combat:SetRange(10)
-            inst.AnimState:PlayAnimation("atk")
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(2 * FRAMES, function(inst)
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-                local sparks = SpawnPrefab("sparks")
-                sparks.Transform:SetPosition(inst:GetPosition():Get())
-            end),
-
-            TimeEvent(3 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                local wanda_attack_shadowweapon_old_fx = SpawnPrefab("wanda_attack_shadowweapon_old_fx")
-                wanda_attack_shadowweapon_old_fx.entity:AddFollower()
-                wanda_attack_shadowweapon_old_fx.Follower:FollowSymbol(inst.GUID, "swap_body", 0, 0, 0)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-            end),
-
-            TimeEvent(6 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                local wanda_attack_shadowweapon_normal_fx = SpawnPrefab("wanda_attack_shadowweapon_normal_fx")
-                wanda_attack_shadowweapon_normal_fx.entity:AddFollower()
-                wanda_attack_shadowweapon_normal_fx.Follower:FollowSymbol(inst.GUID, "swap_body", 0, 0, 0)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-            end),
-
-            TimeEvent(9 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                local wanda_attack_shadowweapon_old_fx = SpawnPrefab("wanda_attack_shadowweapon_old_fx")
-                wanda_attack_shadowweapon_old_fx.entity:AddFollower()
-                wanda_attack_shadowweapon_old_fx.Follower:FollowSymbol(inst.GUID, "swap_body", 0, 0, 0)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-            end),
-
-            TimeEvent(12 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                local wanda_attack_shadowweapon_normal_fx = SpawnPrefab("wanda_attack_shadowweapon_normal_fx")
-                wanda_attack_shadowweapon_normal_fx.entity:AddFollower()
-                wanda_attack_shadowweapon_normal_fx.Follower:FollowSymbol(inst.GUID, "swap_body", 0, 0, 0)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-
-                local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if equip ~= nil and equip.components.spellcaster ~= nil then
-                    equip.components.spellcaster:CastSpell(inst)
-                end
-            end),
-
-            TimeEvent(13 * FRAMES, function(inst)
-                inst.AnimState:PlayAnimation("atk")
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            end),
-
-            TimeEvent(14 * FRAMES, function(inst)
-                inst.Physics:SetMotorVelOverride(32,0,0)
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-            end),
-
-            TimeEvent(16 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-                local x, y, z = inst.Transform:GetWorldPosition()
-                local fx = SpawnPrefab("groundpoundring_fx")
-                fx.Transform:SetScale(.6, .6, .6)
-                fx.Transform:SetPosition(x, y, z)
-            end),
-
-            TimeEvent(17 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone()
-                and inst.components.health ~= nil
-                and not inst.components.health:IsDead()
-                and not inst.sg:HasStateTag("dead")
-                then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end
-        end,
-    },
-
-    State{
-        name = "flip",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-            inst.AnimState:OverrideSymbol("fx_lunge_streak", "player_lunge_blue", "fx_lunge_streak")
-            inst.components.combat:SetRange(6)
-            inst.components.combat:EnableAreaDamage(true)
-            inst.components.combat:SetAreaDamage(2, 1)
-            inst.AnimState:SetDeltaTimeMultiplier(1.3)
-            inst.inspskill = true
-            inst.AnimState:PlayAnimation("lunge_pre")
-            inst.AnimState:PushAnimation("lunge_pst", false)
-            inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(1 * FRAMES, function(inst)
-                inst.Physics:SetMotorVelOverride(32,0,0)
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-            end),
-
-            TimeEvent(2 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-            end),
-
-            TimeEvent(3 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(4 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(5 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(6 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(7 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(8 * FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:SetAreaDamage(1, 1)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst.AnimState:SetDeltaTimeMultiplier(1)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end
-            inst.inspskill = nil
-            inst.components.combat:EnableAreaDamage(false)
-        end,
-    },
-
-    State{
-        name = "thrust",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-            inst.components.combat:SetRange(6)
-            inst.components.combat:EnableAreaDamage(true)
-            inst.components.combat:SetAreaDamage(2, 1)
-            inst.AnimState:SetDeltaTimeMultiplier(1.3)
-            inst.inspskill = true
-            inst.AnimState:PlayAnimation("multithrust")
-            inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(1 * FRAMES, function(inst)
-                inst.Physics:SetMotorVelOverride(32,0,0)
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-            end),
-
-            TimeEvent(2 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-            end),
-
-            TimeEvent(8 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
-            end),
-
-            TimeEvent(9 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-            end),
-
-            TimeEvent(10 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_nightsword")
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-            end),
-
-            TimeEvent(12 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-            end),
-
-            TimeEvent(14 * FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst:PerformBufferedAction()
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:SetAreaDamage(1, 1)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst.AnimState:SetDeltaTimeMultiplier(1)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:EnableAreaDamage(false)
-            end
-            inst.inspskill = nil
-        end,
-    },
-
-    State{
-        name = "ichimonji",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling"},
-
-        onenter = function(inst, target)
-            inst.inspskill = true
-            inst.components.locomotor:Stop()
-            inst.AnimState:PlayAnimation("atk_prop_pre")
-            inst.AnimState:PushAnimation("atk_prop_lag", false)
-            inst.AnimState:PushAnimation("atk", false)
-            inst.components.combat:EnableAreaDamage(true)
-            inst.components.combat:SetAreaDamage(2, 1)
-            inst.AnimState:SetDeltaTimeMultiplier(2.5)
-            inst.components.combat:SetRange(6)
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(8 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/creatures/spiderqueen/swipe")
-                SkillUtil.AddFollowerFx(inst, "electrichitsparks")
-                SkillUtil.GroundPoundFx(inst, 0.5)
-            end),
-
-            TimeEvent(9 * FRAMES, function(inst)
-                inst.AnimState:SetDeltaTimeMultiplier(1)
-                inst.Physics:SetMotorVelOverride(32,0,0)
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-            end),
-
-            TimeEvent(10 * FRAMES, function(inst)
-                inst.Physics:ClearMotorVelOverride()
-                local x, y, z = inst.Transform:GetWorldPosition()
-                local pufffx = SpawnPrefab("dirt_puff")
-                pufffx.Transform:SetScale(.6, .6, .6)
-                pufffx.Transform:SetPosition(x, y, z)
-            end),
-
-            TimeEvent(17 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("dontstarve/wilson/hit")
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-
-                --if not inst.doubleichimonji then inst.components.combat:DoAttack(inst.sg.statemem.target) end
-                inst:PerformBufferedAction()
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:SetAreaDamage(1, 1)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:EnableAreaDamage(false)
-            end
-            inst.inspskill = nil
-            if inst.doubleichimonji ~= nil then
-                inst.doubleichimonji = nil
-                inst.components.talker:Say(STRINGS.SKILL.SKILL1ATTACK, 2, true)
-            end
-            if inst.doubleichimonjistart then
-                inst.doubleichimonjistart = nil
-                inst.doubleichimonji = true
-            end
-        end,
-    },
-
-    State{
-        name = "habakiri",
-        tags = {"busy", "nopredict", "nointerrupt", "nomorph", "doing","notalking","skilling","mdodgeing"},
-
-        onenter = function(inst, target)
-            inst.components.locomotor:Stop()
-            inst.AnimState:OverrideSymbol("fx_lunge_streak", "player_lunge_blue", "fx_lunge_streak")
-            inst.components.combat:SetRange(12)
-            inst.components.combat:EnableAreaDamage(true)
-            inst.components.combat:SetAreaDamage(2, 1)
-            inst.inspskill = true
-            inst.AnimState:PlayAnimation("atk")
-            inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            if target ~= nil and target:IsValid() then
-                inst.sg.statemem.target = target
-                inst:ForceFacePoint(target.Transform:GetWorldPosition())
-            end
-        end,
-
-        timeline = {
-            TimeEvent(1 * FRAMES, function(inst)
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-                inst.Physics:SetMotorVelOverride(-.25,0,10)
-            end),
-
-            TimeEvent(3 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-            end),
-
-            TimeEvent(4 * FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                SpawnShadowFx(inst, inst.sg.statemem.target, 3)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst:PerformBufferedAction()
-                inst.Physics:ClearMotorVelOverride()
-            end),
-
-            TimeEvent(5 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-                inst.AnimState:PlayAnimation("lunge_pst")
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-                inst.Physics:SetMotorVelOverride(-.5,0,-20)
-            end),
-
-            TimeEvent(8* FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                SpawnShadowFx(inst, inst.sg.statemem.target, 2)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst:PerformBufferedAction()
-                inst.Physics:ClearMotorVelOverride()
-            end),
-
-            TimeEvent(9 * FRAMES, function(inst)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
-                inst.AnimState:PlayAnimation("atk")
-                inst:ForceFacePoint(inst.sg.statemem.target.Transform:GetWorldPosition())
-                inst.Physics:SetMotorVelOverride(-.5,0,20)
-            end),
-
-            TimeEvent(12* FRAMES, function(inst)
-                inst.components.combat:DoAttack(inst.sg.statemem.target)
-                SpawnShadowFx(inst, inst.sg.statemem.target, 2)
-                inst:PerformBufferedAction()
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-                inst.components.combat:SetAreaDamage(1, 1)
-                inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
-                inst.Physics:ClearMotorVelOverride()
-                inst.Physics:SetMotorVelOverride(-.5,0,-10)
-            end),
-
-            TimeEvent(15* FRAMES, function(inst)
-                local weapon = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
-                if weapon ~= nil and weapon.components.spellcaster ~= nil then
-                    weapon.components.spellcaster:CastSpell(inst)
-                end
-                inst.Physics:ClearMotorVelOverride()
-                local sparks = SpawnPrefab("sparks")
-                sparks.Transform:SetPosition(inst:GetPosition():Get())
-            end),
-
-            TimeEvent(20 * FRAMES, function(inst)
-                inst.components.talker:Say(STRINGS.SKILL.SKILL2ATTACK, 2, true)
-            end),
-        },
-
-        ontimeout = function(inst)
-            inst.sg:RemoveStateTag("attack")
-            inst.sg:AddStateTag("idle")
-        end,
-
-        events = {
-            EventHandler("animqueueover", function(inst)
-                if inst.AnimState:AnimDone() then
-                    inst.sg:GoToState("idle")
-                end
-            end),
-        },
-
-        onexit = function(inst)
-            if inst.components.combat ~= nil then
-                inst.components.combat:SetTarget(nil)
-                inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
-            end
-            inst.inspskill = nil
-            inst.components.combat:EnableAreaDamage(false)
-        end,
-    },
 
     State{
         name = "mdodge",
@@ -1172,6 +381,46 @@ local states = {
         },
     },
 }
+
+local skill_state_modules = {
+    "heavenlystrike",
+    "blockparry",
+    "start_counter_attack",
+    "counter_attack",
+    "monemind",
+    "quicksheath",
+    "ryusen",
+    "soryuha",
+    "flip",
+    "thrust",
+    "ichimonji",
+    "habakiri",
+}
+
+if package ~= nil and type(package.path) == "string" then
+    local mod_lua_path = MODROOT .. "?.lua"
+    if not string.find(package.path, mod_lua_path, 1, true) then
+        package.path = package.path .. ";" .. mod_lua_path
+    end
+end
+
+for _, module_name in ipairs(skill_state_modules) do
+    local ok, skill_def = pcall(require, "postinit/stategraphs/skills/" .. module_name)
+    if ok and type(skill_def) == "table" then
+        if skill_def.events ~= nil then
+            for _, event in ipairs(skill_def.events) do
+                table.insert(events, event)
+            end
+        end
+        if skill_def.states ~= nil then
+            for _, state in ipairs(skill_def.states) do
+                table.insert(states, state)
+            end
+        end
+    else
+        print("[Louis-Manutsawee][SGwilson] Failed loading skill module:", module_name, skill_def)
+    end
+end
 
 for _, event in ipairs(events) do
     AddStategraphEvent("wilson", event)

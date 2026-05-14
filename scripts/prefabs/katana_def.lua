@@ -7,7 +7,7 @@ local IsUnsheath = function(inst)
 end
 
 local function SheathMode(inst, owner)
-    inst.spelltype:set("PULLOUT")
+    -- inst.spelltype:set("PULLOUT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -20,7 +20,7 @@ local function SheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build)
     inst.AnimState:SetBuild(inst.build)
 
-    if MOD_ENABLED.IA or MOD_ENABLED.PL then
+    if IA_ENABLED or PL_ENABLED then
         if inst.components.tool ~= nil then
             inst:RemoveComponent("tool")
         end
@@ -37,7 +37,7 @@ local function SheathMode(inst, owner)
 end
 
 local function UnsheathMode(inst, owner)
-    inst.spelltype:set("INSERT")
+    -- inst.spelltype:set("INSERT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -50,7 +50,7 @@ local function UnsheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build .. "2")
     inst.AnimState:SetBuild(inst.build .. "2")
 
-    if MOD_ENABLED.IA or MOD_ENABLED.PL then
+    if IA_ENABLED or PL_ENABLED then
         if inst.components.tool == nil then
             inst:AddComponent("tool")
             inst.components.tool:SetAction(ACTIONS.HACK, 3)
@@ -273,8 +273,8 @@ local MakeKatana = function(data)
         --weapon (from weapon component) added to pristine state for optimization
         inst:AddTag("weapon")
 
-        inst.spelltype = net_string(inst.GUID, name .. ".spelltype")
-        inst.spelltype:set("PULLOUT")
+        inst.spelltype = "PULLOUT"
+        -- inst.spelltype:set("PULLOUT")
 
         MakeInventoryFloatable(inst, nil, 0.1)
 

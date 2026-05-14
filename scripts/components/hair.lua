@@ -14,13 +14,24 @@ local function GetHairLengthIndex(length)
             return i
         end
     end
-    return nil
+    return 1
 end
 
 local function OnEquip(inst, data)
     local eslot = data.eslot
     if eslot ~= nil and eslot == EQUIPSLOTS.HEAD then
         inst.components.hair:ChangeHairOverrideSymbol()
+    end
+end
+
+local function OnResetHair(inst)
+    if inst.components.hair.hair_length > 2 then
+        inst.components.hair.hair_length = inst.components.hair.hair_length - 1
+        local length = Hair_Lengths[inst.components.hair.hair_length]
+        inst.components.beard.daysgrowth = Hair_Growth_Lengths[length].days
+        inst.components.hair:ChangeHairGrowthLength()
+    else
+        inst.components.hair:ChangeCutOverrideSymbol()
     end
 end
 
@@ -32,7 +43,7 @@ local Hair = Class(function(self, inst)
 
     local beard = self.inst:AddComponent("beard")
     beard.insulation_factor = 1
-    beard.onreset = self.OnResetHair
+    beard.onreset = OnResetHair
     beard.prize = "beardhair"
     beard.is_skinnable = false
 
@@ -64,20 +75,10 @@ function Hair:ChangeHairOverrideSymbol()
 end
 
 function Hair:ChangeHairGrowthLength(length)
-    self.hair_length = GetHairLengthIndex(length) or 1
+    local length_index = GetHairLengthIndex(length)
+    self.hair_length = length_index
     self.inst.components.beard.bits = Hair_Growth_Lengths[length].bits
     self:ChangeHairOverrideSymbol()
-end
-
-function Hair:OnResetHair()
-    if self.hair_length > 2 then
-        self.hair_length = self.hair_length - 1
-        local length = Hair_Lengths[self.hair_length]
-        self.inst.components.beard.daysgrowth = Hair_Growth_Lengths[length].days
-        self:ChangeHairGrowthLength()
-    else
-        self:ChangeCutOverrideSymbol()
-    end
 end
 
 function Hair:ChangeHairStyle()

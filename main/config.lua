@@ -9,17 +9,17 @@ M_CONFIG = {
     IsTatsujin = GetModConfigData("is_tatsujin"),
 
     CounterAtkCooldown = GetModConfigData("counter_attack_cooldown_time"),
-    Skill1Cooldown = GetModConfigData("skill1_cooldown_time"),
-    Skill2Cooldown = GetModConfigData("skill2_cooldown_time"),
-    Skill3Cooldown = GetModConfigData("skill3_cooldown_time"),
-    Skill4Cooldown = GetModConfigData("skill4_cooldown_time"),
+    IchimonjiCooldown = GetModConfigData("ichimonji_cooldown_time"),
+    FlipCooldown = GetModConfigData("flip_cooldown_time"),
+    ThrustCooldown = GetModConfigData("thrust_cooldown_time"),
+    SoryuhaCooldown = GetModConfigData("soryuha_cooldown_time"),
     IsshinCooldown = GetModConfigData("isshin_skill_cooldown_time"),
     RyusenSusanooCooldown = GetModConfigData("ryusen_and_susanoo_skill_cooldown_time"),
 
-    Skill1Key = GetModConfigData("skill1_key"),
-    Skill2Key = GetModConfigData("skill2_key"),
-    Skill3Key = GetModConfigData("skill3_key"),
-    Skill4Key = GetModConfigData("skill4_key"),
+    IchimonjiKey = GetModConfigData("ichimonji_key"),
+    FlipKey = GetModConfigData("flip_key"),
+    ThrustKey = GetModConfigData("thrust_key"),
+    SoryuhaKey = GetModConfigData("soryuha_key"),
     LevelCheckKey = GetModConfigData("level_check_key"),
     PutGlassesKey = GetModConfigData("put_glasses_key"),
     ChangeHairStyleKey = GetModConfigData("change_hair_style_key"),
@@ -36,13 +36,8 @@ M_CONFIG = {
     IdleAnimationMode = GetModConfigData("idle_animation_mode"),
 }
 
-ENV.M_CONFIG = M_CONFIG
-ENV.MOD_ENABLED = {
-    IA = rawget(_G, "IA_CONFIG") ~= nil,
-    PL = rawget(_G, "PL_CONFIG") ~= nil,
-    AD = KnownModIndex:IsModEnabled("workshop-1847959350"),
-    UM = KnownModIndex:IsModEnabled("workshop-2039181790"),
-    HOF = KnownModIndex:IsModEnabled("workshop-2334209327"),
-}
-
-MOD_ENABLED = ENV.MOD_ENABLED
+IA_ENABLED = rawget(_G, "IA_CONFIG") ~= nil
+PL_ENABLED = rawget(_G, "PL_CONFIG") ~= nil
+AD_ENABLED = KnownModIndex:IsModEnabled("workshop-1847959350")
+UM_ENABLED = KnownModIndex:IsModEnabled("workshop-2039181790")
+HOF_ENABLED = KnownModIndex:IsModEnabled("workshop-2334209327")

@@ -26,11 +26,6 @@ end
 function PlayerKeyHandler:AddKeyListener(namespace, key, action)
     local fn = function(_key, down)
         if down and key == _key then
-            for k, _ in pairs(TheInput.pressed_keys) do
-                if k ~= key then
-                    return false
-                end
-            end
             return self:HandleKeyAction(namespace, action) or false
         end
     end

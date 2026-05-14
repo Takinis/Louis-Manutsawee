@@ -3,12 +3,12 @@ local AddComponentPostInit = AddComponentPostInit
 local Combat = require("components/combat")
 GLOBAL.setfenv(1, GLOBAL)
 
-local blockcount = 0
-local function BlockActive(inst)
-    if inst.blockactive ~= nil then
-        inst.blockactive:Cancel()
-        inst.blockactive = nil
+local function StopBlockWindow(inst)
+    if inst._blockactive_task ~= nil then
+        inst._blockactive_task:Cancel()
+        inst._blockactive_task = nil
     end
+    inst._blockcount = 0
 end
 
 AddComponentPostInit("combat", function(self, inst)
@@ -23,33 +23,48 @@ AddComponentPostInit("combat", function(self, inst)
             inst:ForceFacePoint(attacker.Transform:GetWorldPosition())
         end
 
-        if weapon ~= nil and (not inst.sg:HasStateTag("mdodgeing")) then
-            if blockcount > 0 then
-                blockcount = 0
-                BlockActive(inst)
-                inst:PushEvent("heavenlystrike")
-                if attacker.components.combat ~= nil then
-                    --inst.components.combat:DoAttack(attacker)
-                    SkillUtil.AoeAttack(inst, 2,3)
-                    SkillUtil.GroundPoundFx(inst, .6)
-                    SkillUtil.SlashFx(inst, attacker, "shadowstrike_slash_fx", 1.6)
-                end
-            else
-                inst:PushEvent("blockparry")
-                blockcount = blockcount + 1
-                BlockActive(inst)
-                inst.blockactive = inst:DoTaskInTime(3, function()
-                    blockcount = 0
-                end)
-            end
-        end
+        -- Keep block count per-player to avoid cross-instance interference.
+        inst._blockcount = inst._blockcount or 0
 
         if inst.sg:HasStateTag("mdodgeing") or inst.inspskill then
             SkillUtil.AddFollowerFx(inst, "electricchargedfx")
-        elseif inst.sg:HasStateTag("counteractive") then
+            return true
+        end
 
-            inst.sg:GoToState("counter_attack", attacker)
+        local counter_window = inst.sg:HasStateTag("counteractive") or inst.sg:HasStateTag("startblockparry")
+        if not counter_window and inst._blockcount > 0 then
+            StopBlockWindow(inst)
+        end
 
+        if counter_window and weapon ~= nil then
+            if inst._blockcount > 0 then
+                StopBlockWindow(inst)
+                inst:PushEvent("heavenlystrike")
+                if attacker ~= nil and attacker.components.combat ~= nil then
+                    SkillUtil.AoeAttack(inst, 2, 3)
+                    SkillUtil.GroundPoundFx(inst, .6)
+                    SkillUtil.SlashFx(inst, attacker, "shadowstrike_slash_fx", 1.6)
+                end
+                return true
+            else
+                inst:PushEvent("blockparry")
+                inst._blockcount = inst._blockcount + 1
+                if inst._blockactive_task ~= nil then
+                    inst._blockactive_task:Cancel()
+                end
+                inst._blockactive_task = inst:DoTaskInTime(3, function(inst_)
+                    StopBlockWindow(inst_)
+                end)
+                return true
+            end
+        end
+
+        if counter_window and inst.sg:HasStateTag("counteractive") then
+            if attacker ~= nil and attacker:IsValid() then
+                inst.sg:GoToState("counter_attack", attacker)
+                return true
+            end
+            return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
         else
             return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
         end

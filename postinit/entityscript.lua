@@ -42,6 +42,8 @@ end
 function EntityScript:SetScale(scale)
     if self.Transform ~= nil then
         self.Transform:SetScale(scale, scale, scale)
+    else
+
     end
 end
 
@@ -60,7 +62,11 @@ function EntityScript:SpawnPrefabInPos(prefab, scale)
     local prefab = SpawnPrefab(prefab)
     prefab.Transform:SetPosition(self:GetPosition():Get())
     if scale ~= nil then
-        self:SetSacle(scale)
+        if self.Transform then
+            self.Transform:SetScale(scale, scale, scale)
+        else
+            self.AnimState:SetScale(scale, scale, scale)
+        end
     end
     return prefab
 end

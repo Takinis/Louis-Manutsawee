@@ -5,6 +5,8 @@ resources
 tiled
 参考图
 设计方案
+tool
+参考文件
 *.manifest
 *.txt
 *.log
@@ -27,3 +29,4 @@ tiled
 .vscode
 .idea
 .fsbcache
+.workspace
