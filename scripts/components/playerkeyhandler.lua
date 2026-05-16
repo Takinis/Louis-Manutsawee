@@ -8,28 +8,24 @@ local function IsActiveHUDScreen()
     return screen ~= nil and screen.name == "HUD"
 end
 
-local function HasTextInputFocus()
-    if TheInput ~= nil and TheInput.IsTextInputActive ~= nil and TheInput:IsTextInputActive() then
-        return true
-    end
+local function IsHUDInputBlocked(inst)
+    local hud = inst ~= nil and inst.HUD or (ThePlayer ~= nil and ThePlayer.HUD or nil)
 
-    if TheInput ~= nil and TheInput.IsTyping ~= nil and TheInput:IsTyping() then
-        return true
-    end
-
-    local widget = TheFrontEnd ~= nil and TheFrontEnd:GetFocusWidget() or nil
-    while widget ~= nil do
-        if widget.editing == true or widget.OnTextInput ~= nil then
+    if hud ~= nil then
+        if hud.IsCraftingOpen ~= nil and hud:IsCraftingOpen() then
             return true
         end
-        widget = widget.parent
+
+        if hud.HasInputFocus ~= nil and hud:HasInputFocus() then
+            return true
+        end
     end
 
-    return false
+    return TheFrontEnd ~= nil and TheFrontEnd.textProcessorWidget ~= nil
 end
 
 function PlayerKeyHandler:HandleKeyAction(namespace, action, ...)
-    if IsActiveHUDScreen() and not HasTextInputFocus() then
+    if IsActiveHUDScreen() and not IsHUDInputBlocked(self.inst) then
         if TheWorld.ismastersim then
             local fn = GetModRPCHandler(namespace, action)
             if fn ~= nil then
@@ -59,7 +55,7 @@ function PlayerKeyHandler:AddCombinationKeyListener(namespace, key, _key, action
         return self:HandleKeyAction(namespace, action) or false
     end
     TheInput:AddCombinationKeyHandler(key, _key, fn)
-    
+
     local keys = { key, _key }
     table.sort(keys)
     local event = keys[1] .. "_" .. keys[2]
