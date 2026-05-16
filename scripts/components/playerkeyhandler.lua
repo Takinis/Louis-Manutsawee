@@ -8,8 +8,28 @@ local function IsActiveHUDScreen()
     return screen ~= nil and screen.name == "HUD"
 end
 
+local function HasTextInputFocus()
+    if TheInput ~= nil and TheInput.IsTextInputActive ~= nil and TheInput:IsTextInputActive() then
+        return true
+    end
+
+    if TheInput ~= nil and TheInput.IsTyping ~= nil and TheInput:IsTyping() then
+        return true
+    end
+
+    local widget = TheFrontEnd ~= nil and TheFrontEnd:GetFocusWidget() or nil
+    while widget ~= nil do
+        if widget.editing == true or widget.OnTextInput ~= nil then
+            return true
+        end
+        widget = widget.parent
+    end
+
+    return false
+end
+
 function PlayerKeyHandler:HandleKeyAction(namespace, action, ...)
-    if IsActiveHUDScreen() then
+    if IsActiveHUDScreen() and not HasTextInputFocus() then
         if TheWorld.ismastersim then
             local fn = GetModRPCHandler(namespace, action)
             if fn ~= nil then
@@ -36,7 +56,7 @@ end
 
 function PlayerKeyHandler:AddCombinationKeyListener(namespace, key, _key, action)
     local fn = function(k1, k2)
-        self:HandleKeyAction(namespace, action)
+        return self:HandleKeyAction(namespace, action) or false
     end
     TheInput:AddCombinationKeyHandler(key, _key, fn)
     
@@ -48,7 +68,7 @@ end
 
 function PlayerKeyHandler:AddSequentialKeyHandler(namespace, key, _key, action)
     local fn = function(k1, k2)
-        self:HandleKeyAction(namespace, action)
+        return self:HandleKeyAction(namespace, action) or false
     end
     TheInput:AddSequentialKeyHandler(key, _key, fn)
 
