@@ -36,6 +36,12 @@ SKILL_INPUT = {
     SORYUHA = SKILL_ID.SORYUHA,
 }
 
+SKILL_CONTROL_MODE = {
+    COMBO = "combo",
+    SEQUENCE = "sequence",
+    HOLD = "hold",
+}
+
 SG_STATE = {
     ICHIMONJI = SKILL_ID.ICHIMONJI,
     FLIP = SKILL_ID.FLIP,

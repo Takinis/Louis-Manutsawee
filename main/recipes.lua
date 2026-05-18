@@ -51,7 +51,7 @@ local recipes = {
 
     shirasaya = {
         ingredients = {Ingredient("cane", 1), Ingredient("katanablade", 1), Ingredient("rope", 2), Ingredient("goldnugget", 2)},
-        tech = TECH.SCIENCEs_TWO,
+        tech = TECH.SCIENCE_TWO,
         config = {builder_tag = "kenjutsuka"},
         sort = {before = "batbat", after = "hambat"},
         filters = {"CHARACTER", "WEAPONS"},

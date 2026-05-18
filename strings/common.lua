@@ -17,20 +17,12 @@ return {
                 title = "Birthday",
             },
             {
-                desc = "Learn Everything Technical College of Hawaii",
-                title = "Current School",
-            },
-            {
                 desc = "Unagi, Bacon and Eggs, Cooked Kelp Fronds, Durian, Roasted durian \nCaliforniaroll, Caviar \nSteamed Ham Sandwich, Tea, Ice Tea \nLiceloaf, Boomberry Pancakes",
                 title = "Favorite Food",
             },
             {
-                desc = "Manutsawee.",
-                title = "Her Past...",
-            },
-            {
                 desc = "A strange day and time in the plains, a city far away from the hustle and bustle, a journey to the countryside in the forest, and a shrine to see a shrine. In the shrine village where the shrine is destroyed, a bundle of offering clothing is covered with cloth and clothing. When the curiosity erupted, I touched the handle, and as a result I felt intense pain. When I understood the land, I was shocked and left the place. When they left, a single voice sounded. After the pain disappeared, the eyes turned red and turned red. The shrine has disappeared with no shadow...",
-                title = "The origin of red eye",
+                title = "Blood-red pupils",
             },
             {
                 desc = "Tokijin\nThe cursed sword made from the fangs of the Ghost of God is full of evil, and ordinary people can easily be controlled by it.\nIt was originally broken by Sesshomaru, but Louis found it in an abandoned shrine.. .",
@@ -70,7 +62,7 @@ return {
         SKILL9START = "SORYUHA NO KATA!\n󰀈: ",
     },
     CHARACTER_DESCRIPTIONS = {
-        manutsawee = "*Art of the Japanese sword\n*Brave\n*Benevolent\n*Love to eat",
+        manutsawee = "*Art of the Japanese sword\n*Brave\n*Benevolent",
     },
     CHARACTER_NAMES = {
         manutsawee = "Manutsawee",

@@ -101,22 +101,3 @@ Assets = {
 
 GlassicAPI.InitMinimapAtlas("map_icons/m_minimaps")
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
-
--- local IslandAdventruePrefabFiles = {
-
--- }
-
--- AddOtherModPrefab(PrefabFiles, IslandAdventruePrefabFiles, IA_ENABLED)
-
--- local PorkLandPrefabFiles = {
---     "oinc1000000",
--- }
-
--- AddOtherModPrefab(PrefabFiles, PorkLandPrefabFiles, PL_ENABLED)
-
--- local IslandAdventrueAssets = {
---     "images/saveslot_portraits/manutsawee_ia.tex",
---     "images/saveslot_portraits/manutsawee_ia.xml",
--- }
-
--- AddOtherModAssets(Assets, IslandAdventrueAssets, IA_ENABLED)

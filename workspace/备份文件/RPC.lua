@@ -54,8 +54,8 @@ local ACTIVE_SKILL_TAGS = {
 local function SkillRemove(inst)
     local controller = inst.components.playerskillcontroller
     if controller ~= nil then
-        if controller.DeactivateSkill ~= nil then
-            controller:DeactivateSkill()
+        if controller.ClearActiveSkill ~= nil then
+            controller:ClearActiveSkill()
         elseif controller.DeactiveSkill ~= nil then
             controller:DeactiveSkill()
         end

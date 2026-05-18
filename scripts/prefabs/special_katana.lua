@@ -34,6 +34,11 @@ local function OnRemove(inst)
     TheWorld:PushEvent("ms_forgetkatana", {name = inst.prefab})
 end
 
+local function OnSpawned(inst)
+    -- Track this katana when it spawns
+    TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
+end
+
 local function OnSave(inst, data)
     if inst.first_time_unsheathed ~= nil then
         data.first_time_unsheathed = inst.first_time_unsheathed
@@ -46,6 +51,13 @@ local function OnLoad(inst, data)
             inst.first_time_unsheathed = data.first_time_unsheathed
         end
     end
+
+    -- Re-track the katana after loading
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
+        end
+    end)
 end
 
 local mortalblade_master_postinit = function(inst)
@@ -58,6 +70,13 @@ local mortalblade_master_postinit = function(inst)
 
     inst.OnSave = OnSave
     inst.OnLoad = OnLoad
+
+    -- Track katana on spawn
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            OnSpawned(inst)
+        end
+    end)
 
     inst.onequip_fn = function(inst, owner)
         inst.TryStartFx(inst, owner)
@@ -108,6 +127,17 @@ local tenseiga_master_postinit = function(inst)
     inst.components.hauntable.onhaunt = OnHaunt
 
     inst:RemoveComponent("finiteuses")
+
+    inst:ListenForEvent("onremove", OnRemove)
+    inst.OnSave = OnSave
+    inst.OnLoad = OnLoad
+
+    -- Track katana on spawn
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            OnSpawned(inst)
+        end
+    end)
 end
 
 local ShadowFxs = {
@@ -163,6 +193,17 @@ local function kage_master_postinit(inst)
 
     inst.components.finiteuses:SetOnFinished(OnFinished)
 
+    inst:ListenForEvent("onremove", OnRemove)
+    inst.OnSave = OnSave
+    inst.OnLoad = OnLoad
+
+    -- Track katana on spawn
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            OnSpawned(inst)
+        end
+    end)
+
     inst.onequip_fn = function(inst, owner)
         inst.TryStartFx(inst, owner)
     end
@@ -193,7 +234,7 @@ local kage_onattack = function(inst, owner, target)
         if v ~= nil and v:IsValid() and v.components.health ~= nil and not v.components.health:IsDead() then
             local fx = v:SpawnPrefabInPos(weighted_random_choice(ShadowFxs))
             fx:SetScale(v:HasTag("largecreature") and 2 or v:HasTag("smallcreature") and 0.5 or 1)
-            if ReplaceColorFxs[fx.prefab] ~= nil and fx.AnimState ~= nil then
+            if ReplaceColorFxs[fx.prefab] and fx.AnimState ~= nil then
                 fx.AnimState:SetMultColour(0, 0, 0, 1)
             end
             if v ~= target then
@@ -205,15 +246,39 @@ end
 
 local function bakusaiga_master_postinit(inst)
     inst:RemoveComponent("finiteuses")
+
+    inst:ListenForEvent("onremove", OnRemove)
+    inst.OnSave = OnSave
+    inst.OnLoad = OnLoad
+
+    -- Track katana on spawn
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            OnSpawned(inst)
+        end
+    end)
 end
 
 local function bakusaiga_onattack()
 
 end
 
+local function shusui_master_postinit(inst)
+    inst:ListenForEvent("onremove", OnRemove)
+    inst.OnSave = OnSave
+    inst.OnLoad = OnLoad
+
+    -- Track katana on spawn
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() then
+            OnSpawned(inst)
+        end
+    end)
+end
+
 local data = {
     shusui = {
-        -- master_postinit = shusui_master_postinit,
+        master_postinit = shusui_master_postinit,
         -- onattack = shusui_onattack,
         damage = TUNING.KATANA.TRUE_DAMAGE
     },

@@ -201,6 +201,19 @@ local function OnLoad(inst, data)
             inst:_OnLoad(data)
         end
     end
+
+    -- Re-track the katana after loading
+    inst:DoTaskInTime(0, function()
+        if inst:IsValid() and TheWorld ~= nil then
+            TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
+        end
+    end)
+end
+
+local function OnRemoveKatana(inst)
+    if TheWorld ~= nil then
+        TheWorld:PushEvent("ms_forgetkatana", {name = inst.prefab})
+    end
 end
 
 local function IsShadow(target)
@@ -334,6 +347,16 @@ local MakeKatana = function(data)
         inst._OnLoad = inst.OnLoad
         inst.OnSave = OnSave
         inst.OnLoad = OnLoad
+
+        -- Listen for removal to untrack katana
+        inst:ListenForEvent("onremove", OnRemoveKatana)
+
+        -- Track katana on spawn
+        inst:DoTaskInTime(0, function()
+            if inst:IsValid() and TheWorld ~= nil then
+                TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
+            end
+        end)
 
         MakeHauntableLaunch(inst)
 

@@ -5,7 +5,10 @@ GLOBAL.setfenv(1, GLOBAL)
 M_CONFIG = {
     Locale = GetModConfigData("locale"),
     EnableSkill = GetModConfigData("enable_skill"),
-    EnableDodge = GetModConfigData("dodge_enable"),
+    SkillControlMode = GetModConfigData("skill_control_mode"),
+    SkillInputTimeout = GetModConfigData("skill_input_timeout"),
+    SkillHoldTime = GetModConfigData("skill_hold_time"),
+    EnableDodge = GetModConfigData("enable_dodge"),
     IsTatsujin = GetModConfigData("is_tatsujin"),
 
     CounterAtkCooldown = GetModConfigData("counter_attack_cooldown_time"),
@@ -24,7 +27,7 @@ M_CONFIG = {
     PutGlassesKey = GetModConfigData("put_glasses_key"),
     ChangeHairStyleKey = GetModConfigData("change_hair_style_key"),
     SkillCancelKey = GetModConfigData("skill_cancel_key"),
-    CounterAttackKey = GetModConfigData("counter_attkack_key"),
+    CounterAttackKey = GetModConfigData("counter_attack_key"),
     QuickSheathKey = GetModConfigData("quick_sheath_key"),
 
     MaxMindPower = GetModConfigData("max_mindpower"),

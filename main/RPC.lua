@@ -22,59 +22,59 @@ local function CanPerformIdleAction(inst)
         and not (inst.sg:HasStateTag("moving") or inst:HasTag("moving"))
 end
 
-local function HandleSkillInput(inst, input_name)
+local function ProcessSkillInput(inst, input_name, input_phase)
     local controller = GetSkillController(inst)
     if controller ~= nil then
-        return controller:HandleSkillInput(input_name)
+        return controller:ExecuteSkillInput(input_name, input_phase)
     end
     return true
 end
 
-local function HandleSkillCancel(inst)
+local function CancelActiveSkill(inst)
     local controller = GetSkillController(inst)
     if controller ~= nil then
-        return controller:CancelSkill()
+        return controller:CancelActiveSkill()
     end
     return true
 end
 
-local function HandleCounterAttack(inst)
+local function StartCounterAttack(inst)
     local controller = GetSkillController(inst)
     if controller ~= nil then
-        return controller:CounterAttack()
+        return controller:StartCounterAttack()
     end
     return true
 end
 
-local function HandleQuickSheath(inst)
+local function PerformQuickSheath(inst)
     local controller = GetSkillController(inst)
     if controller ~= nil then
-        return controller:QuickSheath()
+        return controller:PerformQuickSheath()
     end
     return true
 end
 
 local LouisManutsawee_RPC_HANDLERS = {
     RPC_Handlers = {
-        [SKILL_INPUT.ICHIMONJI] = function(inst)
-            return HandleSkillInput(inst, SKILL_INPUT.ICHIMONJI)
+        [SKILL_INPUT.ICHIMONJI] = function(inst, input_phase)
+            return ProcessSkillInput(inst, SKILL_INPUT.ICHIMONJI, input_phase)
         end,
 
-        [SKILL_INPUT.FLIP] = function(inst)
-            return HandleSkillInput(inst, SKILL_INPUT.FLIP)
+        [SKILL_INPUT.FLIP] = function(inst, input_phase)
+            return ProcessSkillInput(inst, SKILL_INPUT.FLIP, input_phase)
         end,
 
-        [SKILL_INPUT.THRUST] = function(inst)
-            return HandleSkillInput(inst, SKILL_INPUT.THRUST)
+        [SKILL_INPUT.THRUST] = function(inst, input_phase)
+            return ProcessSkillInput(inst, SKILL_INPUT.THRUST, input_phase)
         end,
 
-        [SKILL_INPUT.SORYUHA] = function(inst)
-            return HandleSkillInput(inst, SKILL_INPUT.SORYUHA)
+        [SKILL_INPUT.SORYUHA] = function(inst, input_phase)
+            return ProcessSkillInput(inst, SKILL_INPUT.SORYUHA, input_phase)
         end,
 
-        CounterAttackKey = HandleCounterAttack,
-        SkillCancelKey = HandleSkillCancel,
-        QuickSheathKey = HandleQuickSheath,
+        CounterAttackKey = StartCounterAttack,
+        SkillCancelKey = CancelActiveSkill,
+        QuickSheathKey = PerformQuickSheath,
 
         LevelCheckKey = function(inst)
             local kenjutsuka = inst.components.kenjutsuka

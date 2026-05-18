@@ -267,7 +267,7 @@ end
 
 local OnStartAttack = function(inst, target)
     if inst.components.playerskillcontroller ~= nil then
-        inst.components.playerskillcontroller:ReleaseSkill(target)
+        inst.components.playerskillcontroller:ReleaseActiveSkill(target)
     end
 end
 
@@ -621,11 +621,32 @@ local function CreateSkillData()
             [SKILL_INPUT.ICHIMONJI] = {
                 {
                     skill = SKILL_ID.ISSHIN,
+                    control = SKILL_CONTROL_MODE.COMBO,
                     key_cooldown = INPUT_COOLDOWN.ICHIMONJI,
                     input_level = UNLOCK_LEVEL.ICHIMONJI_INPUT,
                     base_mindpower = 3,
                     blocked_tags = {SKILL_ID.ICHIMONJI, SKILL_ID.ISSHIN, SKILL_ID.RYUSEN},
                     requires_tags = {SKILL_ID.FLIP},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.RYUSEN,
+                    control = SKILL_CONTROL_MODE.SEQUENCE,
+                    key_cooldown = INPUT_COOLDOWN.ICHIMONJI,
+                    input_level = UNLOCK_LEVEL.ICHIMONJI_INPUT,
+                    base_mindpower = 3,
+                    blocked_tags = {SKILL_ID.ICHIMONJI, SKILL_ID.ISSHIN, SKILL_ID.RYUSEN},
+                    sequence_from = SKILL_ID.ICHIMONJI,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.RYUSEN,
+                    control = SKILL_CONTROL_MODE.HOLD,
+                    key_cooldown = INPUT_COOLDOWN.ICHIMONJI,
+                    input_level = UNLOCK_LEVEL.ICHIMONJI_INPUT,
+                    base_mindpower = 3,
+                    blocked_tags = {SKILL_ID.ICHIMONJI, SKILL_ID.ISSHIN, SKILL_ID.RYUSEN},
+                    hold_from = SKILL_ID.ICHIMONJI,
                     weapon_tags = {"katana"},
                 },
                 {
@@ -639,6 +660,7 @@ local function CreateSkillData()
             [SKILL_INPUT.FLIP] = {
                 {
                     skill = SKILL_ID.RYUSEN,
+                    control = SKILL_CONTROL_MODE.COMBO,
                     key_cooldown = INPUT_COOLDOWN.FLIP,
                     input_level = UNLOCK_LEVEL.FLIP_INPUT,
                     base_mindpower = 4,
@@ -648,11 +670,42 @@ local function CreateSkillData()
                 },
                 {
                     skill = SKILL_ID.SUSANOO,
+                    control = SKILL_CONTROL_MODE.COMBO,
                     key_cooldown = INPUT_COOLDOWN.FLIP,
                     input_level = UNLOCK_LEVEL.FLIP_INPUT,
                     base_mindpower = 4,
                     blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
                     requires_tags = {SKILL_ID.THRUST},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.ISSHIN,
+                    control = SKILL_CONTROL_MODE.SEQUENCE,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.ISSHIN,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
+                    sequence_from = SKILL_ID.FLIP,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.HEAVENLYSTRIKE,
+                    control = SKILL_CONTROL_MODE.SEQUENCE,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.HEAVENLYSTRIKE,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                    sequence_from = SKILL_ID.ISSHIN,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.ISSHIN,
+                    control = SKILL_CONTROL_MODE.HOLD,
+                    key_cooldown = INPUT_COOLDOWN.FLIP,
+                    input_level = UNLOCK_LEVEL.ISSHIN,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.FLIP, SKILL_ID.RYUSEN, SKILL_ID.SUSANOO},
+                    hold_from = SKILL_ID.FLIP,
                     weapon_tags = {"katana"},
                 },
                 {
@@ -666,11 +719,42 @@ local function CreateSkillData()
             [SKILL_INPUT.THRUST] = {
                 {
                     skill = SKILL_ID.HEAVENLYSTRIKE,
+                    control = SKILL_CONTROL_MODE.COMBO,
                     key_cooldown = INPUT_COOLDOWN.THRUST,
                     input_level = UNLOCK_LEVEL.THRUST_INPUT,
                     base_mindpower = 4,
                     blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
                     requires_tags = {SKILL_ID.FLIP},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.HEAVENLYSTRIKE,
+                    control = SKILL_CONTROL_MODE.COMBO,
+                    key_cooldown = INPUT_COOLDOWN.THRUST,
+                    input_level = UNLOCK_LEVEL.HEAVENLYSTRIKE,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                    requires_tags = {SKILL_ID.ISSHIN},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.SUSANOO,
+                    control = SKILL_CONTROL_MODE.SEQUENCE,
+                    key_cooldown = INPUT_COOLDOWN.THRUST,
+                    input_level = UNLOCK_LEVEL.THRUST_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                    sequence_from = SKILL_ID.THRUST,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.SUSANOO,
+                    control = SKILL_CONTROL_MODE.HOLD,
+                    key_cooldown = INPUT_COOLDOWN.THRUST,
+                    input_level = UNLOCK_LEVEL.THRUST_INPUT,
+                    base_mindpower = 4,
+                    blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
+                    hold_from = SKILL_ID.THRUST,
                     weapon_tags = {"katana"},
                 },
                 {
@@ -754,10 +838,10 @@ local common_postinit = function(inst)
         N + B = SUSANOO
     ]]
     if M_CONFIG.EnableSkill then
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_INPUT.ICHIMONJI)
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_INPUT.FLIP)
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_INPUT.THRUST)
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SoryuhaKey, SKILL_INPUT.SORYUHA)
+        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_INPUT.ICHIMONJI, M_CONFIG.SkillControlMode)
+        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_INPUT.FLIP, M_CONFIG.SkillControlMode)
+        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_INPUT.THRUST, M_CONFIG.SkillControlMode)
+        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.SoryuhaKey, SKILL_INPUT.SORYUHA, M_CONFIG.SkillControlMode)
         inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
         inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
     end
@@ -770,12 +854,10 @@ local master_postinit = function(inst)
 
     inst.AnimState:SetScale(0.88, 0.9, 1)
 
-    -- for test cmp
-    inst:AddComponent("nilcmp")
-
     inst:AddComponent("hair")
 
     if M_CONFIG.EnableSkill then
+        inst:AddComponent("playerskillrouter")
         inst:AddComponent("playerskillcontroller")
         local Skill = CreateSkillData()
         for _, skill in ipairs(Skill.skills) do
@@ -783,7 +865,7 @@ local master_postinit = function(inst)
         end
         for input_name, routes in pairs(Skill.inputs) do
             for _, route in ipairs(routes) do
-                inst.components.playerskillcontroller:AddInputRoute(input_name, route)
+                inst.components.playerskillrouter:AddInputRoute(input_name, route)
             end
         end
     end

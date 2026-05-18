@@ -12,20 +12,6 @@ local function OnAttackOther(self, inst, data)
     end
 end
 
-local function LevelNotReached(inst, requirelevel)
-    local str = STRINGS.SKILL.UNLOCK_SKILL .. requirelevel
-    inst.components.talker:Say(str, 1, true)
-
-    inst:PushEvent("ms_deactivateskill")
-end
-
-local function MindpowerNotEnough(inst, requiremindpower)
-    local str = STRINGS.SKILL.MINDPOWER_NOT_ENOUGH .. inst.components.kenjutsuka:GetMindpower() .. "/" .. requiremindpower .. "\n "
-    inst.components.talker:Say(str, 1, true)
-
-    inst:PushEvent("ms_deactivateskill")
-end
-
 local Kenjutsuka = Class(function(self, inst)
     assert(TheWorld.ismastersim, "Kenjutsuka should not exist on client")
     assert(inst:HasTag("player"), "Kenjutsuka should add on player")
@@ -60,26 +46,7 @@ local Kenjutsuka = Class(function(self, inst)
     self.inst:ListenForEvent("ms_levelup", self._OnLevelUpHandler)
     self.inst:ListenForEvent("ms_expdelta", self._OnExpDeltaHandler)
     self.inst:ListenForEvent("ms_regenmindpower", self._RegenMindPowerHandler)
-
-    self.inst:ListenForEvent("level_not_reached", LevelNotReached)
-    self.inst:ListenForEvent("mindpower_not_enough", MindpowerNotEnough)
 end)
-
-function Kenjutsuka:IsLevelReached(level)
-    local is_level_reached = (self.level >= level)
-    if not is_level_reached then
-        self.inst:PushEvent("level_not_reached", level)
-    end
-    return is_level_reached
-end
-
-function Kenjutsuka:IsMindpowerEnough(inst, mindpower)
-    local is_mindpower_enough = (self:GetMindpower() >= mindpower)
-    if not is_mindpower_enough then
-        self.inst:PushEvent("mindpower_not_enough", mindpower)
-    end
-    return is_mindpower_enough
-end
 
 function Kenjutsuka:CalculateMaxLevel()
     local max_level = 0

@@ -206,6 +206,22 @@ local tier3_cooldown_options = {
     {description="360", data = 360},
 }
 
+local skill_input_timeout_options = {
+    {description="0.3", data = 0.3},
+    {description="0.5", data = 0.5},
+    {description="0.8", data = 0.8},
+    {description="1.0", data = 1.0},
+    {description="1.5", data = 1.5},
+}
+
+local skill_hold_time_options = {
+    {description="0.3", data = 0.3},
+    {description="0.5", data = 0.5},
+    {description="0.8", data = 0.8},
+    {description="1.0", data = 1.0},
+    {description="1.5", data = 1.5},
+}
+
 configuration_options = {
 	AddTitle("Options", "设定", "設定"),
     {
@@ -263,7 +279,7 @@ configuration_options = {
         default = "Default",
     },
     {
-        name = "dodge_enable",
+        name = "enable_dodge",
         label = en_zh("Dodge Ability", "闪避技能", "閃避技能"),
         hover = en_zh("Left click to dodge to the mouse direction.", "左键点击闪避到鼠标方向位置", "左鍵點擊閃避到滑鼠方向位置"),
         options = options_enable,
@@ -362,6 +378,31 @@ configuration_options = {
         options = options_enable,
         default = true,
 	},
+    {
+        name = "skill_control_mode",
+        label = en_zh("Skill Control", "技能控制方案", "技能控制方案"),
+        hover = en_zh("Choose how chained skills are triggered.", "选择后续剑技的触发方式。", "選擇後續劍技的觸發方式。"),
+        options = {
+            {description = en_zh("Key Combo", "按键组合", "按鍵組合"), data = "combo", hover = en_zh("Press a leading skill key, then press the next skill key.", "前置按键 + 后续按键。", "前置按鍵 + 後續按鍵。")},
+            {description = en_zh("Key Sequence", "按键序列", "按鍵序列"), data = "sequence", hover = en_zh("Quickly press the same skill key again to advance the chain.", "快速重复按同一个按键推进连段。", "快速重複按同一個按鍵推進連段。")},
+            {description = en_zh("Hold Key", "长按按键", "長按按鍵"), data = "hold", hover = en_zh("Hold a skill key to advance from the leading route.", "按住前置按键超过指定时间触发后续路由。", "按住前置按鍵超過指定時間觸發後續路由。")},
+        },
+        default = "combo",
+    },
+    {
+        name = "skill_input_timeout",
+        label = en_zh("Skill Input Timeout", "技能输入窗口", "技能輸入窗口"),
+        hover = en_zh("Time allowed between chained skill inputs.", "连段输入之间允许的时间。", "連段輸入之間允許的時間。"),
+        options = skill_input_timeout_options,
+        default = 0.8,
+    },
+    {
+        name = "skill_hold_time",
+        label = en_zh("Skill Hold Time", "技能长按时间", "技能長按時間"),
+        hover = en_zh("Hold duration needed to trigger the next route.", "长按触发后续路由所需时间。", "長按觸發後續路由所需時間。"),
+        options = skill_hold_time_options,
+        default = 0.5,
+    },
 	{
         name = "ichimonji_key",
         label = en_zh("ICHIMONJI Button", "一文字 按键", "一文字 按鍵"),
@@ -456,8 +497,8 @@ configuration_options = {
     },
     {
         name = "soryuha_cooldown_time",
-        label = en_zh("SORYUHA Cooldown time(s).", "双龙破冷却时间", "雙龍破冷卻時間"),
-        hover = en_zh("Set SORYUHA cooldown time.", "设置双龙破冷却时间", "設定雙龍破冷卻時間"),
+        label = en_zh("SORYUHA Cooldown time(s).", "苍龙破冷却时间", "雙龍破冷卻時間"),
+        hover = en_zh("Set SORYUHA cooldown time.", "设置苍龙破冷却时间", "設定雙龍破冷卻時間"),
         options = skill_cooldown_options,
         default = 45,
     },
@@ -477,7 +518,7 @@ configuration_options = {
     },
     AddTitle("Other Keys 󰀮", "其它按键 󰀮", "其它按鍵 󰀮"),
     {
-        name = "counter_attkack_key",
+        name = "counter_attack_key",
         label = en_zh("Counter Attack Skill Button", "反击技能 按键", "反擊技能 按鍵"),
         hover = en_zh("Counter Attack", "反击技能", "反擊技能"),
         default = 122,

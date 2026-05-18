@@ -4,73 +4,73 @@ return {
 	{
 		REPAIRBOAT =
 		{
-			GENERIC = "She's floating just fine right now.",
+			GENERIC = "船还很精神呢，先不用给它包扎啦。",
 		},
 		EMBARK =
 		{
-			INUSE = "Hey, get back here!",
+			INUSE = "哇！那艘船已经有人啦，等一下下。",
 		},
 		INSPECTBOAT =
 		{
-			INUSE = "I should wait my turn.",
+			INUSE = "前面有人检查中，露易丝会乖乖排队的。",
 		},
 		OPEN_CRAFTING  =
 		{
-			FLOODED = "Ugh, water ruins everything!",
+			FLOODED = "水漫成这样，手艺再好也会打滑呀……",
 		},
 	},
 
-	ANNOUNCE_MAGIC_FAIL = "Why won't it work!!",
+	ANNOUNCE_MAGIC_FAIL = "咦？术式没听话，像付丧神闹别扭一样。",
 
-	ANNOUNCE_SHARX = "Hey! Stop splashing around out there!",
+	ANNOUNCE_SHARX = "海里有东西在闹腾，拔刀前先保持距离。",
 
-	ANNOUNCE_TREASURE = "\"X\" marks the spot!",
-	ANNOUNCE_TREASURE_DISCOVER = "\"X\" marks the spot!",
-	ANNOUNCE_MORETREASURE = "This day just got better.",
-	ANNOUNCE_OTHER_WORLD_TREASURE = "This doesn't look like a map of this place.",
-	ANNOUNCE_OTHER_WORLD_PLANT = "It won't grow. Maybe I should burn it instead.",
+	ANNOUNCE_TREASURE = "X 就是宝物的眨眼暗号，haha！",
+	ANNOUNCE_TREASURE_DISCOVER = "找到了！宝藏在这里闪闪发光耶。",
+	ANNOUNCE_MORETREASURE = "今天运气像抽到大吉签一样，超棒。",
+	ANNOUNCE_OTHER_WORLD_TREASURE = "这张图不是这里的海域，像误入隠れ里了。",
+	ANNOUNCE_OTHER_WORLD_PLANT = "它不适合这片土，硬种下去会可怜的。",
 
 	ANNOUNCE_IA_MESSAGEBOTTLE =
 	{
-		"The message is faded. I can't read it.",
+		"字被海水亲到糊掉了，读不出来呢。",
 	},
-	ANNOUNCE_VOLCANO_ERUPT = "The fiery mountain speaks!",
-	ANNOUNCE_MAPWRAP_WARN = "That fog looks pretty dense.",
-	ANNOUNCE_MAPWRAP_LOSECONTROL = "Uh oh. Which way was I going again?",
-	ANNOUNCE_MAPWRAP_RETURN = "I couldn't see a thing in there!",
-	ANNOUNCE_CRAB_ESCAPE = "Shoot! It got away!",
-	ANNOUNCE_TRAWL_FULL = "My trawl is ready to reel in.",
-	ANNOUNCE_BOAT_DAMAGED = "My boat is wounded!",
-	ANNOUNCE_BOAT_SINKING = "I'm going down!",
-	ANNOUNCE_BOAT_SINKING_IMMINENT = "Goodbye cruel world!",
-	ANNOUNCE_WAVE_BOOST = "Weeee!",
+	ANNOUNCE_VOLCANO_ERUPT = "火山开口啦，“神明”发怒了！",
+	ANNOUNCE_MAPWRAP_WARN = "雾好厚，剑尖都像被藏起来了。",
+	ANNOUNCE_MAPWRAP_LOSECONTROL = "糟糕，方向感被狸猫偷走了吗？",
+	ANNOUNCE_MAPWRAP_RETURN = "呼，终于出来了，眼睛差点变成蚊香圈。",
+	ANNOUNCE_CRAB_ESCAPE = "哎呀，横着跑掉了，真会耍小聪明。",
+	ANNOUNCE_TRAWL_FULL = "拖网满啦，收获时间到～",
+	ANNOUNCE_BOAT_DAMAGED = "船受伤了，剑士也要会温柔修补。",
+	ANNOUNCE_BOAT_SINKING = "不妙，海面在邀请她下去玩了……！",
+	ANNOUNCE_BOAT_SINKING_IMMINENT = "哇啊，船要沉了！先别写辞世句啦！",
+	ANNOUNCE_WAVE_BOOST = "乘浪一闪，出发～！",
 
-	ANNOUNCE_WHALE_HUNT_BEAST_NEARBY = "Ooo, there's a big fishie nearby.",
-	ANNOUNCE_WHALE_HUNT_LOST_TRAIL = "Grr, I lost it!",
-	ANNOUNCE_WHALE_HUNT_LOST_TRAIL_SPRING = "The water's too rough to see!",
+	ANNOUNCE_WHALE_HUNT_BEAST_NEARBY = "附近有大家伙的气息，像海坊主巡夜呢。",
+	ANNOUNCE_WHALE_HUNT_LOST_TRAIL = "气泡断掉了，追踪失败，呜。",
+	ANNOUNCE_WHALE_HUNT_LOST_TRAIL_SPRING = "春浪太乱，连剑士的眼睛也会被骗过去。",
 
 	DESCRIBE = {
 
-		FLOTSAM = "It's out there, but I'm over here.",
+		FLOTSAM = "漂在那里耶，要是剑鞘能变成钩子就好了。",
 		SUNKEN_BOAT =
 		{
-			ABANDONED = "Where'd they go?",
-			GENERIC = "Someone out there is all wet.",
+			ABANDONED = "船主不见了……有点像浦岛太郎的后续呢。",
+			GENERIC = "那艘船湿漉漉地等人说话。",
 		},
-		SUNKEN_BOAT_BURNT = "Double whammy.",
+		SUNKEN_BOAT_BURNT = "又沉又焦，太惨啦。",
 
-		BOAT_LOGRAFT = "Campfire wood has other uses, apparently!",
-		BOAT_RAFT = "It would be unwise to light this on fire while at sea.",
-		BOAT_ROW = "Rowing? Really?",
-		BOAT_CARGO = "I can carry so many flammables on this.",
-		BOAT_ARMOURED = "Nothing's gonna take a bite out of this boat.",
-		BOAT_ENCRUSTED = "Crumbly.",
-		CAPTAINHAT = "I no longer have that sinking feeling.",
+		BOAT_LOGRAFT = "木头排排站，勉强算船，haha。",
+		BOAT_RAFT = "朴素但是可靠，像练习用竹刀一样。",
+		BOAT_ROW = "要用手臂修行吗？好吧，露易丝不会输。",
+		BOAT_CARGO = "能装好多东西，便当、材料、还有备用的勇气。",
+		BOAT_ARMOURED = "厚实得像穿了胴甲，安心感上升！",
+		BOAT_ENCRUSTED = "贝壳黏得好认真，像小小的海边结界。",
+		CAPTAINHAT = "戴上它，海风都喊她船长大人啦。",
 
-		BOAT_TORCH = "Strangely not for torching boats.",
-		BOAT_LANTERN = "Light without a flame. I don't like it one bit.",
-		BOATREPAIRKIT = "This should patch up any little leaks.",
-		BOATCANNON = "I wonder if I can start fires with this?",
+		BOAT_TORCH = "夜航的小火苗，别把船吓到哦。",
+		BOAT_LANTERN = "冷冷的光也不错，像狐火借来照路。",
+		BOATREPAIRKIT = "小裂缝交给它，温柔补好。",
+		BOATCANNON = "哇，远距离居合？不对，是大炮啦。",
 
 		BOTTLELANTERN = "The light is so cold and alien.",
 		BIOLUMINESCENCE = "It's a cold light. Not like a flame at all.",
