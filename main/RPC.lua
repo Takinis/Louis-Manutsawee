@@ -56,6 +56,10 @@ end
 
 local LouisManutsawee_RPC_HANDLERS = {
     RPC_Handlers = {
+        [SKILL_RPC.SKILL_INPUT] = function(inst, input_name, input_phase)
+            return ProcessSkillInput(inst, input_name, input_phase)
+        end,
+
         [SKILL_INPUT.ICHIMONJI] = function(inst, input_phase)
             return ProcessSkillInput(inst, SKILL_INPUT.ICHIMONJI, input_phase)
         end,
@@ -68,8 +72,8 @@ local LouisManutsawee_RPC_HANDLERS = {
             return ProcessSkillInput(inst, SKILL_INPUT.THRUST, input_phase)
         end,
 
-        [SKILL_INPUT.SORYUHA] = function(inst, input_phase)
-            return ProcessSkillInput(inst, SKILL_INPUT.SORYUHA, input_phase)
+        [SKILL_INPUT.IMMORTALSLASH] = function(inst, input_phase)
+            return ProcessSkillInput(inst, SKILL_INPUT.IMMORTALSLASH, input_phase)
         end,
 
         CounterAttackKey = StartCounterAttack,
@@ -107,6 +111,13 @@ local LouisManutsawee_RPC_HANDLERS = {
             if CanPerformIdleAction(inst) and not inst.components.timer:TimerExists("put_glasses_cd") then
                 inst.components.timer:StartTimer("put_glasses_cd", 1)
                 inst:PushEventInTime(.1, "put_glasses")
+            end
+            return true
+        end,
+
+        SyncKatanaSpelltype = function(inst, spelltype)
+            if checkstring(spelltype) then
+                inst.spelltype = spelltype
             end
             return true
         end,

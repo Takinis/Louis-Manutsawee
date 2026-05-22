@@ -574,6 +574,47 @@ local function CreateSkillData()
         },
 
         {
+            id = SKILL_ID.IMMORTALSLASH,
+            tag = SKILL_ID.IMMORTALSLASH,
+            state = SKILL_ID.IMMORTALSLASH,
+            level = UNLOCK_LEVEL.IMMORTALSLASH,
+            mindpower = 20,
+            cooldown_name = SKILL_ID.IMMORTALSLASH,
+            cooldown_time = M_CONFIG.SoryuhaCooldown,
+            cooldown_effect = "ghostlyelixir_retaliation_dripfx",
+            range = 10,
+            start_message = STRINGS.SKILL.SKILL8START,
+            release = function(inst, target)
+                inst:DoTaskInTime(.1, function(inst)
+                    if not inst:IsValid() then
+                        return
+                    end
+
+                    if inst.components.talker ~= nil then
+                        inst.components.talker:Say(STRINGS.SKILL.SKILL8ATTACK, 2, true)
+                    end
+
+                    local weapon = inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
+                    if weapon ~= nil and weapon.components.spellcaster ~= nil and weapon.IsUnsheath ~= nil and weapon:IsUnsheath() then
+                        weapon.components.spellcaster:CastSpell(inst)
+                    end
+
+                    local sharkboi_swipe_fx = SpawnPrefab("sharkboi_swipe_fx")
+                    sharkboi_swipe_fx.AnimState:SetScale(5, 5, 5)
+                    sharkboi_swipe_fx.AnimState:SetDeltaTimeMultiplier(0.2)
+                    sharkboi_swipe_fx.entity:SetParent(inst.entity)
+                    sharkboi_swipe_fx.Transform:SetPosition(1, 0, 0)
+                    sharkboi_swipe_fx.AnimState:SetMultColour(0, 0, 0, 1)
+                    sharkboi_swipe_fx:Reverse()
+
+                    SkillUtil.SlashFx(inst, target, "shadowstrike_slash_fx", 3)
+                    SkillUtil.AoeAttack(inst, 1, 4)
+                end)
+                return true
+            end,
+        },
+
+        {
             id = SKILL_ID.SORYUHA,
             tag = SKILL_ID.SORYUHA,
             state = SKILL_ID.SORYUHA,
@@ -765,13 +806,44 @@ local function CreateSkillData()
                     blocked_tags = {SKILL_ID.HEAVENLYSTRIKE, SKILL_ID.THRUST, SKILL_ID.SUSANOO},
                 },
             },
-            [SKILL_INPUT.SORYUHA] = {
+            [SKILL_INPUT.IMMORTALSLASH] = {
                 {
                     skill = SKILL_ID.SORYUHA,
-                    key_cooldown = INPUT_COOLDOWN.SORYUHA,
+                    control = SKILL_CONTROL_MODE.SEQUENCE,
+                    key_cooldown = INPUT_COOLDOWN.IMMORTALSLASH,
+                    input_level = UNLOCK_LEVEL.IMMORTALSLASH,
+                    base_mindpower = 20,
+                    blocked_tags = {SKILL_ID.IMMORTALSLASH, SKILL_ID.SORYUHA},
+                    sequence_from = SKILL_ID.IMMORTALSLASH,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.SORYUHA,
+                    control = SKILL_CONTROL_MODE.HOLD,
+                    key_cooldown = INPUT_COOLDOWN.IMMORTALSLASH,
+                    input_level = UNLOCK_LEVEL.IMMORTALSLASH,
+                    base_mindpower = 20,
+                    blocked_tags = {SKILL_ID.IMMORTALSLASH, SKILL_ID.SORYUHA},
+                    hold_from = SKILL_ID.IMMORTALSLASH,
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.SORYUHA,
+                    control = SKILL_CONTROL_MODE.COMBO,
+                    key_cooldown = INPUT_COOLDOWN.IMMORTALSLASH,
                     input_level = UNLOCK_LEVEL.SORYUHA,
                     base_mindpower = 50,
                     blocked_tags = {SKILL_ID.SORYUHA},
+                    requires_tags = {SKILL_ID.IMMORTALSLASH},
+                    weapon_tags = {"katana"},
+                },
+                {
+                    skill = SKILL_ID.IMMORTALSLASH,
+                    key_cooldown = INPUT_COOLDOWN.IMMORTALSLASH,
+                    input_level = UNLOCK_LEVEL.IMMORTALSLASH,
+                    base_mindpower = 20,
+                    blocked_tags = {SKILL_ID.IMMORTALSLASH, SKILL_ID.SORYUHA},
+                    start_cooldown = false,
                     weapon_tags = {"katana"},
                 },
             },
@@ -820,10 +892,11 @@ local common_postinit = function(inst)
     inst:SetComponent("dodger", M_CONFIG.EnableDodge)
 
     inst:AddComponent("playerkeyhandler")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, "LevelCheckKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, "PutGlassesKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, "ChangeHairStyleKey")
-    inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, "QuickSheathKey")
+    local keyhandler = inst.components.playerkeyhandler
+    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, SKILL_RPC.LEVEL_CHECK)
+    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, SKILL_RPC.PUT_GLASSES)
+    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, SKILL_RPC.CHANGE_HAIR_STYLE)
+    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, SKILL_RPC.QUICK_SHEATH)
 
     --[[
         V = ICHIMONJI
@@ -838,12 +911,25 @@ local common_postinit = function(inst)
         N + B = SUSANOO
     ]]
     if M_CONFIG.EnableSkill then
-        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_INPUT.ICHIMONJI, M_CONFIG.SkillControlMode)
-        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_INPUT.FLIP, M_CONFIG.SkillControlMode)
-        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_INPUT.THRUST, M_CONFIG.SkillControlMode)
-        inst.components.playerkeyhandler:AddSkillKeyListener(LouisManutsawee, M_CONFIG.SoryuhaKey, SKILL_INPUT.SORYUHA, M_CONFIG.SkillControlMode)
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, "SkillCancelKey")
-        inst.components.playerkeyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, "CounterAttackKey")
+        if M_CONFIG.SkillControlMode == SKILL_CONTROL_MODE.HOLD then
+            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.ICHIMONJI)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.FLIP)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.THRUST)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.IMMORTALSLASH)
+        elseif M_CONFIG.SkillControlMode == SKILL_CONTROL_MODE.SEQUENCE then
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.ICHIMONJI, "pressed"}, {SKILL_INPUT.ICHIMONJI, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.FlipKey, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.FLIP, "pressed"}, {SKILL_INPUT.FLIP, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.THRUST, "pressed"}, {SKILL_INPUT.THRUST, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.IMMORTALSLASH, "pressed"}, {SKILL_INPUT.IMMORTALSLASH, "sequence"})
+        else
+            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.ICHIMONJI, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.FLIP, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.THRUST, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.IMMORTALSLASH, "pressed")
+        end
+
+        keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, SKILL_RPC.SKILL_CANCEL)
+        keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, SKILL_RPC.COUNTER_ATTACK)
     end
 
     inst:ListenForEvent("setowner", OnSetOwner)

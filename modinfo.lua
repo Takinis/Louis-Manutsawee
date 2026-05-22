@@ -461,9 +461,9 @@ configuration_options = {
 		default = 0,
 	},
     {
-        name = "soryuha_key",
-        label = en_zh("SORYUHA Button", "苍龙破 按键", "蒼龍破 按鍵"),
-        hover = en_zh("SORYUHA skill input.", "苍龙破剑技按键", "蒼龍破劍技按鍵"),
+        name = "immortalslash_key",
+        label = en_zh("IMMORTAL SLASH Button", "不死斩 按键", "不死斬 按鍵"),
+        hover = en_zh("IMMORTAL SLASH skill input. SORYUHA is routed from its second input.", "不死斩剑技按键。苍龙破作为它的第二层路由触发。", "不死斬劍技按鍵。蒼龍破作為它的第二層路由觸發。"),
         default = 104,
         options = keylist,
     },

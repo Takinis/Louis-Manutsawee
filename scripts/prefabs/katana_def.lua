@@ -2,12 +2,14 @@ local SkillUtil = require("utils/skillutil")
 
 -- No one will use it, but I wrote it anyway
 
+local LouisManutsawee = "LouisManutsawee"
+
 local IsUnsheath = function(inst)
     return inst.weaponstatus
 end
 
 local function SheathMode(inst, owner)
-    -- inst.spelltype:set("PULLOUT")
+    SendModRPCToServer(GetModRPC(LouisManutsawee, "SyncKatanaSpelltype"), "PULLOUT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -37,7 +39,7 @@ local function SheathMode(inst, owner)
 end
 
 local function UnsheathMode(inst, owner)
-    -- inst.spelltype:set("INSERT")
+    SendModRPCToServer(GetModRPC(LouisManutsawee, "SyncKatanaSpelltype"), "INSERT")
 
     owner = owner or inst.components.inventoryitem.owner or nil
     if owner ~= nil then
@@ -212,7 +214,7 @@ end
 
 local function OnRemoveKatana(inst)
     if TheWorld ~= nil then
-        TheWorld:PushEvent("ms_forgetkatana", {name = inst.prefab})
+        TheWorld:PushEvent("ms_forgetkatana", {name = inst.prefab, inst = inst})
     end
 end
 
@@ -287,7 +289,6 @@ local MakeKatana = function(data)
         inst:AddTag("weapon")
 
         inst.spelltype = "PULLOUT"
-        -- inst.spelltype:set("PULLOUT")
 
         MakeInventoryFloatable(inst, nil, 0.1)
 

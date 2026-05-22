@@ -26,6 +26,7 @@ SKILL_ID = {
     HEAVENLYSTRIKE = "heavenlystrike",
     RYUSEN = "ryusen",
     SUSANOO = "susanoo",
+    IMMORTALSLASH = "immortalslash",
     SORYUHA = "soryuha",
 }
 
@@ -33,13 +34,23 @@ SKILL_INPUT = {
     ICHIMONJI = SKILL_ID.ICHIMONJI,
     FLIP = SKILL_ID.FLIP,
     THRUST = SKILL_ID.THRUST,
-    SORYUHA = SKILL_ID.SORYUHA,
+    IMMORTALSLASH = SKILL_ID.IMMORTALSLASH,
 }
 
 SKILL_CONTROL_MODE = {
     COMBO = "combo",
     SEQUENCE = "sequence",
     HOLD = "hold",
+}
+
+SKILL_RPC = {
+    SKILL_INPUT = "SkillInputKey",
+    COUNTER_ATTACK = "CounterAttackKey",
+    SKILL_CANCEL = "SkillCancelKey",
+    QUICK_SHEATH = "QuickSheathKey",
+    LEVEL_CHECK = "LevelCheckKey",
+    CHANGE_HAIR_STYLE = "ChangeHairStyleKey",
+    PUT_GLASSES = "PutGlassesKey",
 }
 
 SG_STATE = {
@@ -61,6 +72,7 @@ UNLOCK_LEVEL = {
     ISSHIN = 6,
     RYUSEN = 7,
     SUSANOO = 8,
+    IMMORTALSLASH = 9,
     SORYUHA = 10,
 }
 
@@ -68,5 +80,5 @@ INPUT_COOLDOWN = {
     ICHIMONJI = "ichimonji_key_cd",
     FLIP = "flip_key_cd",
     THRUST = "thrust_key_cd",
-    SORYUHA = "soryuha_key_cd",
+    IMMORTALSLASH = "immortalslash_key_cd",
 }
