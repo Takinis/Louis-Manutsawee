@@ -1,41 +1,20 @@
 require "events"
 GLOBAL.setfenv(1, GLOBAL)
 
---[[
-
-好的，接下来我们重构技能按键的控制。当前投入使用的是“前置技能状态 + 后续输入”。即按键组合。
-
-现在的需求时实现三种按键控制方案：
-
-方案一: 按键组合
-前置按键 + 后续按键。即先按，再按
-KEY_A (第一路由) + KEY_B (触发第二路由)
-同时也实现多个按键组合。
-KEY_A (第一路由) + KEY_B (触发第二路由) + KEY_C (触发第三路由) + xxx
-
-方案二: 按键序列 (快速连按)
-重复按下控键。
-KEY_A (第一路由) ==> KEY_A (触发第二路由)
-同时也实现多个按键序列。
-KEY_A (第一路由) ==> KEY_A (触发第二路由) ==> KEY_A (触发第三路由) ==> xxx
-
-方案三: 长按按键 (长按不动)
-按住某个按键 超过指定时间。
-KEY_A (第一路由) -pressed_time-> (触发第二路由)
-
-在modinfo中可以调整使用的按键控制方案
-
-相关的文件：
-modinfo.lua
-postinit/input.lua
-scripts/components/kenjutsuka.lua
-scripts/components/playerkeyhandler.lua
-scripts/components/playerskillcontroller.lua
-scripts/prefabs/manutsawee.lua
-
-]]
+-- Extends raw key input with three skill control styles:
+-- pressed key routes, quick repeated-key sequences, and hold-key routes.
 
 local TheInput = TheInput
+
+local function MakeKeyPairEvent(prefix, key1, key2)
+    return prefix .. tostring(key1) .. "_" .. tostring(key2)
+end
+
+local function MakeSortedKeyPairEvent(key1, key2)
+    local keys = { key1, key2 }
+    table.sort(keys)
+    return tostring(keys[1]) .. "_" .. tostring(keys[2])
+end
 
 TheInput.special_keys = {}
 TheInput.onspecialkey = EventProcessor()
@@ -55,6 +34,7 @@ TheInput.onholdrawkey = EventProcessor()
 TheInput.onkeyhold = EventProcessor()
 
 local _OnRawKey = TheInput.OnRawKey
+
 function TheInput:OnRawKey(key, down)
     local current_time = GetTime()
     local sequence_handled = false
@@ -64,31 +44,29 @@ function TheInput:OnRawKey(key, down)
 
     if down then
         if self.last_key_released ~= nil and (current_time - self.last_key_release_time <= self.sequence_timeout) then
-            local event_name = "seq_" .. tostring(self.last_key_released) .. "_" .. tostring(key)
+            local event_name = MakeKeyPairEvent("seq_", self.last_key_released, key)
             sequence_handled = self.onkeysequence:HandleEvent(event_name, key, self.last_key_released) or false
         end
 
         self.last_key_released = nil
         self.last_key_release_time = 0
-
         self.pressed_keys[key] = true
 
         for pressed_key, _ in pairs(self.pressed_keys) do
             if pressed_key ~= key then
-                local keys = { key, pressed_key }
-                table.sort(keys)
-                local event = keys[1] .. "_" .. keys[2]
+                local event = MakeSortedKeyPairEvent(key, pressed_key)
 
                 if self.key_combinations[event] then
                     combo_handled = self.onkeycombo:HandleEvent(event, key, pressed_key) or false
-                    if combo_handled then break end
+                    if combo_handled then
+                        break
+                    end
                 end
             end
         end
     else
         self.last_key_released = key
         self.last_key_release_time = current_time
-
         self.pressed_keys[key] = nil
     end
 
@@ -120,7 +98,7 @@ function TheInput:AddHoldKeyHandler(key, hold_time, fn)
     self.hold_keys[key] = true
     self.hold_key_states[event_name] = state
 
-    local handler = function(_key, down)
+    local raw_fn = function(_key, down)
         if key ~= _key then
             return false
         end
@@ -147,28 +125,28 @@ function TheInput:AddHoldKeyHandler(key, hold_time, fn)
             state.task:Cancel()
             state.task = nil
         end
+
         self.onkeyhold:HandleEvent(event_name, key, "released")
         return true
     end
 
-    self.onholdrawkey:AddEventHandler("onholdrawkey", handler)
+    self.onholdrawkey:AddEventHandler("onholdrawkey", raw_fn)
     self.onkeyhold:AddEventHandler(event_name, fn)
-    return handler, event_name, fn, state
+
+    return raw_fn, event_name, fn, state
 end
 
 function TheInput:AddCombinationKeyHandler(key1, key2, fn)
-    local keys = { key1, key2 }
-    table.sort(keys)
-    local event = keys[1] .. "_" .. keys[2]
+    local event = MakeSortedKeyPairEvent(key1, key2)
     self.key_combinations[event] = true
     return self.onkeycombo:AddEventHandler(event, fn)
 end
 
 function TheInput:AddSequentialKeyHandler(key, _key, fn)
-    local event_name = "seq_" .. tostring(key) .. "_" .. tostring(_key)
+    local event_name = MakeKeyPairEvent("seq_", key, _key)
     return self.onkeysequence:AddEventHandler(event_name, fn)
 end
 
 function TheInput:SetSequenceTimeout(timeout)
-    self.sequence_timeout = timeout or 1 -- 默认0.5
+    self.sequence_timeout = timeout or 0.5
 end

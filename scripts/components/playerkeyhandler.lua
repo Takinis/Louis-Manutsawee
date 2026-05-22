@@ -3,6 +3,21 @@ local PlayerKeyHandler = Class(function(self, inst)
     self.handlers = {}
 end)
 
+local unpack = unpack
+
+local function CopyArgs(args, extra)
+    local copied = {}
+    for i = 1, #args do
+        copied[i] = args[i]
+    end
+
+    if extra ~= nil then
+        copied[#copied + 1] = extra
+    end
+
+    return copied
+end
+
 local function IsActiveHUDScreen()
     local screen = TheFrontEnd and TheFrontEnd:GetActiveScreen()
     return screen ~= nil and screen.name == "HUD"
@@ -39,60 +54,50 @@ function PlayerKeyHandler:HandleKeyAction(namespace, action, ...)
     return false
 end
 
-function PlayerKeyHandler:AddKeyListener(namespace, key, action, phase)
+function PlayerKeyHandler:RememberHandler(processor, event, fn, state, remover, remover_args)
+    table.insert(self.handlers, {event = event, fn = fn, processor = processor, state = state, remover = remover, remover_args = remover_args})
+end
+
+function PlayerKeyHandler:AddKeyListener(namespace, key, action, ...)
+    local args = {...}
     local fn = function(_key, down)
         if down and key == _key then
-            return self:HandleKeyAction(namespace, action, phase or "pressed") or false
+            return self:HandleKeyAction(namespace, action, unpack(args)) or false
         end
     end
-    -- Still call AddSpecialKeyHandler to ensure TheInput.special_keys is updated if needed by the mod
+
     TheInput:AddSpecialKeyHandler(key, fn)
-    table.insert(self.handlers, {event = "onspecialkey", fn = fn, processor = TheInput.onspecialkey})
+    self:RememberHandler(TheInput.onspecialkey, "onspecialkey", fn)
 end
 
-function PlayerKeyHandler:AddSkillKeyListener(namespace, key, action, control_mode)
-    control_mode = control_mode or (M_CONFIG ~= nil and M_CONFIG.SkillControlMode) or SKILL_CONTROL_MODE.COMBO
-
-    if control_mode == SKILL_CONTROL_MODE.HOLD then
-        self:AddHoldKeyListener(namespace, key, action, M_CONFIG.SkillHoldTime)
-    elseif control_mode == SKILL_CONTROL_MODE.SEQUENCE then
-        self:AddKeyListener(namespace, key, action, "pressed")
-        self:AddSequentialKeyHandler(namespace, key, key, action, "sequence")
-    else
-        self:AddKeyListener(namespace, key, action, "pressed")
+function PlayerKeyHandler:AddSequenceKeyListener(namespace, key, next_key, action, timeout, pressed_args, sequence_args)
+    if pressed_args ~= nil then
+        self:AddKeyListener(namespace, key, action, unpack(pressed_args))
     end
+
+    local args = sequence_args or pressed_args or {}
+    local fn = function(k1, k2)
+        return self:HandleKeyAction(namespace, action, unpack(args)) or false
+    end
+
+    if TheInput.SetSequenceTimeout ~= nil then
+        TheInput:SetSequenceTimeout(timeout or .5)
+    end
+
+    TheInput:AddSequentialKeyHandler(key, next_key or key, fn)
+
+    local event_name = "seq_" .. tostring(key) .. "_" .. tostring(next_key or key)
+    self:RememberHandler(TheInput.onkeysequence, event_name, fn)
 end
 
-function PlayerKeyHandler:AddHoldKeyListener(namespace, key, action, hold_time)
+function PlayerKeyHandler:AddHoldKeyListener(namespace, key, action, hold_time, ...)
+    local args = {...}
     local fn = function(_key, phase)
-        return self:HandleKeyAction(namespace, action, phase) or false
+        return self:HandleKeyAction(namespace, action, unpack(CopyArgs(args, phase))) or false
     end
 
-    local raw_fn, event_name, _, state = TheInput:AddHoldKeyHandler(key, hold_time, fn)
-    table.insert(self.handlers, {event = "onholdrawkey", fn = raw_fn, processor = TheInput.onholdrawkey, state = state})
-    table.insert(self.handlers, {event = event_name, fn = fn, processor = TheInput.onkeyhold})
-end
-
-function PlayerKeyHandler:AddCombinationKeyListener(namespace, key, _key, action, phase)
-    local fn = function(k1, k2)
-        return self:HandleKeyAction(namespace, action, phase or "combo") or false
-    end
-    TheInput:AddCombinationKeyHandler(key, _key, fn)
-
-    local keys = { key, _key }
-    table.sort(keys)
-    local event = keys[1] .. "_" .. keys[2]
-    table.insert(self.handlers, {event = event, fn = fn, processor = TheInput.onkeycombo})
-end
-
-function PlayerKeyHandler:AddSequentialKeyHandler(namespace, key, _key, action, phase)
-    local fn = function(k1, k2)
-        return self:HandleKeyAction(namespace, action, phase or "sequence") or false
-    end
-    TheInput:AddSequentialKeyHandler(key, _key, fn)
-
-    local event_name = "seq_" .. tostring(key) .. "_" .. tostring(_key)
-    table.insert(self.handlers, {event = event_name, fn = fn, processor = TheInput.onkeysequence})
+    local raw_fn, event_name, hold_fn, state = TheInput:AddHoldKeyHandler(key, hold_time, fn)
+    self:RememberHandler(TheInput, nil, raw_fn, state, TheInput.RemoveHoldKeyHandler, {event_name, hold_fn})
 end
 
 function PlayerKeyHandler:OnRemoveEntity()
@@ -102,7 +107,13 @@ function PlayerKeyHandler:OnRemoveEntity()
             handler.state.task = nil
         end
 
-        if handler.processor and handler.processor.RemoveEventHandler then
+        if handler.remover ~= nil then
+            if handler.remover_args ~= nil then
+                handler.remover(handler.processor, handler.fn, unpack(handler.remover_args))
+            else
+                handler.remover(handler.processor, handler.fn)
+            end
+        elseif handler.processor and handler.processor.RemoveEventHandler then
             handler.processor:RemoveEventHandler(handler.event, handler.fn)
         end
     end

@@ -1,5 +1,4 @@
 local INPUT_COOLDOWN_TIME = 1
-local DEFAULT_INPUT_TIMEOUT = .8
 
 local PlayerSkillRouter = Class(function(self, inst)
     self.inst = inst
@@ -10,7 +9,7 @@ local PlayerSkillRouter = Class(function(self, inst)
         [SKILL_INPUT.ICHIMONJI] = INPUT_COOLDOWN.ICHIMONJI,
         [SKILL_INPUT.FLIP] = INPUT_COOLDOWN.FLIP,
         [SKILL_INPUT.THRUST] = INPUT_COOLDOWN.THRUST,
-        [SKILL_INPUT.SORYUHA] = INPUT_COOLDOWN.SORYUHA,
+        [SKILL_INPUT.IMMORTALSLASH] = INPUT_COOLDOWN.IMMORTALSLASH,
         cancel = "skill_cancel_cd",
     }
     self.input_levels = {}
@@ -108,7 +107,7 @@ end
 function PlayerSkillRouter:BuildRouteContext()
     return {
         active_skill = self:GetCurrentActiveSkill(),
-        control_mode = (M_CONFIG ~= nil and M_CONFIG.SkillControlMode) or SKILL_CONTROL_MODE.COMBO,
+        control_mode = M_CONFIG.SkillControlMode,
     }
 end
 
@@ -168,7 +167,7 @@ end
 function PlayerSkillRouter:ResolveSequentialRoute(input_name)
     local context = self:BuildRouteContext()
     local current_time = GetTime()
-    local timeout = (M_CONFIG ~= nil and M_CONFIG.SkillInputTimeout) or DEFAULT_INPUT_TIMEOUT
+    local timeout = M_CONFIG.SkillInputTimeout
     local routes = self.sequence_routes[input_name]
 
     if routes ~= nil and self.last_input_name == input_name and current_time - self.last_input_time <= timeout then
@@ -211,13 +210,16 @@ function PlayerSkillRouter:ResolveBaseInput(input_name, ignore_cooldown)
     end
 
     local route, reason = self:ResolveBaseRoute(input_name)
+    local context = self:BuildRouteContext()
     return {
         route = route,
         reason = reason,
         input_name = input_name,
         input_level = self:GetInputLevel(input_name),
         base_mindpower = self:GetInputBaseMindpower(input_name),
-        start_cooldown = true,
+        start_cooldown = route == nil or route.start_cooldown ~= false,
+        keep_input_chain = true,
+        mark_last_input = context.control_mode == SKILL_CONTROL_MODE.SEQUENCE,
     }
 end
 
@@ -229,6 +231,7 @@ function PlayerSkillRouter:ResolveSequenceInput(input_name)
             reason = reason,
             input_name = input_name,
             start_cooldown = route ~= nil,
+            keep_input_chain = true,
         }
     end
 

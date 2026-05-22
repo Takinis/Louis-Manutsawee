@@ -260,14 +260,14 @@ function PlayerSkillController:CanActivateSkill(skill)
     return true
 end
 
-function PlayerSkillController:SelectSkill(skill_name)
+function PlayerSkillController:SelectSkill(skill_name, keep_input_chain)
     local skill = self:GetSkillData(skill_name)
     local kenjutsuka = self.inst.components.kenjutsuka
     if skill == nil or kenjutsuka == nil or not self:CanActivateSkill(skill) then
         return false
     end
 
-    self:ClearActiveSkill(false, true)
+    self:ClearActiveSkill(false, keep_input_chain)
     self.inst:AddTag(skill.tag)
     self.active_skill = skill.name
 
@@ -325,7 +325,7 @@ function PlayerSkillController:ExecuteSkillInput(input_name, input_phase)
     end
 
     if input.route ~= nil then
-        return self:SelectSkill(input.route.skill)
+        return self:SelectSkill(input.route.skill, input.keep_input_chain)
     end
 
     return true
@@ -347,7 +347,7 @@ function PlayerSkillController:StartCounterAttack()
 
     local timer = self.inst.components.timer
     if timer ~= nil and not timer:TimerExists("prepare_counter_attack") then
-        timer:StartTimer("prepare_counter_attack", (M_CONFIG ~= nil and M_CONFIG.CounterAtkCooldown) or COUNTER_ATTACK_COOLDOWN_TIME)
+        timer:StartTimer("prepare_counter_attack", M_CONFIG.CounterAtkCooldown or COUNTER_ATTACK_COOLDOWN_TIME)
         self:ClearActiveSkill()
         self.inst.sg:GoToState("start_counter_attack")
     else
