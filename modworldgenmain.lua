@@ -1,5 +1,6 @@
 local modimport = modimport
-local TUNING = TUNING
+local AddLevelPreInitAny = AddLevelPreInitAny
+local AddRoomPreInit = AddRoomPreInit
 local AddTaskPreInit = AddTaskPreInit
 local AddTaskSetPreInit = AddTaskSetPreInit
 GLOBAL.setfenv(1, GLOBAL)
@@ -13,228 +14,212 @@ modimport("scripts/map/m_layouts")
 modimport("scripts/map/rooms/dev_cemetery")
 modimport("postinit/screens/worldgenscreen")
 
--- print("Loading ScaleRoomChoices")
+local SHIPWRECKED_WORLD_SIZE = 800
+local WORLD_SIZE_HOOK_FLAG = "manutsawee_shipwrecked_world_size_hook"
 
--- -- Worldgen tweak: scale all shipwrecked island tasks to ~2x size.
--- if AddTaskPreInit ~= nil then
---     local function ScaleRoomChoices(room_choices, scale)
---         if type(room_choices) ~= "table" then
---             return
---         end
---         for key, value in pairs(room_choices) do
---             if type(value) == "number" then
---                 if value > 0 then
---                     room_choices[key] = math.max(1, math.floor(value * scale + 0.5))
---                 else
---                     room_choices[key] = 0
---                 end
---             elseif type(value) == "table" then
---                 ScaleRoomChoices(value, scale)
---             end
---         end
---     end
+local function IsShipwreckedWorld()
+    local dimensions = rawget(_G, "CONSTANT_DIMENSIONS")
+    return dimensions ~= nil
+        and rawget(_G, "IA_worldtype") == dimensions.SHIPWRECKED
+end
 
---     local SW_TASKS_TO_SCALE = {
---         "HomeIslandVerySmall",
---         "HomeIslandSmall",
---         "HomeIslandSmallBoon",
---         "HomeIslandMed",
---         "HomeIslandLarge",
---         "HomeIslandLargeBoon",
---         "DesertIsland",
---         "JungleMarsh",
---         "BeachJingleS",
---         "BeachBothJungles",
---         "BeachJungleD",
---         "BeachSavanna",
---         "GreentipA",
---         "GreentipB",
---         "HalfGreen",
---         "BeachRockyland",
---         "LotsaGrass",
---         "AllBeige",
---         "BeachMarsh",
---         "Verdant",
---         "VerdantMost",
---         "Vert",
---         "Florida Timeshare",
---         "JungleSRockyland",
---         "JungleSSavanna",
---         "JungleBeige",
---         "FullofBees",
---         "JungleDense",
---         "JungleDMarsh",
---         "JungleDRockyland",
---         "JungleDRockyMarsh",
---         "JungleDSavanna",
---         "JungleDSavRock",
---         "HotNSticky",
---         "Marshy",
---         "NoGreen A",
---         "NoGreen B",
---         "Savanna",
---         "DoydoyIslandGirl",
---         "DoydoyIslandBoy",
---         "IslandCasino",
---         "KelpForest",
---         "GreatShoal",
---         "IslandMeadowBeeQueen",
---         "BeachPalmForest",
---         "ThemeMarshCity",
---         "Spiderland",
---         "IslandJungleMonkeyHell",
---         "IslandJungleCritterCrunch",
---         "IslandJungleShroomin",
---         "IslandJungleRockyDrop",
---         "IslandJungleNoBerry",
---         "IslandJungleNoRock",
---         "IslandJungleNoMushroom",
---         "IslandJungleNoFlowers",
---         "IslandJungleEvilFlowers",
---         "IslandJungleSkeleton",
---         "IslandBeachCrabTown",
---         "IslandBeachDunes",
---         "IslandBeachGrassy",
---         "IslandBeachSappy",
---         "IslandBeachRocky",
---         "IslandBeachLimpety",
---         "IslandBeachForest",
---         "IslandBeachSpider",
---         "IslandBeachNoFlowers",
---         "IslandBeachNoLimpets",
---         "IslandBeachNoCrabbits",
---         "IslandMangroveOxBoon",
---         "IslandMeadowBees",
---         "IslandMeadowCarroty",
---         "IslandRockyTallBeach",
---         "IslandRockyTallJungle",
---         "PirateBounty",
---         "IslandOasis",
---         "ShellingOut",
---         "Cranium",
---         "CrashZone",
---         "SharkHome",
---         -- Coral cluster island.
---         "BarrierReef",
---     }
+local function InstallShipwreckedWorldSizeHook()
+    if rawget(_G, WORLD_SIZE_HOOK_FLAG) then
+        return
+    end
 
---     local e = {
---         -- Ore-rich islands.
---         "IslandRockyGold",
---         "Rockyland",
---         -- Bamboo-dense island.
---         -- High-resource islands only:
---         "IslandJungleBamboozled",
---     }
+    local worldsim = rawget(_G, "WorldSim")
+    local metatable = worldsim ~= nil and getmetatable(worldsim) or nil
+    local methods = metatable ~= nil and metatable.__index or nil
+    if type(methods) ~= "table" then
+        return
+    end
 
---     AddTaskPreInit("IslandParadise", function(task)
---         if task ~= nil and task.room_choices ~= nil then
---             ScaleRoomChoices(task.room_choices, 4)
---         end
---     end)
+    local SetWorldSize = methods.SetWorldSize
+    local ConvertToTileMap = methods.ConvertToTileMap
+    if type(SetWorldSize) ~= "function" or type(ConvertToTileMap) ~= "function" then
+        return
+    end
 
---     AddTaskPreInit("PiggyParadise", function(task)
---         if task ~= nil and task.room_choices ~= nil then
---             ScaleRoomChoices(task.room_choices, 3)
---         end
---     end)
+    methods.SetWorldSize = function(sim, width, height, ...)
+        if IsShipwreckedWorld() then
+            width = math.max(tonumber(width) or 0, SHIPWRECKED_WORLD_SIZE)
+            height = math.max(tonumber(height) or 0, SHIPWRECKED_WORLD_SIZE)
+        end
+        return SetWorldSize(sim, width, height, ...)
+    end
 
---     for _, task_name in ipairs(e) do
---         AddTaskPreInit(task_name, function(task)
---             if task ~= nil and task.room_choices ~= nil then
---                 ScaleRoomChoices(task.room_choices, 2)
---             end
---         end)
---     end
+    methods.ConvertToTileMap = function(sim, size, ...)
+        if IsShipwreckedWorld() then
+            size = math.max(tonumber(size) or 0, SHIPWRECKED_WORLD_SIZE)
+        end
+        return ConvertToTileMap(sim, size, ...)
+    end
 
---     for _, task_name in ipairs(SW_TASKS_TO_SCALE) do
---         AddTaskPreInit(task_name, function(task)
---             if task ~= nil and task.room_choices ~= nil then
---                 ScaleRoomChoices(task.room_choices, 2)
---             end
---         end)
---     end
--- end
+    rawset(_G, WORLD_SIZE_HOOK_FLAG, true)
+end
 
--- require("map/storygen")
--- require("map/network")
+InstallShipwreckedWorldSizeHook()
 
--- -- Worldgen tweak: scale ocean spacing/area between islands to ~2x.
--- -- This is separate from island task scaling above.
--- if Story ~= nil and Story.SeperateIslandsByOcean ~= nil then
---     local _SeperateIslandsByOcean = Story.SeperateIslandsByOcean
---     Story.SeperateIslandsByOcean = function(story, startnode, endnode, links)
---         print("Scaling ocean links for separate islands by ocean...")
---         local ocean_links = tonumber(links) or 0
---         if ocean_links > 0 then
---             ocean_links = math.max(1, math.floor(ocean_links * 2 + 0.5))
---         end
---         return _SeperateIslandsByOcean(story, startnode, endnode, ocean_links)
---     end
--- end
+if AddLevelPreInitAny ~= nil then
+    AddLevelPreInitAny(function(level)
+        InstallShipwreckedWorldSizeHook()
 
--- -- Worldgen tweak: merge selectedtasks into tasks, then clear selectedtasks.
--- -- Implemented via hook (AddTaskSetPreInit), not by directly editing taskset logic.
--- AddTaskSetPreInit("shipwrecked", function(taskset)
---     if taskset == nil then
---         return
---     end
+        local overrides = level ~= nil and level.overrides or nil
+        if overrides ~= nil and overrides.task_set == "shipwrecked" then
+            overrides.world_size = "huge"
+        end
+    end)
+end
 
---     taskset.tasks = taskset.tasks or {}
---     taskset.selectedtasks = taskset.selectedtasks or {}
+if AddTaskPreInit ~= nil then
+    local function ScaleRoomChoices(room_choices, scale)
+        for key, value in pairs(room_choices or {}) do
+            if type(value) == "number" then
+                room_choices[key] = value * scale
+            elseif type(value) == "table" then
+                ScaleRoomChoices(value, scale)
+            end
+        end
+    end
 
---     -- High-resource tasks picked from selectedtasks:
---     -- pig houses, five-biome rich island, ore-rich, dense bamboo, coral/ocean resource clusters.
---     local PROMOTE_TASKS = {
---         PiggyParadise = true,
---         IslandParadise = true,
---         IslandRockyGold = true,
---         Rockyland = true,
---         IslandJungleBamboozled = true,
---         BarrierReef = true,
---         GreatShoal = true,
---         KelpForest = true,
---     }
+    for _, task_name in ipairs({
+        "IslandJungleBamboozled",
+        "PiggyParadise",
+        "IslandParadise"
+    }) do
+        AddTaskPreInit(task_name, function(task)
+            ScaleRoomChoices(task ~= nil and task.room_choices or nil, 2)
+        end)
+    end
 
---     local exists = {}
---     for _, task_name in ipairs(taskset.tasks) do
---         exists[task_name] = true
---     end
+    AddTaskPreInit("IslandParadise", function(task)
+        if task == nil then
+            return
+        end
 
---     -- Promote selected high-resource tasks into fixed tasks.
---     for _, selected in ipairs(taskset.selectedtasks) do
---         local choices = selected and selected.task_choices
---         if type(choices) == "table" then
---             for _, task_name in ipairs(choices) do
---                 if type(task_name) == "string" and PROMOTE_TASKS[task_name] and not exists[task_name] then
---                     table.insert(taskset.tasks, task_name)
---                     exists[task_name] = true
---                 end
---             end
---         end
---     end
+        local outer_rooms = task.room_choices or {}
+        ScaleRoomChoices(outer_rooms, 2)
+        -- outer_rooms.Jungle = math.max(0, (outer_rooms.Jungle or 0) - 1)
 
---     -- Remove promoted tasks from selected choices, keep the rest randomized.
---     for _, selected in ipairs(taskset.selectedtasks) do
---         local choices = selected and selected.task_choices
---         if type(choices) == "table" then
---             local filtered = {}
---             for _, task_name in ipairs(choices) do
---                 if not PROMOTE_TASKS[task_name] then
---                     table.insert(filtered, task_name)
---                 end
---             end
---             selected.task_choices = filtered
+        -- task.gen_method = "lagoon"
+        -- task.room_choices = {
+        --     {
+        --         Jungle = 1,
+        --     },
+        --     outer_rooms,
+        -- }
+        -- task.hub_room = nil
+        -- task.make_loop = nil
+        -- task.crosslink_factor = nil
+        -- task.room_bg = WORLD_TILES.BEACH
+        -- task.background_room = nil
+    end)
 
---             -- Clamp min/max against new choice count to avoid invalid sampling.
---             local n = #filtered
---             if n == 0 then
---                 selected.min = 0
---                 selected.max = 0
---             else
---                 selected.min = math.max(0, math.min(selected.min or 0, n))
---                 selected.max = math.max(selected.min, math.min(selected.max or n, n))
---             end
---         end
---     end
--- end)
+    AddTaskPreInit("BeachPalmForest", function(task)
+        if task == nil then
+            return
+        end
+
+        local room_choices = task.room_choices or {}
+        local room_count = math.max(1, tonumber(room_choices.BeachPalmForest) or 1) * 2
+        local inner_count = math.ceil(room_count / 2)
+
+        task.gen_method = "lagoon"
+        task.room_choices = {
+            {
+                BeachPalmForest = inner_count,
+            },
+            {
+                BeachPalmForest = room_count - inner_count,
+            },
+        }
+        task.room_bg = WORLD_TILES.BEACH
+        task.background_room = "BeachPalmForest"
+    end)
+
+    AddTaskPreInit("Vert", function(task)
+        local room_choices = task ~= nil and task.room_choices or nil
+        local count = room_choices ~= nil and room_choices.MeadowCarroty or nil
+        if type(count) == "number" and count > 0 then
+            room_choices.MeadowCarroty = nil
+            room_choices.NoOxMeadow = (room_choices.NoOxMeadow or 0) + count
+        end
+    end)
+end
+
+if AddRoomPreInit ~= nil then
+    AddRoomPreInit("BeachPalmForest", function(room)
+        local contents = room ~= nil and room.contents or nil
+        if contents == nil then
+            return
+        end
+
+        contents.distributepercent = 0.55
+        contents.distributeprefabs = contents.distributeprefabs or {}
+        contents.distributeprefabs.palmtree = 2
+    end)
+end
+
+if AddTaskSetPreInit ~= nil then
+    AddTaskSetPreInit("shipwrecked", function(taskset)
+        if taskset == nil then
+            return
+        end
+
+        taskset.tasks = taskset.tasks or {}
+
+        local selected_tasks_to_keep = {
+            BeachBothJungles = true,
+            Cranium = true,
+            BeachJingleS = true,
+            GreentipA = true,
+            GreentipB = true,
+            HalfGreen = true,
+            LotsaGrass = true,
+            CrashZone = true,
+            VerdantMost = true,
+            PiggyParadise = true,
+            BeachPalmForest = true,
+            JungleSRockyland = true,
+            Spiderland = true,
+            IslandJungleBamboozled = true,
+            JungleDRockyland = true,
+            JungleDRockyMarsh = true,
+            ThemeMarshCity = true,
+            IslandJungleCritterCrunch = true,
+            KelpForest = true,
+            GreatShoal = true,
+            BarrierReef = true,
+            Rockyland = true,
+            IslandJungleMonkeyHell = true,
+            FullofBees = true,
+            IslandJungleRockyDrop = true,
+            IslandJungleEvilFlowers = true,
+            ["NoGreen B"] = true,
+            IslandRockyGold = true,
+            IslandRockyTallBeach = true,
+        }
+
+        local exists = {}
+        for _, task_name in ipairs(taskset.tasks) do
+            exists[task_name] = true
+        end
+
+        if not exists.BeachPalmForest then
+            table.insert(taskset.tasks, "BeachPalmForest")
+            exists.BeachPalmForest = true
+        end
+
+        for _, selected in ipairs(taskset.selectedtasks or {}) do
+            for _, task_name in ipairs(selected.task_choices or {}) do
+                if selected_tasks_to_keep[task_name] and not exists[task_name] then
+                    table.insert(taskset.tasks, task_name)
+                    exists[task_name] = true
+                end
+            end
+        end
+
+        taskset.selectedtasks = {}
+    end)
+end
