@@ -16,7 +16,7 @@ return {
         M_FOXMASK = "What a nice mask!.",
         M_PANTSU = "..?",
         M_SCARF = "It'll be good for when winter comes.",
-        OINC1000000 = "我的无畏舰在哪里？",
+        OINC1000000 = "Where is my dreadnought?",
         RAIKIRI = "What a beautyful sword.",
         SHINAI = "Is this useful?",
         SHIRASAYA = "What a beautyful sword.",
