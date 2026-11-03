@@ -449,6 +449,15 @@ Idle 动画支持三种模式：
 
 ## 开发者参考
 
+### 台词补全
+
+[`tools/speech`](tools/speech/README.md) 提供缺失台词扫描、补写清单导入和翻译同步。导入默认只预览，写入前会检查文件是否变化并备份原文件。
+
+```sh
+npm ci --prefix tools/speech
+node tools/speech/cli.cjs scan --source "/Users/sydney/Desktop/scripts" --output "/tmp/speech-draft.json"
+```
+
 ### 加载顺序
 
 `modmain.lua` 会依次加载：

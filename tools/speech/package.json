@@ -1,0 +1,12 @@
+{
+  "name": "louis-manutsawee-speech-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Review and complete DST character speech without replacing existing dialogue.",
+  "engines": { "node": ">=20" },
+  "scripts": { "test": "node --test test/*.test.cjs" },
+  "dependencies": {
+    "gettext-parser": "8.0.0",
+    "luaparse": "0.3.1"
+  }
+}
