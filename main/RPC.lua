@@ -56,6 +56,55 @@ end
 
 local LouisManutsawee_RPC_HANDLERS = {
     RPC_Handlers = {
+        KiritzukaBossSlam = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:ToggleSlam()
+            end
+            return false
+        end,
+
+        KiritzukaDestruction = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:ToggleDestruction()
+            end
+            return false
+        end,
+
+        KiritzukaHomeRunStart = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:StartHomeRun()
+            end
+            return false
+        end,
+
+        KiritzukaHomeRunRelease = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:ReleaseHomeRun()
+            end
+            return false
+        end,
+
+        KiritzukaCounter = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:StartCounter()
+            end
+            return false
+        end,
+
+        KiritzukaDash = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:ToggleDash()
+            end
+            return false
+        end,
+
+        KiritzukaFlurry = function(inst)
+            if inst ~= nil and inst.prefab == "kiritzuka" then
+                return inst:ToggleFlurry()
+            end
+            return false
+        end,
+
         [SKILL_RPC.SKILL_INPUT] = function(inst, input_name, input_phase)
             return ProcessSkillInput(inst, input_name, input_phase)
         end,
@@ -127,10 +176,14 @@ local LouisManutsawee_RPC_HANDLERS = {
 
     Shard_RPC_Handlers = {
         SyncKatanaSpawnerData = function(shardid, active, name)
-            if active then
-                TheWorld:PushEvent("ms_trackkatana", {name = name})
+            if TheWorld.components.katanaspawner ~= nil then
+                TheWorld.components.katanaspawner:ReceiveShardSync(active, name, shardid)
             else
-                TheWorld:PushEvent("ms_forgetkatana", {name = name})
+                if active then
+                    TheWorld:PushEvent("ms_trackkatana", {name = name})
+                else
+                    TheWorld:PushEvent("ms_forgetkatana", {name = name})
+                end
             end
         end,
 

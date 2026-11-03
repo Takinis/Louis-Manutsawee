@@ -1,6 +1,6 @@
 local function OnSkinsChanged(inst)
     local equip = inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HEAD)
-    if equip == nil then
+    if equip == nil and inst.components.skinheaddress ~= nil then
         local build = inst.components.skinheaddress.headdresses[inst.AnimState:GetBuild()]
         if build ~= nil then
             inst.AnimState:Show("HAT")

@@ -42,17 +42,30 @@ GlassicAPI.SkinHandler.AddModSkin("loading_night_for_four", function(skin, useri
     return true
 end)
 
+GlassicAPI.SkinHandler.AddModSkin("kiritzuka_short_skirt", function(skin, userid)
+    CLOTHING.kiritzuka_short_skirt = {
+        type = "legs",
+		skin_tags = { "CLOTHING_LEGS", "CLOTHING", "BLACK", },
+		symbol_overrides = { "skirt", },
+        rarity = "Glassic",
+        rarity_modifier = "Woven",
+    }
+    return true
+end)
 
--- GlassicAPI.SkinHandler.AddModSkin("maid", function(skin, userid)
---     CLOTHING.maid = {
---         type = "body",
--- 		skin_tags = { "CLOTHING_BODY", "CLOTHING", },
--- 		symbol_overrides = { "arm_lower", "arm_upper", "foot", "leg", "skirt", "torso", "torso_pelvis", },
--- 		symbol_hides = { "arm_upper_skin", },
--- 		rarity = "Spiffy",
---     }
---     return true
--- end)
+GlassicAPI.SkinHandler.AddModSkin("kiritzuka_long_sleeved_top", function(skin, userid)
+    CLOTHING.kiritzuka_long_sleeved_top = {
+        type = "body",
+		skin_tags = { "CLOTHING_BODY", "CLOTHING", "BLACK", },
+		symbol_overrides = { "arm_upper", },
+        rarity = "Glassic",
+        rarity_modifier = "Woven",
+    }
+    return true
+end)
+
+GlassicAPI.SkinHandler.SetCharacterExclusiveSkin("kiritzuka_short_skirt", "kiritzuka")
+GlassicAPI.SkinHandler.SetCharacterExclusiveSkin("kiritzuka_long_sleeved_top", "kiritzuka")
 
 GlassicAPI.SkinHandler.AddModSkins({
     manutsawee = {
@@ -71,6 +84,12 @@ GlassicAPI.SkinHandler.AddModSkins({
         "manutsawee_bocchi",
         "manutsawee_lycoris",
 
+    },
+    kiritzuka = {
+        "kiritzuka_none",
+    },
+    inoue = {
+        "inoue_none",
     },
     cane = {"lcane"},
     yari = {"mnaginata"},

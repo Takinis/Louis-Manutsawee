@@ -27,6 +27,7 @@ local languages = {
 local strings = {
     CHARACTERS = {
         GENERIC = StringUtil.ImportStringsFile("generic", ENV),
+        KIRITZUKA = StringUtil.ImportStringsFile("kiritzuka", ENV),
         MANUTSAWEE = StringUtil.ImportStringsFile("manutsawee", ENV),
     }
 }

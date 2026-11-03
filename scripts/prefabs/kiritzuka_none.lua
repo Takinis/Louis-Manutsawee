@@ -10,11 +10,11 @@ table.insert(prefabs, CreatePrefabSkin("kiritzuka_none", {
     skin_tags = {"BASE", "kiritzuka", },
     skins = {
         normal_skin = "kiritzuka",
-        ghost_skin = "ghost_kiritzuka_build",
+        -- ghost_skin = "ghost_kiritzuka_build",
     },
     assets = {
         Asset("ANIM", "anim/kiritzuka.zip"),
-        Asset("ANIM", "anim/ghost_kiritzuka_build.zip"),
+        -- Asset("ANIM", "anim/ghost_kiritzuka_build.zip"),
     },
 }))
 

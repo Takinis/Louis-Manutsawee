@@ -169,20 +169,6 @@ local skill_cooldown_options = {
     {description="360", data = 360},
 }
 
-local counter_cooldown_options = {
-    {description="0.5", data = 0.5},
-    {description="0.63", data = 0.63},
-    {description="1", data = 1},
-    {description="2", data = 2},
-    {description="3", data = 3},
-    {description="4", data = 4},
-    {description="5", data = 5},
-    {description="10", data = 10},
-    {description="20", data = 20},
-    {description="30", data = 30},
-    {description="60", data = 60},
-}
-
 local tier2_cooldown_options = {
     {description="50", data = 50},
     {description="60", data = 60},
@@ -410,6 +396,41 @@ configuration_options = {
         default = 118,
         options = keylist,
     },
+    {
+        name = "kiritzuka_destroy_key",
+        label = en_zh("Kiritzuka DESTRUCTION Button", "Kiritzuka 破坏 开关", "Kiritzuka 破壞 開關"),
+        hover = en_zh("Toggle whether the slam and dash tear down trees, rocks, walls and buildings in their way. Off each time you load in.", "切换重击和冲刺是否摧毁范围内的树木、岩石、墙和建筑。每次进入游戏默认关闭。", "切換重擊和衝刺是否摧毀範圍內的樹木、岩石、牆和建築。每次進入遊戲預設關閉。"),
+        default = 107,
+        options = keylist,
+    },
+    {
+        name = "kiritzuka_homerun_key",
+        label = en_zh("Kiritzuka HOME RUN Button", "Kiritzuka 全垒打 按键", "Kiritzuka 全壘打 按鍵"),
+        hover = en_zh("Hold to charge, release to swing the way you are facing. The longer the charge, the harder the hit and the further it sends them.", "按住蓄力，松开朝人物面向挥棒。蓄力越久伤害越高，打得越远。", "按住蓄力，放開朝人物面向揮棒。蓄力越久傷害越高，打得越遠。"),
+        default = 106,
+        options = keylist,
+    },
+    {
+        name = "kiritzuka_counter_key",
+        label = en_zh("Kiritzuka COUNTER Button", "Kiritzuka 反击 按键", "Kiritzuka 反擊 按鍵"),
+        hover = en_zh("Hold a stance for a moment; an attack from the front is blocked and swung straight back.", "摆出架势片刻，挡下来自正面的攻击并立刻打回去。", "擺出架勢片刻，擋下來自正面的攻擊並立刻打回去。"),
+        default = 110,
+        options = keylist,
+    },
+    {
+        name = "kiritzuka_dash_key",
+        label = en_zh("Kiritzuka DASH Button", "Kiritzuka 冲刺 按键", "Kiritzuka 衝刺 按鍵"),
+        hover = en_zh("Press to ready the dash, then attack a target to cut through it three times. Press again to cancel.", "按下后准备冲刺，再攻击目标时连续三段穿过目标。再按一次取消。", "按下後準備衝刺，再攻擊目標時連續三段穿過目標。再按一次取消。"),
+        default = 98,
+        options = keylist,
+    },
+    {
+        name = "kiritzuka_flurry_key",
+        label = en_zh("Kiritzuka FLURRY Button", "Kiritzuka 连打 按键", "Kiritzuka 連打 按鍵"),
+        hover = en_zh("Press to ready the flurry, then attack a target: after the first hit she vanishes and afterimages finish the ten hits in a blur. Press again to cancel.", "按下后准备连打，再攻击目标时，第一击后人物消失，由残影极速打完十下。再按一次取消。", "按下後準備連打，再攻擊目標時，第一擊後人物消失，由殘影極速打完十下。再按一次取消。"),
+        default = 108,
+        options = keylist,
+    },
 	{
         name = "flip_key",
         label = en_zh("FLIP Button", "翻斩 按键", "翻斬 按鍵"),
@@ -467,12 +488,12 @@ configuration_options = {
         default = 104,
         options = keylist,
     },
-	{
-        name = "counter_attack_cooldown_time",
-        label = en_zh("Counter Cooldown time(s).", "反击冷却时间", "反擊冷卻時間"),
-        hover = en_zh("Set counter attack cooldown time.", "设置反击技能冷却时间", "設定反擊技能冷卻時間"),
-        options = counter_cooldown_options,
-        default = 0.63,
+    {
+        name = "kiritzuka_slam_key",
+        label = en_zh("Kiritzuka SLAM Button", "Kiritzuka 重击 按键", "Kiritzuka 重擊 按鍵"),
+        hover = en_zh("Press to ready the slam, then attack a target to leap at it. Press again to cancel.", "按下后准备重击，再攻击目标时跃向目标。再按一次取消。", "按下後準備重擊，再攻擊目標時躍向目標。再按一次取消。"),
+        default = 118,
+        options = keylist,
     },
 	{
         name = "ichimonji_cooldown_time",
@@ -520,7 +541,7 @@ configuration_options = {
     {
         name = "counter_attack_key",
         label = en_zh("Counter Attack Skill Button", "反击技能 按键", "反擊技能 按鍵"),
-        hover = en_zh("Counter Attack", "反击技能", "反擊技能"),
+        hover = en_zh("Toggle predictive counters before incoming attacks. No cooldown.", "按下开启预判反击，再次按下关闭。攻击命中前反击，无冷却。", "按下開啟預判反擊，再次按下關閉。攻擊命中前反擊，無冷卻。"),
         default = 122,
         options = keylist,
     },

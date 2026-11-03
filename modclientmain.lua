@@ -7,6 +7,8 @@ local AssetUtil = require("utils/assetutil")
 
 PrefabFiles = {
 	"manutsawee_none",
+	"kiritzuka_none",
+	"inoue_none",
 }
 
 Assets = {
@@ -19,9 +21,49 @@ Assets = {
     Asset("IMAGE", "images/hud/m_inventoryimages.tex"),
     Asset("ATLAS", "images/hud/m_inventoryimages.xml"),
     Asset("ATLAS_BUILD", "images/hud/m_inventoryimages.xml", 256),  -- for minisign
+    Asset("IMAGE", "images/hud/crowbar.tex"),
+    Asset("ATLAS", "images/hud/crowbar.xml"),
+    Asset("ATLAS_BUILD", "images/hud/crowbar.xml", 256),  -- for minisign
+    Asset("IMAGE", "images/hud/rebar.tex"),
+    Asset("ATLAS", "images/hud/rebar.xml"),
+    Asset("ATLAS_BUILD", "images/hud/rebar.xml", 256),  -- for minisign
+
+    Asset("IMAGE", "images/hud/baseballbat.tex"),
+    Asset("ATLAS", "images/hud/baseballbat.xml"),
+    Asset("ATLAS_BUILD", "images/hud/baseballbat.xml", 256),  -- for minisign
 
     Asset("IMAGE", "images/saveslot_portraits/manutsawee.tex"),
     Asset("ATLAS", "images/saveslot_portraits/manutsawee.xml"),
+
+    Asset("IMAGE", "images/saveslot_portraits/kiritzuka.tex"),
+    Asset("ATLAS", "images/saveslot_portraits/kiritzuka.xml"),
+
+    Asset("IMAGE", "images/names_kiritzuka.tex"),
+    Asset("ATLAS", "images/names_kiritzuka.xml"),
+    Asset("IMAGE", "images/names_gold_kiritzuka.tex"),
+    Asset("ATLAS", "images/names_gold_kiritzuka.xml"),
+    Asset("IMAGE", "images/names_gold_cn_kiritzuka.tex"),
+    Asset("ATLAS", "images/names_gold_cn_kiritzuka.xml"),
+
+    Asset("IMAGE", "bigportraits/kiritzuka.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_none.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_none.xml"),
+
+    Asset("IMAGE", "images/saveslot_portraits/inoue.tex"),
+    Asset("ATLAS", "images/saveslot_portraits/inoue.xml"),
+
+    Asset("IMAGE", "images/names_inoue.tex"),
+    Asset("ATLAS", "images/names_inoue.xml"),
+    Asset("IMAGE", "images/names_gold_inoue.tex"),
+    Asset("ATLAS", "images/names_gold_inoue.xml"),
+    Asset("IMAGE", "images/names_gold_cn_inoue.tex"),
+    Asset("ATLAS", "images/names_gold_cn_inoue.xml"),
+
+    Asset("IMAGE", "bigportraits/inoue.tex"),
+    Asset("ATLAS", "bigportraits/inoue.xml"),
+    Asset("IMAGE", "bigportraits/inoue_none.tex"),
+    Asset("ATLAS", "bigportraits/inoue_none.xml"),
 
     Asset("IMAGE", "images/names_gold_manutsawee.tex"),
     Asset("ATLAS", "images/names_gold_manutsawee.xml"),
@@ -62,6 +104,12 @@ Assets = {
 
     Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_night_for_four.xml"),
 	Asset("PKGREF", "images/bg_loading_loading_night_for_four.tex"),
+
+    Asset("DYNAMIC_ANIM", "anim/dynamic/kiritzuka_short_skirt.zip"),
+	Asset("PKGREF", "anim/dynamic/kiritzuka_short_skirt.dyn"),
+
+    Asset("DYNAMIC_ANIM", "anim/dynamic/kiritzuka_long_sleeved_top.zip"),
+	Asset("PKGREF", "anim/dynamic/kiritzuka_long_sleeved_top.dyn"),
 }
 
 PreloadAssets = {}
@@ -74,6 +122,10 @@ modimport("main/characters")
 modimport("main/prefabskin")
 
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
+AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")
+AssetUtil.RegisterImageAtlas("images/hud/rebar.xml")
+AssetUtil.RegisterImageAtlas("images/hud/baseballbat.xml")
+
 AssetUtil.LoadAssets(ENV.modname, {
     Asset("ANIM", "anim/player_idles_wortox_nice.zip"), -- fuck
     Asset("ANIM", "anim/player_idles_bocchi.zip"),
@@ -89,4 +141,5 @@ if ENV.is_mim_enabled then
     modimport("postinit/widgets/redux/loadersexplorerpanel")
     modimport("postinit/widgets/skinspuppet")
     modimport("postinit/widgets/redux/loadingwidget")
+    modimport("postinit/components/skinner")
 end

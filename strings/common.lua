@@ -8,9 +8,35 @@ return {
         MDODGE = "Dodge",
     },
     CHARACTER_ABOUTME = {
+        inoue = "Inoue decides when to fire now. At least until the bullets run out.",
+        kiritzuka = "Shino is just an ordinary girl. At least, that's what she thinks.",
         manutsawee = "Manutsawee is too long so just louis.",
     },
     CHARACTER_BIOS = {
+        inoue = {
+            {
+                desc = "Inoue was brave, just like in the movies: she broke the balance.\n\nOn one mission she killed every target without the organization's approval to save a teammate. To protect itself, the organization put all the blame on her.\n\nWith a bullet in her arm, she fled through the rainy night into an unremarkable alley, where a manhole with no cover opened like an old clock. She jumped in.",
+                title = "The Alley",
+            },
+        },
+        kiritzuka = {
+            {
+                desc = "October 10",
+                title = "Birthday",
+            },
+            {
+                desc = "Omelette, Ice Cream, California Roll, Unagi, Blue Cap, Berries, Juice Berries",
+                title = "Favorite Food",
+            },
+            {
+                desc = "Shino often skips class and gets into fights. With her extraordinary natural strength, it's no wonder everyone thinks she's a delinquent girl. She doesn't see what the big deal is.",
+                title = "School Life",
+            },
+            {
+                desc = "Like any ordinary high school girl, Shino enjoys wandering around town and collecting things she finds interesting. Her collection just happens to include crowbars, rebar, baseball bats, and pipe wrenches. Perfectly normal, if you ask her.",
+                title = "Free Time",
+            },
+        },
         manutsawee = {
             {
                 desc = "October 9",
@@ -35,13 +61,41 @@ return {
         TIER2_COOLDOWN = "Tier2: Cooldown",
         TIER3_COOLDOWN = "Tier3: Cooldown",
         SKILL_LATER = "Later...",
+        KIRITZUKA_SLAM_READY = "Ready. Next swing's the big one.",
+        KIRITZUKA_SLAM_COOLDOWN = "Not yet... still catching my breath.",
+        KIRITZUKA_SLAM_CANCEL = "Eh, next time.",
+        KIRITZUKA_WEAPON_REFUSE = {
+            "This thing? Not my style.",
+            "I need something I can actually swing.",
+            "Not with this. Where's my bat?",
+        },
+        KIRITZUKA_SLAM_SEA = {
+            "Slam out here? We'd all go swimming.",
+            "Nothing solid to land on out here.",
+            "I'm not putting a hole in the only floor we've got.",
+        },
+        KIRITZUKA_WORM_DISGUST = {
+            "Ugh, so gross in there.",
+            "I'm never getting this smell out.",
+            "Blegh. Never again.",
+        },
+        KIRITZUKA_DESTROY_ON = "Anything in the way goes.",
+        KIRITZUKA_DESTROY_OFF = "Fine, I'll leave the scenery alone.",
+        KIRITZUKA_HOMERUN_READY = "Batter up.",
+        KIRITZUKA_HOMERUN_COOLDOWN = "Arms need a breather.",
+        KIRITZUKA_HOMERUN_FULL = "Outta the park!",
+        KIRITZUKA_COUNTER_COOLDOWN = "Hands are still ringing.",
+        KIRITZUKA_DASH_READY = "Point me at something.",
+        KIRITZUKA_DASH_COOLDOWN = "My legs need a second.",
+        KIRITZUKA_FLURRY_READY = "Don't blink.",
+        KIRITZUKA_FLURRY_COOLDOWN = "My wrists need a second.",
         MINDPOWER_NOT_ENOUGH = "Not now!\n󰀈: ",
         UNLOCK_SKILL = "[UNLOCK] 󰀍: ",
         HAIRTOOSHORT = "My hair isn't long enough for this.",
         SKILL_CANCEL = "Maybe next time",
         REFUSE_RELEASE = "I don't wanna do this.",
         REJECTED = "It won't collaborate to let me release the move.",
-        SORYUHA_FRAGILE = "它可能承受不了这股力量。",
+        SORYUHA_FRAGILE = "It may not be able to withstand this power.",
         SKILL1ATTACK = "ICHIMONJI",
         SKILL1START = "ICHI NO KATA!\n󰀈: ",
         SKILL2ATTACK = "HABAKIRI!!",
@@ -62,18 +116,28 @@ return {
         SKILL9START = "SORYUHA NO KATA!\n󰀈: ",
     },
     CHARACTER_DESCRIPTIONS = {
+        inoue = "*Former second-in-command\n*Cold and efficient\n*A precise shot",
+        kiritzuka = "*Born with extraordinary physical strength\n*Frequently skips class\n*Often mistaken for a delinquent girl",
         manutsawee = "*Art of the Japanese sword\n*Brave\n*Benevolent",
     },
     CHARACTER_NAMES = {
+        inoue = "Inoue",
+        kiritzuka = "Kiritzuka",
         manutsawee = "Manutsawee",
     },
     CHARACTER_QUOTES = {
+        inoue = "\"Results are what matter.\"",
+        kiritzuka = "\"You're boring.\"",
         manutsawee = "\"Where There's a Will, There's a Way\"",
     },
     CHARACTER_SURVIVABILITY = {
+        inoue = "󰀕Grim",
+        kiritzuka = "󰀕Grim",
         manutsawee = "󰀕Grim",
     },
     CHARACTER_TITLES = {
+        inoue = "The Runaway Agent",
+        kiritzuka = "The Delinquent Girl",
         manutsawee = "The Red-Eyes Girl",
     },
     M_LOADINGTIPS = {
@@ -94,8 +158,10 @@ return {
         HITOKIRI = "Nihiru",
         HMINGOT = "Hot Mysterious Ingot",
         KAGE = "Kage",
+        INOUE = "Inoue Takina",
         KATANABLADE = "Katana Blade",
         KATANABODY = "Katana shape",
+        KIRITZUKA = "Kiritzuka Shino",
         KOSHIRAE = "Sakakura",
         MANUTSAWEE = "Manutsawee",
         MINGOT = "Mysterious Ingot",
@@ -142,6 +208,10 @@ return {
         lcane = "Would you believe a stick fell from the moon?",
         loading_dev_cemetery = "Players are still waiting for the update, while the authors have already gone to their graves.",
         loading_night_for_four = "A quiet and relaxing evening.",
+        inoue_none = "Inoue's usual outfit.",
+        kiritzuka_long_sleeved_top = "A long-sleeved top for Shino.",
+        kiritzuka_none = "Shino's usual outfit.",
+        kiritzuka_short_skirt = "A short skirt for Shino.",
         manutsawee_bocchi = "Goto Hitori's sportswear from Bocchi The Rock",
         manutsawee_fuka = "Fu hua hawk of the fog's outfit from honkai impact 3d",
         manutsawee_jinbei = "Japan's outfit.",
@@ -161,6 +231,10 @@ return {
     SKIN_NAMES = {
         lcane = "Moon cane",
         loading_dev_cemetery = "Mod abandoned (permanently unpatched)",
+        inoue_none = "Inoue",
+        kiritzuka_long_sleeved_top = "Shino's long-sleeved top",
+        kiritzuka_none = "Shino",
+        kiritzuka_short_skirt = "Shino's short skirt",
         loading_night_for_four = "Night for four",
         manutsawee_bocchi = "Guitar Hero",
         manutsawee_fuka = "Cosplay",
@@ -179,6 +253,10 @@ return {
         mnaginata = "Naginata",
     },
     SKIN_QUOTES = {
+        inoue_none = "\"Nobody's reimbursing my ammo out here.\"",
+        kiritzuka_long_sleeved_top = "\"I'm keeping my hands in my sleeves until it warms up.\"",
+        kiritzuka_none = "\"How am I a delinquent? I didn't lengthen my skirt.\"",
+        kiritzuka_short_skirt = "\"A little shorter. That doesn't mean I'm running another lap.\"",
         manutsawee_bocchi = "\"mu mu mu mu mu mu mu mu\"",
         manutsawee_fuka = "\"I'm a kung-fu master now.\"",
         manutsawee_jinbei = "\"Relax Feeling good.\"",
@@ -195,11 +273,17 @@ return {
         manutsawee_yukatalong = "\"Kon ni chi wa ..?'\"",
     },
     UI = {
+        KIRITZUKA_MOMENTUM = {
+            STAGE_CALM = "Calm",
+            STAGE_RISE = "Rising",
+            STAGE_SURGE = "Surging",
+            STAGE_ZENITH = "Zenith",
+        },
         WORLDGEN = {
             M_NOUNS = {
                 "Louis's pantsu...",
                 "Takina's pistol...",
-                "Kiritzuka's sushi...",
+                "Shino's sushi...",
             },
             PL_NOUNS = {
                 "Millionpiece Oinc",
