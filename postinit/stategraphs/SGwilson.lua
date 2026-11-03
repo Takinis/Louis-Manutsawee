@@ -326,6 +326,7 @@ local states = {
 
 			inst.components.dodger.last_dodge_time = GetTime()
             inst.components.dodger.dodge_time:set(not inst.components.dodger.dodge_time:value())
+            inst:StartDodgeAfterImage()
             inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
 
             inst.sg.statemem.is_katana_equip = is_katana_equip
@@ -437,6 +438,10 @@ end
 local function fn(sg)
     local attack_actionhandler = sg.actionhandlers[ACTIONS.ATTACK].deststate
     sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action, ...)
+        -- SGkiritzuka routes this character.
+        if inst.prefab == "kiritzuka" then
+            return attack_actionhandler(inst, action, ...)
+        end
         inst.sg.mem.localchainattack = not action.forced or nil
         local playercontroller = inst.components.playercontroller
         local attack_tag =

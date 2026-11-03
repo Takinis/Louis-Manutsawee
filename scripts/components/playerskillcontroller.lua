@@ -1,4 +1,3 @@
-local COUNTER_ATTACK_COOLDOWN_TIME = .63
 local QUICK_SHEATH_LEVEL = 2
 local DEFAULT_COOLDOWN_EFFECT = "ghostlyelixir_retaliation_dripfx"
 
@@ -10,9 +9,14 @@ local function PushDeactivateSkillEvent(inst)
     inst:PushEvent("ms_deactivateskill")
 end
 
+local function OnDeactivateSkills(inst)
+    inst.components.playerskillcontroller:SetAutoCounterAttack(false)
+    PushDeactivateSkillEvent(inst)
+end
+
 local function OnUnEquip(inst, data)
     if data ~= nil and data.eslot == EQUIPSLOTS.HANDS then
-        PushDeactivateSkillEvent(inst)
+        OnDeactivateSkills(inst)
     end
 end
 
@@ -101,6 +105,7 @@ end
 local PlayerSkillController = Class(function(self, inst)
     self.inst = inst
     self.active_skill = nil
+    self.auto_counter_attack = false
     self.skills = {}
     self.skill_order = {}
     self.tag_to_skill = {}
@@ -111,9 +116,9 @@ local PlayerSkillController = Class(function(self, inst)
 
     inst:ListenForEvent("unequip", OnUnEquip)
     inst:ListenForEvent("timerdone", OnTimerDone)
-    inst:ListenForEvent("mounted", PushDeactivateSkillEvent)
-    inst:ListenForEvent("death", PushDeactivateSkillEvent)
-    inst:ListenForEvent("ms_playerreroll", PushDeactivateSkillEvent)
+    inst:ListenForEvent("mounted", OnDeactivateSkills)
+    inst:ListenForEvent("death", OnDeactivateSkills)
+    inst:ListenForEvent("ms_playerreroll", OnDeactivateSkills)
     inst:ListenForEvent("ms_deactivateskill", self._on_deactivate_skill)
 end)
 
@@ -332,6 +337,7 @@ function PlayerSkillController:ExecuteSkillInput(input_name, input_phase)
 end
 
 function PlayerSkillController:CancelActiveSkill()
+    self:SetAutoCounterAttack(false)
     if self:CanStartSkillInput() and not self:IsInputOnCooldown("cancel") then
         self:StartInputCooldownTimer("cancel")
         self:ClearActiveSkill()
@@ -340,21 +346,39 @@ function PlayerSkillController:CancelActiveSkill()
     return true
 end
 
+function PlayerSkillController:SetAutoCounterAttack(enabled)
+    self.auto_counter_attack = enabled
+    local predictor = self.inst.components.counterpredictor
+    if predictor ~= nil then
+        predictor:SetEnabled(enabled)
+    end
+end
+
+function PlayerSkillController:CanAutoCounterAttack()
+    local sg = self.inst.sg
+    return self.auto_counter_attack
+        and self:CanStartSkillInput()
+        and sg ~= nil
+        and (not sg:HasStateTag("nointerrupt") or sg:HasStateTag("counterattack"))
+        and not sg:HasStateTag("noattack")
+end
+
 function PlayerSkillController:StartCounterAttack()
+    if self.auto_counter_attack then
+        self:SetAutoCounterAttack(false)
+        return true
+    end
+
     if not self:CanStartSkillInput() then
         return true
     end
 
-    local timer = self.inst.components.timer
-    if timer ~= nil and not timer:TimerExists("prepare_counter_attack") then
-        timer:StartTimer("prepare_counter_attack", M_CONFIG.CounterAtkCooldown or COUNTER_ATTACK_COOLDOWN_TIME)
-        self:ClearActiveSkill()
-        self.inst.sg:GoToState("start_counter_attack")
-    else
-        self:Say(STRINGS.SKILL.COOLDOWN)
-        self:ClearActiveSkill()
+    if self.inst.sg:HasStateTag("nointerrupt") or self.inst.sg:HasStateTag("noattack") then
+        return true
     end
 
+    self:ClearActiveSkill()
+    self:SetAutoCounterAttack(true)
     return true
 end
 
@@ -483,12 +507,13 @@ function PlayerSkillController:ClearActiveSkill(later, keep_input_chain)
 end
 
 function PlayerSkillController:OnRemoveEntity()
+    self:SetAutoCounterAttack(false)
     self:ClearActiveSkill()
     self.inst:RemoveEventCallback("unequip", OnUnEquip)
     self.inst:RemoveEventCallback("timerdone", OnTimerDone)
-    self.inst:RemoveEventCallback("mounted", PushDeactivateSkillEvent)
-    self.inst:RemoveEventCallback("death", PushDeactivateSkillEvent)
-    self.inst:RemoveEventCallback("ms_playerreroll", PushDeactivateSkillEvent)
+    self.inst:RemoveEventCallback("mounted", OnDeactivateSkills)
+    self.inst:RemoveEventCallback("death", OnDeactivateSkills)
+    self.inst:RemoveEventCallback("ms_playerreroll", OnDeactivateSkills)
     self.inst:RemoveEventCallback("ms_deactivateskill", self._on_deactivate_skill)
 end
 

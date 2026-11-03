@@ -4,10 +4,11 @@ return {
     states = {
         State{
             name = "counter_attack",
-            tags = {"attack", "doing", "busy", "nointerrupt", "nopredict", "nomorph"},
+            tags = {"attack", "doing", "busy", "nointerrupt", "nopredict", "nomorph", "counterattack"},
 
             onenter = function(inst, target)
                 inst.components.locomotor:Stop()
+                inst:ClearBufferedAction()
 
                 local sparks = SpawnPrefab("sparks")
                 sparks.Transform:SetPosition(inst:GetPosition():Get())
@@ -22,7 +23,6 @@ return {
                 SkillUtil.GroundPoundFx(inst, .6)
                 inst.SoundEmitter:PlaySound("turnoftides/common/together/moon_glass/mine")
 
-                inst.inspskill = true
                 inst.components.combat:SetRange(4)
 
                 if target ~= nil and target:IsValid() then
@@ -33,9 +33,14 @@ return {
 
             timeline = {
                 TimeEvent(3 * FRAMES, function(inst)
+                    inst.sg.statemem.counter_committed = true
+                    local target = inst.sg.statemem.target
+                    if target == nil or not target:IsValid()
+                        or (target.components.health ~= nil and target.components.health:IsDead()) then
+                        return
+                    end
                     inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-                    inst:PerformBufferedAction()
-                    inst.components.combat:DoAttack(inst.sg.statemem.target)
+                    inst.components.combat:DoAttack(target)
                 end),
 
                 TimeEvent(4 * FRAMES, function(inst)
@@ -64,8 +69,6 @@ return {
                     inst.components.combat:SetTarget(nil)
                     inst.components.combat:SetRange(TUNING.DEFAULT_ATTACK_RANGE)
                 end
-                inst.inspskill = nil
-                inst.components.timer:StartTimer("counter_attack", M_CONFIG.CounterAtkCooldown or .63)
             end,
         },
     },

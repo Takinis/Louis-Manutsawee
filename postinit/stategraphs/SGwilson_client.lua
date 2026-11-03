@@ -25,7 +25,6 @@ local actionhandlers = {
 }
 
 local states = {
-
 --------------------------------------katana-----------------------------------------------
     State{
         name = "mkatana",
@@ -409,6 +408,7 @@ local states = {
 
             inst.components.dodger.last_dodge_time = GetTime()
             inst.components.dodger.dodge_time:set(inst.components.dodger.dodge_time:value() == false and true or false)
+            inst:StartDodgeAfterImage()
 
             inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
 
@@ -461,6 +461,10 @@ end
 local function fn(sg)
     local attack_actionhandler = sg.actionhandlers[ACTIONS.ATTACK].deststate
     sg.actionhandlers[ACTIONS.ATTACK].deststate = function(inst, action, ...)
+        -- SGkiritzuka routes this character.
+        if inst.prefab == "kiritzuka" then
+            return attack_actionhandler(inst, action, ...)
+        end
         if not (inst.sg:HasStateTag("attack") and action.target == inst.sg.statemem.attacktarget or IsEntityDead(inst)) then
             local weapon = inst.replica.inventory:GetEquippedItem(EQUIPSLOTS.HANDS)
             local inventoryitem = weapon.replica.inventoryitem

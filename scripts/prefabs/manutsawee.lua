@@ -1,5 +1,6 @@
 local MakePlayerCharacter = require "prefabs/player_common"
 local SkillUtil = require("utils/skillutil")
+local AfterImageUtil = require("utils/afterimageutil")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -869,6 +870,27 @@ local function OnSetOwner(inst)
     end
 end
 
+local DODGE_AFTER_IMAGE = {
+    anims = {"atk_leap_pre", "slide_pre", "slide_loop"},
+    duration = TUNING.DEFAULT_DODGE_TIMEOUT,
+    spacing = 0.6,
+    lifetime = 0.2,
+    peak_alpha = 0.6,
+    colour = {0.75, 0.75, 0.72},
+    max_jump = 3.6,
+}
+
+local function StartDodgeAfterImage(inst)
+    AfterImageUtil.Start(inst, DODGE_AFTER_IMAGE)
+end
+
+local function OnDodgeTimeDirty(inst)
+    -- A predicting owner already started from its own mdodge state.
+    if inst.sg == nil then
+        StartDodgeAfterImage(inst)
+    end
+end
+
 local common_postinit = function(inst)
     inst.MiniMapEntity:SetIcon("manutsawee.tex")
 
@@ -878,6 +900,7 @@ local common_postinit = function(inst)
     inst:AddTag("dodger")
 
     inst:AddTag("naughtychild")
+    inst:AddTag("monkeycurse_immune")
 
     inst:AddTag("stronggrip")
 
@@ -890,6 +913,11 @@ local common_postinit = function(inst)
     inst:SetTag("msurfer", IA_ENABLED)
 
     inst:SetComponent("dodger", M_CONFIG.EnableDodge)
+
+    inst.StartDodgeAfterImage = StartDodgeAfterImage
+    if M_CONFIG.EnableDodge and not TheWorld.ismastersim then
+        inst:ListenForEvent("dodgetimedirty", OnDodgeTimeDirty)
+    end
 
     inst:AddComponent("playerkeyhandler")
     local keyhandler = inst.components.playerkeyhandler
@@ -945,6 +973,7 @@ local master_postinit = function(inst)
     if M_CONFIG.EnableSkill then
         inst:AddComponent("playerskillrouter")
         inst:AddComponent("playerskillcontroller")
+        inst:AddComponent("counterpredictor")
         local Skill = CreateSkillData()
         for _, skill in ipairs(Skill.skills) do
             inst.components.playerskillcontroller:AddSkill(skill.id, skill)

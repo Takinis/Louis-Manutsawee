@@ -3,14 +3,6 @@ local AddComponentPostInit = AddComponentPostInit
 local Combat = require("components/combat")
 GLOBAL.setfenv(1, GLOBAL)
 
-local function StopBlockWindow(inst)
-    if inst._blockactive_task ~= nil then
-        inst._blockactive_task:Cancel()
-        inst._blockactive_task = nil
-    end
-    inst._blockcount = 0
-end
-
 AddComponentPostInit("combat", function(self, inst)
 
     local _GetAttacked = self.GetAttacked
@@ -19,62 +11,43 @@ AddComponentPostInit("combat", function(self, inst)
             return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
         end
 
-        if attacker ~= nil then
-            inst:ForceFacePoint(attacker.Transform:GetWorldPosition())
-        end
-
-        -- Keep block count per-player to avoid cross-instance interference.
-        inst._blockcount = inst._blockcount or 0
-
         if inst.sg:HasStateTag("mdodgeing") or inst.inspskill then
             SkillUtil.AddFollowerFx(inst, "electricchargedfx")
             return true
         end
 
-        local counter_window = inst.sg:HasStateTag("counteractive") or inst.sg:HasStateTag("startblockparry")
-        if not counter_window and inst._blockcount > 0 then
-            StopBlockWindow(inst)
+        local predictor = inst.components.counterpredictor
+        if predictor ~= nil and predictor:ShouldBlockAttack(attacker, weapon) then
+            SkillUtil.AddFollowerFx(inst, "electricchargedfx")
+            return true
         end
-
-        if counter_window and weapon ~= nil then
-            if inst._blockcount > 0 then
-                StopBlockWindow(inst)
-                inst:PushEvent("heavenlystrike")
-                if attacker ~= nil and attacker.components.combat ~= nil then
-                    SkillUtil.AoeAttack(inst, 2, 3)
-                    SkillUtil.GroundPoundFx(inst, .6)
-                    SkillUtil.SlashFx(inst, attacker, "shadowstrike_slash_fx", 1.6)
-                end
-                return true
-            else
-                inst:PushEvent("blockparry")
-                inst._blockcount = inst._blockcount + 1
-                if inst._blockactive_task ~= nil then
-                    inst._blockactive_task:Cancel()
-                end
-                inst._blockactive_task = inst:DoTaskInTime(3, function(inst_)
-                    StopBlockWindow(inst_)
-                end)
-                return true
-            end
-        end
-
-        if counter_window and inst.sg:HasStateTag("counteractive") then
-            if attacker ~= nil and attacker:IsValid() then
-                inst.sg:GoToState("counter_attack", attacker)
-                return true
-            end
-            return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
-        else
-            return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
-        end
+        return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
     end
 
 end)
 
+local _GetAttacked_Internal = Combat.GetAttacked_Internal
+function Combat:GetAttacked_Internal(attacker, damage, weapon, stimuli, spdamage, ...)
+    if self.inst.InterceptHit ~= nil and self.inst:InterceptHit(attacker, damage, weapon, stimuli, spdamage, ...) then
+        return true
+    end
+    -- A redirected hit comes back through here on whichever target actually takes it.
+    if attacker ~= nil and attacker.OffsetTargetDefense ~= nil and damage ~= nil
+        and self.redirectdamagefn == nil and self.inst.components.health ~= nil then
+        damage, spdamage = attacker:OffsetTargetDefense(self.inst, weapon, damage, spdamage)
+    end
+    return _GetAttacked_Internal(self, attacker, damage, weapon, stimuli, spdamage, ...)
+end
+
 local _StartAttack = Combat.StartAttack
 function Combat:StartAttack(...)
     _StartAttack(self, ...)
+
+    local target = self.target
+    local predictor = target ~= nil and target:IsValid() and target.components.counterpredictor or nil
+    if predictor ~= nil then
+        predictor:WatchAttacker(self.inst)
+    end
 
     if self.startattackfn ~= nil and self.forcefacing and self.target ~= nil and self.target:IsValid() then
         self.startattackfn(self.inst, self.target)

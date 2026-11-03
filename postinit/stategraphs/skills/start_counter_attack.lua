@@ -1,7 +1,10 @@
 return {
     events = {
         EventHandler("start_counter_attack", function(inst)
-            inst.sg:GoToState("start_counter_attack")
+            local controller = inst.components.playerskillcontroller
+            if controller ~= nil then
+                controller:StartCounterAttack()
+            end
         end),
     },
     states = {
@@ -16,16 +19,6 @@ return {
                 inst.SoundEmitter:PlaySound("turnoftides/common/together/boat/jump")
             end,
 
-            timeline = {
-                TimeEvent(.5 * FRAMES, function(inst)
-                    inst.sg:AddStateTag("counteractive")
-                end),
-                TimeEvent(8 * FRAMES, function(inst)
-                    inst.sg:RemoveStateTag("counteractive")
-                    inst.sg:AddStateTag("startblockparry")
-                end),
-            },
-
             events = {
                 EventHandler("animover", function(inst)
                     if inst.AnimState:AnimDone() then
@@ -33,10 +26,6 @@ return {
                     end
                 end),
             },
-
-            onexit = function(inst)
-                inst.sg:RemoveStateTag("startblockparry")
-            end,
         },
     },
 }
