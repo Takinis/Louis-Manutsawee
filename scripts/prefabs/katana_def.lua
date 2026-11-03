@@ -22,11 +22,11 @@ local function SheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build)
     inst.AnimState:SetBuild(inst.build)
 
-    if IA_ENABLED or PL_ENABLED then
-        if inst.components.tool ~= nil then
-            inst:RemoveComponent("tool")
-        end
-    end
+    -- if IA_ENABLED or PL_ENABLED then
+    --     if inst.components.tool ~= nil then
+    --         inst:RemoveComponent("tool")
+    --     end
+    -- end
 
     inst.components.weapon:SetRange(1, 1.5)
     inst.components.equippable.walkspeedmult = 1.25
@@ -52,12 +52,12 @@ local function UnsheathMode(inst, owner)
     inst.AnimState:SetBank(inst.build .. "2")
     inst.AnimState:SetBuild(inst.build .. "2")
 
-    if IA_ENABLED or PL_ENABLED then
-        if inst.components.tool == nil then
-            inst:AddComponent("tool")
-            inst.components.tool:SetAction(ACTIONS.HACK, 3)
-        end
-    end
+    -- if IA_ENABLED or PL_ENABLED then
+    --     if inst.components.tool == nil then
+    --         inst:AddComponent("tool")
+    --         inst.components.tool:SetAction(ACTIONS.HACK, 3)
+    --     end
+    -- end
 
     inst.components.weapon:SetRange(.8, 1.2)
     inst.components.equippable.walkspeedmult = 1.15

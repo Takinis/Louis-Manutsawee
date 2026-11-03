@@ -24,7 +24,7 @@ AddPrefabPostInit("fissure", function(inst)
         local pt = inst:GetPosition()
         if katanaspawner ~= nil and not katanaspawner:GetKatana("mortalblade") then
             local mortalblade = inst.components.lootdropper:SpawnLootPrefab("mortalblade", pt)
-            TheWorld:PushEvent("ms_trackkatana", {name = mortalblade.prefab})
+            TheWorld:PushEvent("ms_trackkatana", {name = mortalblade.prefab, inst = mortalblade})
         end
     end
 

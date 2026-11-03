@@ -24,59 +24,50 @@ local function StopFx(inst)
     end
 end
 
+local function SaveSpecialData(inst, data)
+    if inst.first_time_unsheathed ~= nil then
+        data.first_time_unsheathed = inst.first_time_unsheathed
+    end
+end
+
+local function LoadSpecialData(inst, data)
+    if data ~= nil and inst.first_time_unsheathed ~= nil then
+        inst.first_time_unsheathed = data.first_time_unsheathed
+    end
+end
+
+local function AttachSpecialSaveLoad(inst)
+    local prev_save = inst._OnSave
+    local prev_load = inst._OnLoad
+
+    inst._OnSave = function(inst, data)
+        if prev_save ~= nil then
+            prev_save(inst, data)
+        end
+        SaveSpecialData(inst, data)
+    end
+
+    inst._OnLoad = function(inst, data)
+        if prev_load ~= nil then
+            prev_load(inst, data)
+        end
+        LoadSpecialData(inst, data)
+    end
+end
+
 local mortalblade_onattack = function(inst, owner, target)
     if inst.IsShadow(target) or inst.IsLunar(target) then
         target.components.combat:GetAttacked(owner, inst.components.weapon.damage * 10)
     end
 end
 
-local function OnRemove(inst)
-    TheWorld:PushEvent("ms_forgetkatana", {name = inst.prefab})
-end
-
-local function OnSpawned(inst)
-    -- Track this katana when it spawns
-    TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
-end
-
-local function OnSave(inst, data)
-    if inst.first_time_unsheathed ~= nil then
-        data.first_time_unsheathed = inst.first_time_unsheathed
-    end
-end
-
-local function OnLoad(inst, data)
-    if data ~= nil then
-        if inst.first_time_unsheathed ~= nil then
-            inst.first_time_unsheathed = data.first_time_unsheathed
-        end
-    end
-
-    -- Re-track the katana after loading
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            TheWorld:PushEvent("ms_trackkatana", {name = inst.prefab, inst = inst})
-        end
-    end)
-end
-
 local mortalblade_master_postinit = function(inst)
     inst.first_time_unsheathed = true
-
-    inst:ListenForEvent("onremove", OnRemove)
 
     inst.TryStartFx = TryStartFx
     inst.StopFx = StopFx
 
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
-
-    -- Track katana on spawn
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            OnSpawned(inst)
-        end
-    end)
+    AttachSpecialSaveLoad(inst)
 
     inst.onequip_fn = function(inst, owner)
         inst.TryStartFx(inst, owner)
@@ -128,16 +119,7 @@ local tenseiga_master_postinit = function(inst)
 
     inst:RemoveComponent("finiteuses")
 
-    inst:ListenForEvent("onremove", OnRemove)
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
-
-    -- Track katana on spawn
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            OnSpawned(inst)
-        end
-    end)
+    AttachSpecialSaveLoad(inst)
 end
 
 local ShadowFxs = {
@@ -171,7 +153,7 @@ local function kage_master_postinit(inst)
     inst.TryStartFx = TryStartFx
     inst.StopFx = StopFx
 
-    local _OnFinished =inst.components.finiteuses.onfinished
+    local _OnFinished = inst.components.finiteuses.onfinished
     local function OnFinished(inst)
         local owner = inst.components.inventoryitem:GetGrandOwner()
         local x, y, z = inst.Transform:GetWorldPosition()
@@ -193,16 +175,7 @@ local function kage_master_postinit(inst)
 
     inst.components.finiteuses:SetOnFinished(OnFinished)
 
-    inst:ListenForEvent("onremove", OnRemove)
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
-
-    -- Track katana on spawn
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            OnSpawned(inst)
-        end
-    end)
+    AttachSpecialSaveLoad(inst)
 
     inst.onequip_fn = function(inst, owner)
         inst.TryStartFx(inst, owner)
@@ -247,16 +220,7 @@ end
 local function bakusaiga_master_postinit(inst)
     inst:RemoveComponent("finiteuses")
 
-    inst:ListenForEvent("onremove", OnRemove)
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
-
-    -- Track katana on spawn
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            OnSpawned(inst)
-        end
-    end)
+    AttachSpecialSaveLoad(inst)
 end
 
 local function bakusaiga_onattack()
@@ -264,16 +228,15 @@ local function bakusaiga_onattack()
 end
 
 local function shusui_master_postinit(inst)
-    inst:ListenForEvent("onremove", OnRemove)
-    inst.OnSave = OnSave
-    inst.OnLoad = OnLoad
+    AttachSpecialSaveLoad(inst)
+end
 
-    -- Track katana on spawn
-    inst:DoTaskInTime(0, function()
-        if inst:IsValid() then
-            OnSpawned(inst)
-        end
-    end)
+local function murasame_master_postinit(inst)
+    AttachSpecialSaveLoad(inst)
+end
+
+local function murasame_onattack()
+
 end
 
 local data = {
@@ -300,6 +263,11 @@ local data = {
     bakusaiga = {
         master_postinit = bakusaiga_master_postinit,
         onattack = bakusaiga_onattack,
+        damage = TUNING.KATANA.TRUE_DAMAGE,
+    },
+    murasame = {
+        master_postinit = murasame_master_postinit,
+        onattack = murasame_onattack,
         damage = TUNING.KATANA.TRUE_DAMAGE,
     },
 }
