@@ -432,9 +432,8 @@ function write(root, draft, prepared) {
 
 const STRING_FILES = {
     common: "STRINGS",
-    generic: "STRINGS.CHARACTERS.GENERIC",
-    kiritzuka: "STRINGS.CHARACTERS.KIRITZUKA",
-    manutsawee: "STRINGS.CHARACTERS.MANUTSAWEE",
+    kiritzuka_variants: "STRINGS.KIRITZUKA_SPEECH_VARIANTS",
+    manutsawee_variants: "STRINGS.MANUTSAWEE_SPEECH_VARIANTS",
 };
 const LOCALE = "scripts/languages/chinese_s.po";
 const TEMPLATE = "scripts/languages/strings.pot";
@@ -444,8 +443,13 @@ const placeholders = text => (text.match(/%[sd]|\{\w+\}/g) ?? []).sort().join();
 // Every English string must have one catalog entry; scan() only covers speech shared with the game.
 function audit(root) {
     const english = new Map();
-    for (const [name, base] of Object.entries(STRING_FILES)) {
-        const strings = parseSpeech(fs.readFileSync(path.join(root, `strings/${name}.lua`), "utf8")).value;
+    const directory = path.join(root, "strings");
+    for (const file of fs.readdirSync(directory)) {
+        if (path.extname(file) !== ".lua") continue;
+        const name = path.basename(file, ".lua");
+        const base = STRING_FILES[name] ?? (/^[a-z][a-z0-9]*$/.test(name) ? `STRINGS.CHARACTERS.${name.toUpperCase()}` : null);
+        if (base === null) continue;
+        const strings = parseSpeech(fs.readFileSync(path.join(directory, file), "utf8")).value;
         for (const [context, value] of leaves(strings)) english.set(`${base}.${context}`, value);
     }
     const load = relative => new Catalog(fs.readFileSync(path.join(root, relative), "utf8")).entries;

@@ -267,7 +267,7 @@ test("audit reports stale, missing, extra, placeholder and unsynced entries", ()
         fs.writeFileSync(path.join(root, relative), content);
     };
     save("strings/common.lua", 'return { NAMES = { A = "New", B = "Weight: {weight}", C = "Absent" } }\n');
-    for (const name of ["generic", "kiritzuka", "manutsawee"]) save(`strings/${name}.lua`, "return {}\n");
+    for (const name of ["generic", "kiritzuka", "kiritzuka_variants", "manutsawee"]) save(`strings/${name}.lua`, "return {}\n");
     const entry = (context, id, text) => `msgctxt "STRINGS.NAMES.${context}"\nmsgid "${id}"\nmsgstr "${text}"\n`;
     const locale = [entry("A", "Old", "旧"), entry("B", "Weight: {weight}", "重量：{重量}"), entry("D", "Gone", "没了")].join("\n");
     save("scripts/languages/chinese_s.po", locale);
