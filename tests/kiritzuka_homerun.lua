@@ -8,11 +8,11 @@ TUNING = {
     KIRITZUKA_BOSS_SLAM = { HITS = 5, ARMED_ATTACK_RANGE = 16 },
     KIRITZUKA_DASH = { ARMED_ATTACK_RANGE = 12 },
     KIRITZUKA_HOMERUN = {
-        COOLDOWN = 10, CHARGE_TIME = 1.5, MAX_HOLD = 4, RANGE = 3, ARC = 120,
+        CHARGE_TIME = 1.5, MAX_HOLD = 4, RANGE = 3, ARC = 120,
         DAMAGE_MULT = { 1, 4 }, KNOCK_DISTANCE = { 2, 10 }, KNOCK_SCALE = { large = 0.5, epic = 0.25 },
     },
 }
-TUNING.KIRITZUKA_SKILL_COOLDOWNS = true
+GetRandomItem = function(list) return list[1] end
 STRINGS = dofile("strings/common.lua")
 TheNet = { GetServerGameMode = function() return "default" end }
 FlattenTree = function(tree) return tree[1] end
@@ -93,13 +93,6 @@ local function Player()
         playercontroller = { IsEnabled = function() return not inst.flags.disabled end },
         rider = { IsRiding = function() return inst.flags.riding == true end },
         inventory = { IsHeavyLifting = function() return inst.flags.heavy == true end },
-        timer = {
-            TimerExists = function() return inst.cooldown ~= nil end,
-            StartTimer = function(_, name, duration)
-                assert(name == "kiritzuka_homerun")
-                inst.cooldown = duration
-            end,
-        },
         health = { SetMaxHealth = function() end, IsDead = function() return inst.flags.dead == true end },
         combat = {
             attackrange = 2,
@@ -165,18 +158,26 @@ local function RunSlide(enemy)
     end
 end
 
+local function InPool(line, pool)
+    if type(pool) ~= "table" then return line == pool end
+    for _, entry in ipairs(pool) do
+        if entry == line then return true end
+    end
+    return false
+end
+
 local function Near(a, b, tolerance)
     return math.abs(a - b) < (tolerance or 0.0001)
 end
 
--- Holding charges in a loop with no cooldown yet.
+-- Holding charges in a loop.
 local player = Player()
 player.rot = 30
 now = 0
 assert(player:StartHomeRun())
 assert(player.sg.currentstate == charge and player.rot == 30, "Keeps the way the player already faces")
 assert(player.animation == "scythe_pre" and player.queued == "scythe_lag" and player.queued_loop == true)
-assert(player.sg.timeout == 4 and player.cooldown == nil)
+assert(player.sg.timeout == 4)
 assert(not player.sg:HasStateTag("busy"), "Moving drops the charge")
 
 -- The full charge is marked once, at the moment it is reached.
@@ -185,18 +186,18 @@ charge.onupdate(player)
 assert(player.said == nil)
 now = 1.5
 charge.onupdate(player)
-assert(player.said == STRINGS.SKILL.KIRITZUKA_HOMERUN_READY and player.sg.statemem.full)
+assert(InPool(player.said, STRINGS.SKILL.KIRITZUKA_HOMERUN_READY) and player.sg.statemem.full)
 assert(player.tint == nil, "The full charge is spoken, not lit up")
 player.said = nil
 charge.onupdate(player)
 assert(player.said == nil, "Said once")
 
--- Releasing swings the same way, and starts the cooldown.
+-- Releasing swings the same way.
 assert(player:ReleaseHomeRun())
 assert(player.sg.currentstate == swing and player.rot == 30)
 player.rot = 0
-assert(player.cooldown == 10 and player.sg.statemem.charge == 1)
-assert(player.said == STRINGS.SKILL.KIRITZUKA_HOMERUN_FULL)
+assert(player.sg.statemem.charge == 1)
+assert(InPool(player.said, STRINGS.SKILL.KIRITZUKA_HOMERUN_FULL))
 assert(player.sg.statemem.signature_crit == true, "A full charge always crits")
 assert(player.animation == "scythe_loop" and player.anim_speed == 1.5)
 
@@ -333,7 +334,7 @@ now = 90
 player:StartHomeRun()
 now = 94
 charge.ontimeout(player)
-assert(player.sg.currentstate == swing and player.sg.statemem.charge == 1 and player.cooldown == 10)
+assert(player.sg.currentstate == swing and player.sg.statemem.charge == 1)
 
 -- Dropping the charge costs nothing, and a late release does nothing.
 player = Player()
@@ -342,18 +343,14 @@ player:StartHomeRun()
 now = 101.5
 charge.onupdate(player)
 player.sg:GoToState("run_start")
-assert(player.cooldown == nil)
-assert(not player:ReleaseHomeRun() and player.cooldown == nil, "No swing out of nothing")
+assert(not player:ReleaseHomeRun(), "No swing out of nothing")
 assert(player.sg.currentstate.name == "run_start")
 
 -- Refusals.
-player = Player()
-player.cooldown = 3
-assert(not player:StartHomeRun() and player.said == STRINGS.SKILL.KIRITZUKA_HOMERUN_COOLDOWN)
 for _, prefab in ipairs({ "pickaxe", "spear" }) do
     player = Player()
     player.weapon.prefab = prefab
-    assert(not player:StartHomeRun() and player.cooldown == nil, prefab)
+    assert(not player:StartHomeRun(), prefab)
     local matched = false
     for _, line in ipairs(STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE) do
         matched = matched or line == player.said

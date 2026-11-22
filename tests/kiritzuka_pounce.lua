@@ -5,7 +5,7 @@ TUNING = {
     KIRITZUKA_PARRY_ALL = true,
     KIRITZUKA_PARRY_RETREAT = 2.5,
     KIRITZUKA_POUNCE_REPEL = { RANGE = 1, RADIUS = 3, STRENGTH = 1.5 },
-    KIRITZUKA_COUNTER = { SUCCESS_COOLDOWN = 2, MOMENTUM_GAIN = 15 },
+    KIRITZUKA_COUNTER = { MOMENTUM_GAIN = 15 },
 }
 FRAMES = 1 / 30
 TheNet = { GetServerGameMode = function() return "default" end }

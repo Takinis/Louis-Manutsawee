@@ -14,8 +14,6 @@ TUNING.KIRITZUKA_HEALTH = 101.0
 TUNING.KIRITZUKA_HUNGER = 164
 TUNING.KIRITZUKA_SANITY = 234
 TUNING.KIRITZUKA_LOW_HEALTH_DAMAGE = 0.75
--- Off for now: no Kiritzuka skill has a cooldown while this is false.
-TUNING.KIRITZUKA_SKILL_COOLDOWNS = false
 -- With an exclusive weapon, every attack faced is blocked rather than only the ones that knock back.
 TUNING.KIRITZUKA_PARRY_ALL = true
 -- How much harder a parried knockback pushes her back; at 1 it barely moves her a unit.
@@ -39,15 +37,24 @@ TUNING.KIRITZUKA_BOSS_SLAM = {
     BURST_SPREAD = 0.5,
     RADIUS = 6,
     RANGE = 20,
-    COOLDOWN = 20,
     CRATER_DURATION = 12,
     MOMENTUM_COST = 30,
     -- Leaves room for weapon reach and target size inside RANGE.
     ARMED_ATTACK_RANGE = 16,
     LANDING_DISTANCE = { small = 2, default = 3, large = 4 },
+    -- Pressing the key again before the slam raises it to this.
+    TIER2 = {
+        DAMAGE_MULT = 1.75,
+        RADIUS = 9,
+        IMPACT_BURSTS = 12,
+        HIT_BURSTS = 5,
+        -- Extra craters torn open around the impact, this far out, over this many seconds.
+        CRATERS = 5,
+        CRATER_DISTANCE = { 4, 8 },
+        CRATER_SPREAD = 0.4,
+    },
 }
 TUNING.KIRITZUKA_DASH = {
-    COOLDOWN = 12,
     -- Leaves room for weapon reach and target size, like the slam's.
     ARMED_ATTACK_RANGE = 12,
     -- How far each line runs out past the target's body on either side.
@@ -60,12 +67,28 @@ TUNING.KIRITZUKA_DASH = {
     DAMAGE_MULT = { 1, 1, 2 },
 }
 TUNING.KIRITZUKA_FLURRY = {
-    COOLDOWN = 10,
     -- Scales the weapon's damage on each of the ten hits.
     DAMAGE_MULT = 0.4,
     -- How far the images stand from the target's body, and how far round from her they can appear.
     IMAGE_DISTANCE = 1.2,
     IMAGE_ARC = 180,
+}
+-- Her plain swings also strike what stands beside the target, followers and mounts included.
+TUNING.KIRITZUKA_COLLATERAL = {
+    RADIUS = 2,
+    DAMAGE_MULT = 0.25,
+}
+TUNING.KIRITZUKA_WEAPON_WEAR = {
+    -- How much faster ordinary weapons wear in her hands.
+    ATTACK_MULT = 2,
+    -- How many skills a borrowed weapon carries from full before it breaks.
+    SKILL_USES = 3,
+}
+-- Rabbits, birds and the like, for Kiritzuka and Manutsawee: left alone unless hunger drives them to it.
+TUNING.SMALL_ANIMALS = {
+    TAGS = { "prey", "bird", "butterfly" },
+    HUNGER = 0.1,
+    DAMAGE_MULT = 0.1,
 }
 TUNING.KIRITZUKA_WORM_BREAK = {
     -- Seconds inside the Great Depths Worm before breaking out, and the damage it does on the way.
@@ -85,7 +108,6 @@ TUNING.KIRITZUKA_ARMOR_BREAK = {
     WINDOW = 5,
 }
 TUNING.KIRITZUKA_HOMERUN = {
-    COOLDOWN = 10,
     -- Seconds to a full charge, and how long it can be held before it swings by itself.
     CHARGE_TIME = 1.5,
     MAX_HOLD = 4,
@@ -101,8 +123,6 @@ TUNING.KIRITZUKA_COUNTER = {
     WINDOW = 1,
     -- Recovery after a stance that caught nothing.
     WHIFF_TIME = 0.5,
-    COOLDOWN = 8,
-    SUCCESS_COOLDOWN = 2,
     -- The swing scales the weapon's damage and adds a share of what was blocked.
     DAMAGE_MULT = 2,
     BLOCKED_DAMAGE_MULT = 0.5,

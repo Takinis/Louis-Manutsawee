@@ -5,6 +5,12 @@ local PEAK_ALPHA = 0.8
 -- The same dark silhouette the dash leaves behind.
 local COLOUR = { 0.1, 0.03, 0.15 }
 local ANIM_SPEED = 3
+-- Weapons whose art isn't named after them, as { build, symbol }; false for one with nothing to copy.
+local WEAPON_ART = {
+    nightsword = { "swap_nightmaresword", "swap_nightmaresword" },
+    sword_lunarplant = { "sword_lunarplant", "swap_sword_lunarplant" },
+    shadow_battleaxe = false,
+}
 
 local function SetAlpha(inst, a)
     -- The add colour fades with the alpha, or the silhouette would stay bright until it is removed.
@@ -19,12 +25,16 @@ end
 
 local function Setup(inst, owner, weapon, anim)
     inst.AnimState:SetBuild(owner.AnimState:GetBuild())
-    local symbol = "swap_" .. weapon.prefab
-    local skin_build = weapon:GetSkinBuild()
-    if skin_build ~= nil then
-        inst.AnimState:OverrideItemSkinSymbol("swap_object", skin_build, symbol, weapon.GUID, symbol)
-    else
-        inst.AnimState:OverrideSymbol("swap_object", symbol, symbol)
+    local art = WEAPON_ART[weapon.prefab]
+    if art ~= false then
+        local default = "swap_" .. weapon.prefab
+        local build, symbol = art ~= nil and art[1] or default, art ~= nil and art[2] or default
+        local skin_build = weapon:GetSkinBuild()
+        if skin_build ~= nil then
+            inst.AnimState:OverrideItemSkinSymbol("swap_object", skin_build, symbol, weapon.GUID, build)
+        else
+            inst.AnimState:OverrideSymbol("swap_object", build, symbol)
+        end
     end
     inst.AnimState:SetDeltaTimeMultiplier(ANIM_SPEED)
     inst.AnimState:PlayAnimation(anim)

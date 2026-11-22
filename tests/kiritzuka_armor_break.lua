@@ -5,6 +5,7 @@ TUNING = {
     KIRITZUKA_ARMOR_BREAK = { STEP = 0.05, MAX_STACKS = 10, WINDOW = 5 },
     KIRITZUKA_CRIT = { CHANCE = { 0 }, MULTIPLIER = { 2 }, CHANCE_STEP = 0, MOMENTUM_GAIN = 5, FX_COUNT = 3, FX_TOWARD = 0.85 },
     KIRITZUKA_BOSS_SLAM = { RADIUS = 6, IMPACT_BURSTS = 0, HIT_BURSTS = 0 },
+    SMALL_ANIMALS = { TAGS = { "prey", "bird", "butterfly" }, HUNGER = 0.1, DAMAGE_MULT = 0.1 },
 }
 STRINGS = dofile("strings/common.lua")
 EQUIPSLOTS = { HANDS = "hands", BODY = "body" }

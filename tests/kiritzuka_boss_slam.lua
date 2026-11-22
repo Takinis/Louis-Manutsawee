@@ -4,12 +4,12 @@ FRAMES = 1 / 30
 COLLISION = { GROUND = 1 }
 CAMERASHAKE = { VERTICAL = 1 }
 TUNING = {
-    KIRITZUKA_BOSS_SLAM = { DAMAGE = 600, HITS = 5, IMPACT_BURSTS = 0, HIT_BURSTS = 0, BURST_RADIUS = 2, BURST_DAMAGE_MULT = 0.25, BURST_SPREAD = 0.5, RADIUS = 6, RANGE = 20, COOLDOWN = 20, CRATER_DURATION = 12, ARMED_ATTACK_RANGE = 16,
-        LANDING_DISTANCE = { small = 2, default = 3, large = 4 } },
+    KIRITZUKA_BOSS_SLAM = { DAMAGE = 600, HITS = 5, IMPACT_BURSTS = 0, HIT_BURSTS = 0, BURST_RADIUS = 2, BURST_DAMAGE_MULT = 0.25, BURST_SPREAD = 0.5, RADIUS = 6, RANGE = 20, CRATER_DURATION = 12, ARMED_ATTACK_RANGE = 16,
+        LANDING_DISTANCE = { small = 2, default = 3, large = 4 },
+        TIER2 = { DAMAGE_MULT = 1.75, RADIUS = 9, IMPACT_BURSTS = 0, HIT_BURSTS = 0, CRATERS = 5, CRATER_DISTANCE = { 4, 8 }, CRATER_SPREAD = 0.4 } },
     GAMEMODE_STARTING_ITEMS = { DEFAULT = { KIRITZUKA = {} } },
     KIRITZUKA_ARMOR_BREAK = { STEP = 0.05, MAX_STACKS = 10, WINDOW = 5 },
 }
-TUNING.KIRITZUKA_SKILL_COOLDOWNS = true
 STRINGS = dofile("strings/common.lua")
 TheNet = { GetServerGameMode = function() return "default" end }
 package.loaded["components/spdamageutil"] = {}
@@ -103,6 +103,7 @@ package.loaded["prefabs/player_common"] = function(_, _, _, common_fn, master_fn
 end
 dofile("scripts/prefabs/kiritzuka.lua")
 local function InPool(line, pool)
+    if type(pool) ~= "table" then return line == pool end
     for _, entry in ipairs(pool) do
         if entry == line then return true end
     end
@@ -114,13 +115,6 @@ local function Player()
     inst.mask = 123
     inst.shadow = true
     inst.components.health.invincible = false
-    inst.components.timer = {
-        TimerExists = function() return inst.cooldown ~= nil end,
-        StartTimer = function(_, name, duration)
-            assert(name == "kiritzuka_boss_slam")
-            inst.cooldown = duration
-        end,
-    }
     inst.components.playercontroller = { IsEnabled = function() return not inst.disabled end }
     inst.components.rider = { IsRiding = function() return inst.riding end }
     inst.components.inventory = { IsHeavyLifting = function() return inst.heavy end }
@@ -201,36 +195,36 @@ local player = Player()
 entities = { mob }
 local skill = STRINGS.SKILL
 -- Pressing only readies the slam: no state change, a line, and a longer reach.
-assert(player:ToggleSlam() and player:IsSlamArmed())
-assert(player.said == skill.KIRITZUKA_SLAM_READY and player.sg.currentstate == nil)
+assert(player:ToggleSlam() and player:IsSlamArmed() and player:GetArmedTier() == 1)
+assert(InPool(player.said, skill.KIRITZUKA_SLAM_READY) and player.sg.currentstate == nil)
 assert(player.components.combat.attackrange == 16 and player.components.combat.hitrange == 3)
-assert(player.cooldown == nil, "Readying does not cost the cooldown")
--- A second press stands down and restores the reach.
+-- A second press raises it to the second tier, keeping the reach.
+assert(player:ToggleSlam() and player:IsSlamArmed() and player:GetArmedTier() == 2)
+assert(InPool(player.said, skill.KIRITZUKA_SLAM_READY_2))
+assert(player.components.combat.attackrange == 16)
+-- A third stands down and restores the reach.
 assert(player:ToggleSlam() and not player:IsSlamArmed())
-assert(player.said == skill.KIRITZUKA_SLAM_CANCEL)
+assert(InPool(player.said, skill.KIRITZUKA_SLAM_CANCEL))
 assert(player.components.combat.attackrange == 2 and player.components.combat.hitrange == 3)
+-- Readied again, it starts from the first tier.
+assert(player:ToggleSlam() and player:GetArmedTier() == 1)
+player:DisarmSkill()
 -- Death clears a readied slam.
 assert(player:ToggleSlam())
 player:DisarmSkill()
 assert(not player:IsSlamArmed() and player.components.combat.attackrange == 2)
 player:DisarmSkill()
 assert(player.components.combat.attackrange == 2, "Disarm is idempotent")
--- Pressing during cooldown only speaks.
-player.components.timer.TimerExists = function() return true end
-player.said = nil
-assert(not player:ToggleSlam() and not player:IsSlamArmed())
-assert(player.said == skill.KIRITZUKA_SLAM_COOLDOWN)
-player.components.timer.TimerExists = function() return player.cooldown ~= nil end
 -- The attack's own target decides; any attackable creature qualifies.
 assert(Start(player, mob) and player.sg.statemem.target == mob)
 assert(not player:IsSlamArmed() and player.components.combat.attackrange == 2, "Release spends the readied slam")
 assert(player.buffered == nil, "The attack action is consumed")
 player.sg:GoToState("idle")
--- A rejected release speaks, spends the readied slam and leaves no cooldown.
+-- A rejected release speaks and spends the readied slam.
 player.said = nil
 assert(not Start(player, {}), "Malformed target must not crash")
-assert(player.said == skill.REFUSE_RELEASE and not player:IsSlamArmed())
-assert(player.cooldown == nil)
+assert(InPool(player.said, skill.REFUSE_RELEASE))
+assert(not player:IsSlamArmed())
 player.sg:GoToState("idle")
 
 entities = { boss, other_boss, mob }
@@ -264,10 +258,9 @@ assert(not Start(player, boss))
 hole = false
 
 effects = {}
-assert(Start(player, boss))
-assert(player.cooldown == nil, "Cooldown starts at takeoff")
+assert(Start(player, boss) and player.sg.statemem.tier == 1)
 Frame(player, 8)
-assert(player.cooldown == 20 and player.mask == COLLISION.GROUND)
+assert(player.mask == COLLISION.GROUND)
 assert(player.components.health.invincible and player.shadow, "The ground shadow stays visible along the arc")
 assert(player.animation == "atk_leap" and player.faces == 8, "The arc comes from the leap animation")
 assert(math.abs(player.motor - 6 / (12 * FRAMES)) < 0.0001, "Fly only up to the landing distance")
@@ -324,7 +317,8 @@ blocked = false
 assert(effects[1].x == 8, "Unsafe ground centers the impact on the landing")
 state.events[1].fn(player)
 assert(player.sg.currentstate == "idle" and player.x == 8 and player.faces == 4)
-assert(not Start(player, boss), "Cooldown remains after recovery")
+assert(Start(player, boss), "No cooldown: she can go again at once")
+player.sg:GoToState("idle")
 
 for _, frame in ipairs({ 0, 8, 20 }) do
     local inst = Player()
@@ -400,30 +394,11 @@ KEY_G = 103
 KEY_M = 109
 KEY_K = 107
 KEY_H = 104
-M_CONFIG = { KiritzukaSlamKey = KEY_V, KiritzukaDashKey = KEY_B, KiritzukaCounterKey = KEY_G, KiritzukaHomeRunKey = KEY_M, KiritzukaDestroyKey = KEY_K, KiritzukaFlurryKey = KEY_H }
 local homerun_input_fn
 local input_fn, registrations, calls = nil, 0, 0
-local input_listener
 local hud = true
 TheInput = {
-    onspecialkey = { RemoveHandler = function() end },
     GetWorldEntityUnderMouse = function() return boss end,
-    AddSpecialKeyHandler = function(_, key, fn)
-        if key ~= KEY_V then
-            if key == KEY_B then
-                dash_input_fn = fn
-            elseif key == KEY_M then
-                homerun_input_fn = fn
-            else
-                assert(key == KEY_G or key == KEY_K or key == KEY_H)
-            end
-            return {}
-        end
-        input_fn = fn
-        registrations = registrations + 1
-        input_listener = { fn = fn }
-        return input_listener
-    end,
 }
 local function InputPlayer()
     local p = Player()
@@ -439,9 +414,17 @@ local function InputPlayer()
                 if hud then calls = calls + 1 end
                 return hud
             end,
-            RememberHandler = function(_, processor, event, listener, state, remover)
-                assert(processor == TheInput.onspecialkey and event == "onspecialkey")
-                assert(remover == processor.RemoveHandler)
+            AddRawKeyListener = function(_, bind, fn)
+                if bind == "kiritzuka_slam" then
+                    input_fn = fn
+                    registrations = registrations + 1
+                elseif bind == "kiritzuka_dash" then
+                    dash_input_fn = fn
+                elseif bind == "kiritzuka_homerun" then
+                    homerun_input_fn = fn
+                else
+                    assert(bind == "kiritzuka_counter" or bind == "kiritzuka_destroy" or bind == "kiritzuka_flurry")
+                end
             end,
         }
     end
@@ -455,16 +438,16 @@ assert(registrations == 0)
 owner.setowner(owner)
 owner.setowner(owner)
 assert(registrations == 1)
-input_fn(KEY_V, true)
-input_fn(KEY_V, true)
+input_fn(true)
+input_fn(true)
 assert(calls == 1, "Held keys must not retrigger")
-input_fn(KEY_V, false)
+input_fn(false)
 hud = false
-input_fn(KEY_V, true)
+input_fn(true)
 assert(calls == 1, "HUD input block must be respected")
-input_fn(KEY_V, false)
+input_fn(false)
 ThePlayer = remote
-input_fn(KEY_V, true)
+input_fn(true)
 assert(calls == 1, "Old owner must not send input")
 
 -- The dash key just asks for the dash to be readied, once per press.
@@ -477,10 +460,10 @@ owner.components.playerkeyhandler.HandleKeyAction = function(_, namespace, actio
     return true
 end
 ThePlayer = owner
-dash_input_fn(KEY_B, true)
-dash_input_fn(KEY_B, true)
-dash_input_fn(KEY_B, false)
-dash_input_fn(KEY_B, true)
+dash_input_fn(true)
+dash_input_fn(true)
+dash_input_fn(false)
+dash_input_fn(true)
 assert(dash_sent == 2, "Held keys must not retrigger the dash")
 owner.components.playerkeyhandler.HandleKeyAction = dash_handler
 
@@ -493,10 +476,10 @@ owner.components.playerkeyhandler.HandleKeyAction = function(_, namespace, actio
     return true
 end
 ThePlayer = owner
-homerun_input_fn(KEY_M, true)
-homerun_input_fn(KEY_M, true)
-homerun_input_fn(KEY_M, false)
-homerun_input_fn(KEY_M, false)
+homerun_input_fn(true)
+homerun_input_fn(true)
+homerun_input_fn(false)
+homerun_input_fn(false)
 assert(#homerun_sent == 2 and homerun_sent[1] == "KiritzukaHomeRunStart" and homerun_sent[2] == "KiritzukaHomeRunRelease")
 owner.components.playerkeyhandler.HandleKeyAction = homerun_handler
 
@@ -531,6 +514,7 @@ rpc_player.prefab = "wilson"
 assert(not rpc(rpc_player))
 rpc_player.prefab = "kiritzuka"
 assert(rpc(rpc_player) and rpc_player:IsSlamArmed())
+assert(rpc(rpc_player) and rpc_player:GetArmedTier() == 2, "The key again raises the tier")
 assert(rpc(rpc_player) and not rpc_player:IsSlamArmed())
 GetModRPCHandler = function(_, action) return handlers[action] end
 GetModRPC = function(namespace, action) return namespace .. "." .. action end
@@ -605,14 +589,14 @@ do
     local sailor = Player()
     sailor.platform = {}
     assert(not sailor:ToggleSlam() and not sailor:IsSlamArmed(), "No readying on a boat")
-    assert(InPool(sailor.said, skill.KIRITZUKA_SLAM_SEA) and sailor.cooldown == nil)
+    assert(InPool(sailor.said, skill.KIRITZUKA_SLAM_SEA))
     assert(sailor.components.combat.attackrange == 2)
 
     sailor = Player()
     assert(sailor:ToggleSlam())
     sailor.platform = {}
-    assert(sailor:ToggleSlam() and not sailor:IsSlamArmed(), "A readied slam can still be put away on a boat")
-    assert(sailor.said == skill.KIRITZUKA_SLAM_CANCEL)
+    assert(sailor:ToggleSlam() and sailor:ToggleSlam() and not sailor:IsSlamArmed(), "A readied slam can still be put away on a boat")
+    assert(InPool(sailor.said, skill.KIRITZUKA_SLAM_CANCEL))
 
     sailor = Player()
     assert(sailor:ToggleSlam())
@@ -620,7 +604,7 @@ do
     sailor.buffered = { target = Entity(10, {}) }
     sailor.sg:GoToState(state.name)
     assert(sailor.sg.currentstate == "idle" and InPool(sailor.said, skill.KIRITZUKA_SLAM_SEA), "Stepping aboard spends it")
-    assert(sailor.cooldown == nil and sailor.components.combat.attackrange == 2)
+    assert(sailor.components.combat.attackrange == 2)
 
     sailor = Player()
     ocean_from = 8
@@ -652,14 +636,14 @@ do
     assert(rings > 0, "The shockwave still plays")
 end
 
--- Only the exclusive weapons can ready or release the slam.
-for _, weapon in ipairs({ false, "pickaxe", "spear", "nightsword" }) do
+-- Only her own weapons and the advanced ones can ready or release the slam.
+for _, weapon in ipairs({ false, "pickaxe", "spear" }) do
     local refused = Player()
     refused.weapon = weapon and { prefab = weapon } or nil
     assert(not refused:ToggleSlam() and not refused:IsSlamArmed(), tostring(weapon))
     assert(InPool(refused.said, skill.KIRITZUKA_WEAPON_REFUSE) and refused.components.combat.attackrange == 2)
 end
-for _, weapon in ipairs({ "baseballbat", "crowbar", "rebar" }) do
+for _, weapon in ipairs({ "baseballbat", "crowbar", "rebar", "nightsword" }) do
     local allowed = Player()
     allowed.weapon = { prefab = weapon }
     assert(allowed:ToggleSlam() and allowed:IsSlamArmed(), weapon)
@@ -673,7 +657,7 @@ do
     swapped.buffered = { target = swapped_target }
     swapped.sg:GoToState(state.name)
     assert(swapped.sg.currentstate == "idle" and InPool(swapped.said, skill.KIRITZUKA_WEAPON_REFUSE), "Unequipping before the attack spends it")
-    assert(swapped.components.combat.attackrange == 2 and swapped.cooldown == nil)
+    assert(swapped.components.combat.attackrange == 2)
 
     assert(swapped:ToggleSlam() == false, "Still unarmed")
     swapped.weapon = { prefab = "rebar" }
@@ -824,4 +808,48 @@ do
     tuning.IMPACT_BURSTS, tuning.HIT_BURSTS = 0, 0
 end
 
-print("PASS: arming, speech, target validation, authority, range, terrain, cooldown, damage filters, movement, interruption, input, RPC and FX lifecycle")
+-- The second tier hits harder and wider, with more fx and craters torn open all round.
+do
+    local inst = Player()
+    local far_mob = Entity(10 + 8, {})
+    local near_mob = Entity(10 + 5, {})
+    entities = { boss, near_mob, far_mob }
+    boss.x, boss.damage = 10, 0
+    assert(inst:ToggleSlam() and inst:ToggleSlam())
+    inst.buffered = { target = boss }
+    inst.sg:GoToState(state.name)
+    assert(inst.sg.currentstate == state.name and inst.sg.statemem.tier == 2)
+    assert(not inst:IsSlamArmed(), "Release spends it, tier and all")
+    effects = {}
+    Frame(inst, 8)
+    Frame(inst, 20)
+    effects = {}
+    Frame(inst, 21)
+    assert(boss.damage == 210, "Each hit is 1.75 times as strong")
+    assert(far_mob.damage == 0, "Eight out from the boss is still past the edge, measured from the impact")
+    assert(near_mob.damage == 210, "The reach grows from six to nine")
+    local count = {}
+    for _, effect in ipairs(effects) do count[effect.name] = (count[effect.name] or 0) + 1 end
+    for _, name in ipairs({ "groundpound_fx", "groundpoundring_fx", "collapse_big" }) do
+        assert(count[name] == 1, name)
+    end
+    assert(count.kiritzuka_crater_fx == 6, "The impact's crater and five around it")
+    assert(count.ground_chunks_breaking == 5, "Rubble out of each extra crater")
+    for _, frame in ipairs({ 26, 31, 36, 41 }) do Frame(inst, frame) end
+    assert(boss.damage == 1050, "Five tier-2 hits")
+
+    -- Craters never open over water or off the edge.
+    local dry = Player()
+    unsafe = false
+    effects = {}
+    local passable = TheWorld.Map.IsPassableAtPoint
+    TheWorld.Map.IsPassableAtPoint = function() return false end
+    dry:DoSlamImpact({ x = 8, y = 0, z = 0 }, boss, 2)
+    TheWorld.Map.IsPassableAtPoint = passable
+    count = {}
+    for _, effect in ipairs(effects) do count[effect.name] = (count[effect.name] or 0) + 1 end
+    assert(count.kiritzuka_crater_fx == 1 and count.ground_chunks_breaking == nil)
+    entities = {}
+end
+
+print("PASS: arming, tiers, speech, target validation, authority, range, terrain, damage filters, movement, interruption, input, RPC and FX lifecycle")

@@ -7,12 +7,11 @@ CAMERASHAKE = { VERTICAL = 1 }
 TUNING = {
     GAMEMODE_STARTING_ITEMS = { DEFAULT = { KIRITZUKA = {} } },
     KIRITZUKA_BOSS_SLAM = { HITS = 5, ARMED_ATTACK_RANGE = 16 },
-    KIRITZUKA_DASH = { COOLDOWN = 12, ARMED_ATTACK_RANGE = 12, RANGE = 5, WIDTH = 1.5, SEA_RANGE = 3, DAMAGE_MULT = { 1, 1, 2 } },
+    KIRITZUKA_DASH = { ARMED_ATTACK_RANGE = 12, RANGE = 5, WIDTH = 1.5, SEA_RANGE = 3, DAMAGE_MULT = { 1, 1, 2 } },
     KIRITZUKA_CRIT = { CHANCE = { 0 }, MULTIPLIER = { 1.5 }, CHANCE_STEP = 0, MOMENTUM_GAIN = 5, FX_COUNT = 3, FX_TOWARD = 0.85 },
 }
-TUNING.KIRITZUKA_SKILL_COOLDOWNS = true
 STRINGS = dofile("strings/common.lua")
-TheNet = { GetServerGameMode = function() return "default" end }
+TheNet = { GetServerGameMode = function() return "default" end, IsDedicated = function() return true end }
 FlattenTree = function(tree) return tree[1] end
 Asset = function() end
 State = function(def) return def end
@@ -68,6 +67,7 @@ end
 local function Player()
     local inst = { x = 0, z = 0, rot = 0, tags = {}, flags = {}, hits = {}, weapon = { prefab = "baseballbat" } }
     inst.HasTag = function(self, tag) return self.tags[tag] == true end
+    inst.IsValid = function() return true end
     inst.GetPosition = function(self) return { x = self.x, y = 0, z = self.z } end
     inst.GetCurrentPlatform = function(self) return self.platform end
     inst.AddComponent = function() end
@@ -104,13 +104,6 @@ local function Player()
         playercontroller = { IsEnabled = function() return not inst.flags.disabled end },
         rider = { IsRiding = function() return inst.flags.riding end },
         inventory = { IsHeavyLifting = function() return inst.flags.heavy end },
-        timer = {
-            TimerExists = function() return inst.cooldown ~= nil end,
-            StartTimer = function(_, name, duration)
-                assert(name == "kiritzuka_dash")
-                inst.cooldown = duration
-            end,
-        },
         health = {
             invincible = false,
             SetMaxHealth = function() end,
@@ -145,6 +138,7 @@ local function Player()
             next_state.onenter(inst, data)
         end
     end
+    inst.net_dash_after_image = { push = function() end }
     master(inst)
     return inst
 end
@@ -177,6 +171,7 @@ local function Run(inst, frame)
 end
 
 local function InPool(line, pool)
+    if type(pool) ~= "table" then return line == pool end
     for _, entry in ipairs(pool) do
         if entry == line then return true end
     end
@@ -204,13 +199,13 @@ local found = {}
 for _, name in ipairs(dependencies) do found[name] = true end
 assert(found.rocky_dash_fx and found.rocky_snip_fx and found.kiritzuka_hit_fx_puff)
 
--- Pressing only readies it: a line, a longer reach, no state change, and a second press cancels.
+-- Pressing only readies it: a line, a longer reach, no state change. With no second tier, a second press cancels.
 local player = Player()
 assert(player:ToggleDash() and player:IsDashArmed())
-assert(player.sg.currentstate.name == "idle" and player.said == STRINGS.SKILL.KIRITZUKA_DASH_READY)
-assert(player.components.combat.attackrange == 12 and player.cooldown == nil)
+assert(player.sg.currentstate.name == "idle" and InPool(player.said, STRINGS.SKILL.KIRITZUKA_DASH_READY))
+assert(player.components.combat.attackrange == 12)
 assert(player:ToggleDash() and not player:IsDashArmed())
-assert(player.said == STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL and player.components.combat.attackrange == 2)
+assert(InPool(player.said, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL) and player.components.combat.attackrange == 2)
 
 -- Readying one skill puts the other away, keeping the original reach.
 assert(player:ToggleSlam() and player:ToggleDash())
@@ -228,10 +223,8 @@ assert(Release(player, boss))
 assert(not player:IsDashArmed() and player.components.combat.attackrange == 2, "Release spends the readied dash")
 assert(player.sg.statemem.dash_stage == 1 and player.sg.statemem.target == boss)
 assert(player.animation == "lunge_pre" and player.anim_speed == 2 and Near(player.rot, 0), "Faces through the target")
-assert(player.cooldown == nil, "Cooldown starts on launch")
 
 Run(player, 6)
-assert(player.cooldown == 12)
 assert(player.components.health.invincible and player.mask == 1, "Untouchable and unblocked in flight")
 assert(player.sg:HasStateTag("noattack") and player.sg:HasStateTag("jumping"))
 assert(player.animation == "lunge_pst" and player.anim_speed == 1)
@@ -266,7 +259,6 @@ for stage = 2, 3 do
     assert(player.sg.statemem.dash_stage == stage and player.sg.statemem.target == boss, "Stays locked")
     assert(Near(Dist(player.x, player.z, 10, 0), 5.5), "Starts out to the side of the target")
     Run(player, 6)
-    player.cooldown = 3
     player.hits = {}
     Run(player, 10)
     RecordLine(player)
@@ -280,7 +272,6 @@ local function SameLine(a, b)
     return Near((a - b + 90) % 180 - 90, 0)
 end
 assert(SameLine(lines[1], 0) and SameLine(lines[2], 60) and SameLine(lines[3], 120), "Three lines evenly apart")
-assert(player.cooldown == 3, "Only the first stage starts the cooldown")
 assert(not player.sg:HasStateTag("nointerrupt"))
 Run(player, 14)
 assert(player.sg.statemem.dash_stage == 3, "Three stages only")
@@ -400,9 +391,9 @@ entities = { boss }
 spawned = {}
 Release(player, boss)
 assert(player.sg.currentstate == sea, "A target on the water sends the dash out and back")
-assert(player.animation == "lunge_pre" and player.cooldown == nil)
+assert(player.animation == "lunge_pre")
 RunSea(player, 6)
-assert(player.cooldown == 12 and player.components.health.invincible and player.mask == 1)
+assert(player.components.health.invincible and player.mask == 1)
 assert(Near(player.motor, 13.5 / (4 * FRAMES)), "Reaches past the target")
 RunSea(player, 10)
 assert(Near(player.x, 13.5), "Turns over the water, not refused")
@@ -518,12 +509,7 @@ Run(player, 6)
 player.sg:GoToState("death")
 assert(not player.components.health.invincible and player.mask == 123 and player.motor == 0 and player.anim_speed == 1)
 
--- Refusals: the cooldown line, invalid targets, and states that cannot act.
-player = Player()
-player.cooldown = 5
-assert(not player:ToggleDash() and not player:IsDashArmed())
-assert(player.said == STRINGS.SKILL.KIRITZUKA_DASH_COOLDOWN)
-assert(player.sg.currentstate.name == "idle")
+-- Refusals: invalid targets, and states that cannot act.
 for _, flag in ipairs({ "dead", "riding", "heavy", "disabled" }) do
     player = Player()
     player.flags[flag] = true
@@ -540,19 +526,19 @@ player = Player()
 local friend = Enemy(10, 0)
 friend.tags.companion = true
 assert(not Release(player, friend), "Invalid targets spend the readied dash")
-assert(player.sg.currentstate.name == "idle" and player.said == STRINGS.SKILL.REFUSE_RELEASE)
-assert(not player:IsDashArmed() and player.components.combat.attackrange == 2 and player.cooldown == nil)
+assert(player.sg.currentstate.name == "idle" and InPool(player.said, STRINGS.SKILL.REFUSE_RELEASE))
+assert(not player:IsDashArmed() and player.components.combat.attackrange == 2)
 player = Player()
 assert(not Release(player, nil), "No target refuses")
 
--- Only the exclusive weapons can ready or release the dash.
-for _, weapon in ipairs({ false, "pickaxe", "spear", "nightsword" }) do
+-- Only her own weapons and the advanced ones can ready or release the dash.
+for _, weapon in ipairs({ false, "pickaxe", "spear" }) do
     player = Player()
     player.weapon = weapon and { prefab = weapon } or nil
     assert(not player:ToggleDash() and not player:IsDashArmed(), tostring(weapon))
     assert(InPool(player.said, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE) and player.components.combat.attackrange == 2)
 end
-for _, weapon in ipairs({ "baseballbat", "crowbar", "rebar" }) do
+for _, weapon in ipairs({ "baseballbat", "crowbar", "rebar", "nightsword" }) do
     player = Player()
     player.weapon = { prefab = weapon }
     assert(player:ToggleDash() and player:IsDashArmed(), weapon)
@@ -563,7 +549,7 @@ player.weapon = nil
 player.buffered = { target = Enemy(10, 0) }
 player.sg:GoToState(state.name)
 assert(player.sg.currentstate.name == "idle" and InPool(player.said, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE), "Unequipping spends it")
-assert(player.components.combat.attackrange == 2 and player.cooldown == nil)
+assert(player.components.combat.attackrange == 2)
 
 -- Putting the weapon away stands a readied skill down at once, with a line instead of a late refusal.
 EQUIPSLOTS = { HANDS = "hands", BODY = "body" }
@@ -578,7 +564,7 @@ unequip(player, { eslot = EQUIPSLOTS.BODY })
 assert(player:IsDashArmed(), "Other slots do not matter")
 unequip(player, { eslot = EQUIPSLOTS.HANDS })
 assert(not player:IsDashArmed() and player.components.combat.attackrange == 2)
-assert(player.said == STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
+assert(InPool(player.said, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL))
 player.said = nil
 unequip(player, { eslot = EQUIPSLOTS.HANDS })
 assert(player.said == nil, "Nothing to stand down")

@@ -6,11 +6,10 @@ TUNING = {
     KIRITZUKA_BOSS_SLAM = { HITS = 5, ARMED_ATTACK_RANGE = 16 },
     KIRITZUKA_DASH = { ARMED_ATTACK_RANGE = 12 },
     KIRITZUKA_COUNTER = {
-        WINDOW = 0.5, WHIFF_TIME = 0.5, COOLDOWN = 8, SUCCESS_COOLDOWN = 2,
+        WINDOW = 0.5, WHIFF_TIME = 0.5,
         DAMAGE_MULT = 2, BLOCKED_DAMAGE_MULT = 0.5, MOMENTUM_GAIN = 15,
     },
 }
-TUNING.KIRITZUKA_SKILL_COOLDOWNS = true
 STRINGS = dofile("strings/common.lua")
 TheNet = { GetServerGameMode = function() return "default" end }
 FlattenTree = function(tree) return tree[1] end
@@ -91,14 +90,6 @@ local function Player()
             EquipHasTag = function() return false end,
         },
         momentum = { Gain = function(_, amount) inst.gained = inst.gained + amount end },
-        timer = {
-            TimerExists = function() return inst.cooldown ~= nil end,
-            StopTimer = function() inst.cooldown = nil end,
-            StartTimer = function(_, name, duration)
-                assert(name == "kiritzuka_counter")
-                inst.cooldown = duration
-            end,
-        },
         health = { SetMaxHealth = function() end, IsDead = function() return inst.flags.dead == true end },
         combat = {
             attackrange = 2,
@@ -157,20 +148,19 @@ local function Hit(player, attacker, damage, spdamage)
     return player:InterceptHit(attacker, damage, nil, nil, spdamage)
 end
 
--- Pressing opens a half second stance; only a catch or a whiff starts the cooldown.
+-- Pressing opens a half second stance.
 local player = Player()
 assert(player:StartCounter())
 assert(player.sg.currentstate == stance and player.animation == "kiritzuka_guard_pre" and player.queued == "kiritzuka_guard_loop")
 assert(player.queued_loop == true and player.sg.timeout == 0.5)
-assert(player.cooldown == nil)
 
--- Caught from the front: no damage, no retreat, a short cooldown, gauge, and the swing.
+-- Caught from the front: no damage, no retreat, gauge, and the swing.
 local enemy = Enemy(30)
 assert(Hit(player, enemy, 100, { planar = 20 }), "The hit is blocked")
 assert(player.task == nil, "Nothing is left pending")
 assert(player.sg.currentstate == swing and player.sg.statemem.target == enemy)
 assert(player.sg.statemem.blocked == 120 and player.sg.statemem.signature_crit == true, "Swing always crits")
-assert(player.cooldown == 2 and player.gained == 15)
+assert(player.gained == 15)
 assert(player.animation == "atk_pre" and player.queued == "atk" and player.faced[1] == 30)
 assert(player.anim_speed == 8 / 5 and player.sg:HasStateTag("nointerrupt"))
 
@@ -209,12 +199,12 @@ player = Player()
 player:StartCounter()
 assert(not player.sg:HasStateTag("busy") and not player.sg:HasStateTag("nopredict"))
 player.sg:GoToState("run_start")
-assert(player.cooldown == nil, "Walking away costs nothing")
+assert(player.sg.currentstate.name == "run_start", "Walking away costs nothing")
 
 player = Player()
 player:StartCounter()
 assert(player:StartCounter(), "A second press drops the stance")
-assert(player.sg.currentstate.name == "idle" and player.cooldown == nil)
+assert(player.sg.currentstate.name == "idle")
 assert(player:StartCounter() and player.sg.currentstate == stance, "And the stance can be raised again at once")
 
 player = Player()
@@ -222,15 +212,14 @@ player:StartCounter()
 stance.ontimeout(player)
 assert(not player:StartCounter() and player.sg.currentstate == stance, "A whiff cannot be dropped")
 stance.ontimeout(player)
-assert(player.cooldown == 8, "And keeps the long cooldown")
+assert(player.sg.currentstate.name == "idle" and player:StartCounter(), "No cooldown once it is over")
 
--- A whiff: stance comes down and leaves an open half second, with the long cooldown.
+-- A whiff: stance comes down and leaves an open half second.
 player = Player()
 player:StartCounter()
 stance.ontimeout(player)
 assert(player.sg.currentstate == stance and player.animation == "kiritzuka_guard_pst" and player.sg.timeout == 0.5)
 assert(player.sg:HasStateTag("busy"), "No acting during the recovery")
-assert(player.cooldown == 8)
 enemy = Enemy(0)
 Hit(player, enemy, 50)
 assert(player.sg.currentstate == stance, "Too late to catch anything")
@@ -241,7 +230,7 @@ assert(player.sg.currentstate.name == "idle")
 player = Player()
 player:StartCounter()
 assert(not Hit(player, Enemy(135), 50), "The hit lands")
-assert(player.sg.currentstate == stance and player.cooldown == nil)
+assert(player.sg.currentstate == stance)
 
 -- Things that cannot be struck back fall through to the ordinary guard.
 player = Player()
@@ -284,11 +273,7 @@ enemy.dead = true
 swing.timeline[1].fn(player)
 assert(#player.hits == 0 and #enemy.bonus == 0)
 
--- Refusals: the cooldown line, other weapons, and states that cannot act.
-player = Player()
-player.cooldown = 3
-assert(not player:StartCounter() and player.said == STRINGS.SKILL.KIRITZUKA_COUNTER_COOLDOWN)
-assert(player.sg.currentstate.name == "idle")
+-- Refusals: other weapons, and states that cannot act.
 for _, prefab in ipairs({ "pickaxe", "spear" }) do
     player = Player()
     player.weapon.prefab = prefab
@@ -298,7 +283,6 @@ for _, prefab in ipairs({ "pickaxe", "spear" }) do
         matched = matched or line == player.said
     end
     assert(matched, "Says a weapon line")
-    assert(player.cooldown == nil, "Refusing costs nothing")
 end
 player = Player()
 player.weapon = nil

@@ -1,6 +1,7 @@
 local MakePlayerCharacter = require "prefabs/player_common"
 local SpDamageUtil = require "components/spdamageutil"
 local AfterImageUtil = require "utils/afterimageutil"
+local SmallAnimalUtil = require "utils/smallanimalutil"
 
 local assets ={
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -18,7 +19,9 @@ local HIT_FX = {
 
 local prefabs = {
     "kiritzuka_crater_fx", "superjump_fx", "kiritzuka_slam_ring_fx", "kiritzuka_slam_dust_fx", "splash",
-    "rocky_dash_fx", "rocky_snip_fx", "explode_small", "kiritzuka_flurry_image", unpack(HIT_FX),
+    "rocky_dash_fx", "rocky_snip_fx", "explode_small", "kiritzuka_flurry_image",
+    "groundpound_fx", "groundpoundring_fx", "collapse_big", "ground_chunks_breaking", "rock_break_fx",
+    "sinkhole_spawn_fx_1", "sinkhole_spawn_fx_2", "sinkhole_spawn_fx_3", unpack(HIT_FX),
 }
 local start_inv = {}
 
@@ -35,6 +38,24 @@ local PARRY_WEAPONS = {
     baseballbat = true,
     crowbar = true,
     rebar = true,
+}
+-- Strong enough to carry her skills, but not for long: a few of them and they break.
+local SKILL_WEAPONS = {
+    nightsword = true,
+    ruins_bat = true,
+    glasscutter = true,
+    sword_lunarplant = true,
+    shadow_battleaxe = true,
+    batbat = true,
+    nightstick = true,
+}
+-- A skill is still going on in any of these, so its wear waits until she has left them all.
+local SKILL_STATES = {
+    kiritzuka_boss_slam = true,
+    kiritzuka_dash = true,
+    kiritzuka_dash_sea = true,
+    kiritzuka_flurry = true,
+    kiritzuka_homerun_swing = true,
 }
 -- The whole front half counts as facing the attacker.
 local PARRY_ANGLE = 90
@@ -62,15 +83,11 @@ local POUNCERS = {
 
 local HOMERUN_STATE = "kiritzuka_homerun_charge"
 local HOMERUN_SWING_STATE = "kiritzuka_homerun_swing"
-local HOMERUN_COOLDOWN = "kiritzuka_homerun"
 -- The slide covers most of what is left each frame, so it starts fast and eases out.
 local KNOCK_STEP = 0.2
 local COUNTER_STATE = "kiritzuka_counter"
 local COUNTER_SWING_STATE = "kiritzuka_counter_swing"
-local COUNTER_COOLDOWN = "kiritzuka_counter"
 local DASH_STATE = "kiritzuka_dash"
-local DASH_COOLDOWN = "kiritzuka_dash"
-local FLURRY_COOLDOWN = "kiritzuka_flurry"
 local FLURRY_IMAGE = "kiritzuka_flurry_image"
 local FLURRY_IMAGE_ANIMS = { "atk", "scythe_loop" }
 local DASH_BUILD = "rocky_boss_shadow_build"
@@ -86,9 +103,13 @@ local SLAM_EXCLUDE_TAGS = {
     "player", "playerghost", "companion", "wall",
 }
 local SLAM_LARGE_TAGS = { "epic", "boss", "largecreature" }
+-- The slam's exclusions without its sparing of allies: her followers are exactly who gets caught.
+local COLLATERAL_CANT_TAGS = {
+    "INLIMBO", "FX", "NOCLICK", "invisible", "notarget", "noattack",
+    "player", "playerghost", "companion", "wall", "structure",
+}
 -- Preferred approach first, then spread around the target if that side is blocked.
 local SLAM_LANDING_ANGLES = { 0, 45, -45, 90, -90, 135, -135, 180 }
-local SLAM_COOLDOWN = "kiritzuka_boss_slam"
 local WORM_BURST_SCALE = 1.4
 local WORM_LEAP_STATE = "kiritzuka_worm_leap"
 local WORM_BREAK_LINE_DELAY = 1
@@ -110,17 +131,12 @@ local SLAM_HIT_DUST = { { delay = 0, radius = 3.5, count = 6 } }
 local SLAM_BURST_RING_SCALE = 0.45
 local SLAM_BURST_DUST_RADIUS = 1
 local SLAM_BURST_DUST_COUNT = 3
-
--- Cooldowns are switched off for now; the setting brings them all back at once.
-local function IsOnCooldown(inst, name)
-    return TUNING.KIRITZUKA_SKILL_COOLDOWNS and inst.components.timer:TimerExists(name)
-end
-
-local function StartSkillCooldown(inst, name, duration)
-    if TUNING.KIRITZUKA_SKILL_COOLDOWNS then
-        inst.components.timer:StartTimer(name, duration)
-    end
-end
+-- The second tier's shockwave reaches this much further.
+local SLAM_TIER2_SPREAD = 1.5
+local SLAM_TIER2_IMPACT_FX = { "groundpound_fx", "groundpoundring_fx", "collapse_big" }
+local SLAM_TIER2_DEBRIS_FX = {
+    "ground_chunks_breaking", "rock_break_fx", "sinkhole_spawn_fx_1", "sinkhole_spawn_fx_2", "sinkhole_spawn_fx_3",
+}
 
 -- Only reductions are offset: vulnerability stays a bonus and full immunity stays immune.
 local function GetReduction(factor)
@@ -288,6 +304,45 @@ local function HasExclusiveWeapon(inst)
     return weapon ~= nil and PARRY_WEAPONS[weapon.prefab] == true
 end
 
+local function HasSkillWeapon(inst)
+    local weapon = inst.components.combat:GetWeapon()
+    return weapon ~= nil and (PARRY_WEAPONS[weapon.prefab] or SKILL_WEAPONS[weapon.prefab]) == true
+end
+
+local function MarkSkillWear(inst)
+    local weapon = inst.components.combat:GetWeapon()
+    if weapon ~= nil and SKILL_WEAPONS[weapon.prefab] then
+        inst.kiritzuka_skill_wear = weapon
+    end
+end
+
+-- Taken once the skill is over, so the weapon never breaks in the middle of one.
+local function TakeSkillWear(inst, data)
+    local weapon = inst.kiritzuka_skill_wear
+    if weapon == nil or SKILL_STATES[data.statename] then
+        return
+    end
+    inst.kiritzuka_skill_wear = nil
+    if not weapon:IsValid() then
+        return
+    end
+    local uses = TUNING.KIRITZUKA_WEAPON_WEAR.SKILL_USES
+    local finiteuses, fueled = weapon.components.finiteuses, weapon.components.fueled
+    if finiteuses ~= nil then
+        finiteuses:Use(math.ceil(finiteuses.total / uses))
+    elseif fueled ~= nil then
+        fueled:DoDelta(-math.ceil(fueled.maxfuel / uses))
+    end
+end
+
+-- Ordinary weapons can't take her strength. Her own have no durability to lose.
+local function OnEquip(inst, data)
+    local weapon = data ~= nil and data.eslot == EQUIPSLOTS.HANDS and data.item.components.weapon or nil
+    if weapon ~= nil then
+        weapon.attackwearmultipliers:SetModifier(inst, TUNING.KIRITZUKA_WEAPON_WEAR.ATTACK_MULT)
+    end
+end
+
 local function CanCarryOutSlam(inst)
     return not inst:HasTag("playerghost") and not inst.components.health:IsDead()
         and inst.components.playercontroller:IsEnabled()
@@ -296,29 +351,32 @@ local function CanCarryOutSlam(inst)
 end
 
 -- First press readies the skill for the next attack; a second press stands down. No range keeps her normal reach.
-local function ToggleSkill(inst, skill, cooldown, range, ready_line, cooldown_line, cancel_line)
+-- A skill with a second tier is raised to it by the second press and stood down by the third.
+local function ToggleSkill(inst, skill, range, ready_line, cancel_line, tier2_line)
     if inst.sg == nil or inst.sg:HasStateTag("busy")
         or inst.sg:HasStateTag("dead") or inst.sg:HasStateTag("sleeping")
         or inst.sg:HasStateTag("frozen") or inst.sg:HasStateTag("jumping")
         or not CanCarryOutSlam(inst) then
         return false
     end
-    if inst.kiritzuka_armed ~= nil and inst.kiritzuka_armed.skill == skill then
-        DisarmSkill(inst)
-        SaySlamLine(inst, cancel_line)
+    local armed = inst.kiritzuka_armed
+    if armed ~= nil and armed.skill == skill then
+        if tier2_line ~= nil and armed.tier == 1 and HasSkillWeapon(inst) then
+            armed.tier = 2
+            SaySlamLine(inst, tier2_line)
+        else
+            DisarmSkill(inst)
+            SaySlamLine(inst, cancel_line)
+        end
         return true
     end
-    if IsOnCooldown(inst, cooldown) then
-        SaySlamLine(inst, cooldown_line)
-        return false
-    end
-    if not HasExclusiveWeapon(inst) then
+    if not HasSkillWeapon(inst) then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE)
         return false
     end
     DisarmSkill(inst)
     local combat = inst.components.combat
-    inst.kiritzuka_armed = { skill = skill, attack = combat.attackrange, hit = combat.hitrange }
+    inst.kiritzuka_armed = { skill = skill, tier = 1, attack = combat.attackrange, hit = combat.hitrange }
     if range ~= nil then
         combat:SetRange(range, combat.hitrange)
     end
@@ -330,6 +388,10 @@ end
 local function OnUnequip(inst, data)
     if data == nil or data.eslot ~= EQUIPSLOTS.HANDS then
         return
+    end
+    local weapon = data.item ~= nil and data.item.components.weapon or nil
+    if weapon ~= nil then
+        weapon.attackwearmultipliers:RemoveModifier(inst)
     end
     inst.kiritzuka_armor_break = nil
     if inst.kiritzuka_armed ~= nil then
@@ -344,18 +406,21 @@ local function ToggleSlam(inst)
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_SLAM_SEA)
         return false
     end
-    return ToggleSkill(inst, "slam", SLAM_COOLDOWN, TUNING.KIRITZUKA_BOSS_SLAM.ARMED_ATTACK_RANGE,
-        STRINGS.SKILL.KIRITZUKA_SLAM_READY, STRINGS.SKILL.KIRITZUKA_SLAM_COOLDOWN, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
+    return ToggleSkill(inst, "slam", TUNING.KIRITZUKA_BOSS_SLAM.ARMED_ATTACK_RANGE,
+        STRINGS.SKILL.KIRITZUKA_SLAM_READY, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL, STRINGS.SKILL.KIRITZUKA_SLAM_READY_2)
 end
 
 local function ToggleDash(inst)
-    return ToggleSkill(inst, "dash", DASH_COOLDOWN, TUNING.KIRITZUKA_DASH.ARMED_ATTACK_RANGE,
-        STRINGS.SKILL.KIRITZUKA_DASH_READY, STRINGS.SKILL.KIRITZUKA_DASH_COOLDOWN, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
+    return ToggleSkill(inst, "dash", TUNING.KIRITZUKA_DASH.ARMED_ATTACK_RANGE,
+        STRINGS.SKILL.KIRITZUKA_DASH_READY, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
 end
 
 local function ToggleFlurry(inst)
-    return ToggleSkill(inst, "flurry", FLURRY_COOLDOWN, nil,
-        STRINGS.SKILL.KIRITZUKA_FLURRY_READY, STRINGS.SKILL.KIRITZUKA_FLURRY_COOLDOWN, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
+    return ToggleSkill(inst, "flurry", nil, STRINGS.SKILL.KIRITZUKA_FLURRY_READY, STRINGS.SKILL.KIRITZUKA_SLAM_CANCEL)
+end
+
+local function GetArmedTier(inst)
+    return inst.kiritzuka_armed ~= nil and inst.kiritzuka_armed.tier or 1
 end
 
 -- Spends the readied slam on the attack's target, whether or not it can be carried out.
@@ -370,9 +435,11 @@ local function IsSlamAtSea(inst, target)
     return TheWorld.Map:IsOceanTileAtPoint(x, 0, z)
 end
 
+-- Returns the tier it goes out at, or false.
 local function TryReleaseSlam(inst, target, origin)
+    local tier = GetArmedTier(inst)
     DisarmSkill(inst)
-    if not HasExclusiveWeapon(inst) then
+    if not HasSkillWeapon(inst) then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE)
         return false
     end
@@ -380,17 +447,12 @@ local function TryReleaseSlam(inst, target, origin)
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_SLAM_SEA)
         return false
     end
-    if CanCarryOutSlam(inst)
-        and not IsOnCooldown(inst, SLAM_COOLDOWN)
-        and IsSlamPointSafe(inst, origin) and GetSlamLanding(inst, target, origin) ~= nil then
-        return true
+    if CanCarryOutSlam(inst) and IsSlamPointSafe(inst, origin) and GetSlamLanding(inst, target, origin) ~= nil then
+        MarkSkillWear(inst)
+        return tier
     end
     SaySlamLine(inst, STRINGS.SKILL.REFUSE_RELEASE)
     return false
-end
-
-local function StartSlamCooldown(inst)
-    StartSkillCooldown(inst, SLAM_COOLDOWN, TUNING.KIRITZUKA_BOSS_SLAM.COOLDOWN)
 end
 
 local function SpawnSlamRing(inst, pos, scale)
@@ -415,12 +477,15 @@ local function SpawnSlamDustRing(inst, pos, radius, count)
     end
 end
 
-local function SpawnSlamShockwave(inst, pos, rings, dust)
+-- The rings' radius grows with the square of their scale, so they take the root of the spread.
+local function SpawnSlamShockwave(inst, pos, rings, dust, spread)
+    spread = spread or 1
+    local ring_scale = math.sqrt(spread)
     for _, ring in ipairs(rings) do
-        inst:DoTaskInTime(ring.delay, SpawnSlamRing, pos, ring.scale)
+        inst:DoTaskInTime(ring.delay, SpawnSlamRing, pos, ring.scale * ring_scale)
     end
     for _, wave in ipairs(dust) do
-        inst:DoTaskInTime(wave.delay, SpawnSlamDustRing, pos, wave.radius, wave.count)
+        inst:DoTaskInTime(wave.delay, SpawnSlamDustRing, pos, wave.radius * spread, math.ceil(wave.count * spread))
     end
 end
 
@@ -433,6 +498,41 @@ local function SpawnSlamCrater(inst, pos)
         end
     end
     SpawnSlamRing(inst, pos, 0.8)
+end
+
+local function SpawnSlamFx(prefab, x, z)
+    local fx = SpawnPrefab(prefab)
+    if fx ~= nil then
+        fx.Transform:SetPosition(x, 0, z)
+    end
+end
+
+local function SpawnSlamDebris(x, z)
+    SpawnSlamFx(SLAM_TIER2_DEBRIS_FX[math.random(#SLAM_TIER2_DEBRIS_FX)], x, z)
+end
+
+-- The second tier tears the ground open all around the impact, rubble flying out of each crater.
+local function SpawnSlamOuterCraters(inst, center)
+    local tier2 = TUNING.KIRITZUKA_BOSS_SLAM.TIER2
+    local near, far = tier2.CRATER_DISTANCE[1], tier2.CRATER_DISTANCE[2]
+    local offset = math.random() * 2 * math.pi
+    for i = 1, tier2.CRATERS do
+        local theta = offset + 2 * math.pi * (i + math.random() * 0.5) / tier2.CRATERS
+        local distance = near + math.random() * (far - near)
+        local x, z = center.x + distance * math.cos(theta), center.z + distance * math.sin(theta)
+        if TheWorld.Map:IsPassableAtPoint(x, 0, z) then
+            inst:DoTaskInTime(math.random() * tier2.CRATER_SPREAD, function()
+                SpawnSlamCrater(inst, { x = x, y = 0, z = z })
+                SpawnSlamDebris(x, z)
+            end)
+        end
+    end
+end
+
+-- Whatever the second tier changes, taken from its own table.
+local function GetSlamValue(tier, key)
+    local tuning = TUNING.KIRITZUKA_BOSS_SLAM
+    return tier == 2 and tuning.TIER2[key] or tuning[key]
 end
 
 -- Halfway to the target, falling back to the landing point when the target is gone or that spot is unsafe.
@@ -480,10 +580,6 @@ local function GetGuardPoint(attacker)
 end
 
 -- Only something that can be hit back qualifies: beams and supernova burns stay with the held guard.
-local function StartCounterWhiffCooldown(inst)
-    StartSkillCooldown(inst, COUNTER_COOLDOWN, TUNING.KIRITZUKA_COUNTER.COOLDOWN)
-end
-
 local function TryCounter(inst, attacker, damage, spdamage)
     if inst.sg.currentstate.name ~= COUNTER_STATE or inst.sg.statemem.whiffed
         or (attacker.sg ~= nil and attacker.sg:HasStateTag("supernovaburning"))
@@ -494,7 +590,6 @@ local function TryCounter(inst, attacker, damage, spdamage)
     if not CanParryFrom(inst, x, z) then
         return false
     end
-    StartSkillCooldown(inst, COUNTER_COOLDOWN, TUNING.KIRITZUKA_COUNTER.SUCCESS_COOLDOWN)
     if inst.components.momentum ~= nil then
         inst.components.momentum:Gain(TUNING.KIRITZUKA_COUNTER.MOMENTUM_GAIN)
     end
@@ -769,7 +864,7 @@ local function GetAttackDamageMult(inst, target)
     local statemem = inst.sg ~= nil and inst.sg.statemem or nil
     local crit = RollCrit(inst, statemem ~= nil and statemem.signature_crit)
     inst.kiritzuka_crit_hit = crit > 1
-    inst.kiritzuka_attack_mult = crit * GetArmorBreakMult(inst, target)
+    inst.kiritzuka_attack_mult = crit * GetArmorBreakMult(inst, target) * SmallAnimalUtil.GetDamageMult(inst, target)
     return inst.kiritzuka_attack_mult
 end
 
@@ -789,12 +884,42 @@ local function SpawnHitFx(inst, target, count, toward)
     end
 end
 
+-- Only her own swings: not a skill, a shot or a throw, and never from the saddle.
+local function IsPlainSwing(inst, weapon)
+    local state = inst.sg ~= nil and inst.sg.currentstate.name or nil
+    return (state == ATTACK_STATE or state == "attack")
+        and not inst.components.rider:IsRiding()
+        and (weapon == nil or (weapon.components.projectile == nil and not weapon:HasTag("rangedweapon")))
+end
+
+-- She can't hold back, so whatever stands beside the target takes part of the blow, friend or not.
+-- GetAttacked pushes onhitother on her again; those spill-over hits must not spill over in turn,
+-- or a crowd (a pond of frogs) hits itself back and forth until the game locks up.
+local function HitCollateral(inst, target, damage)
+    if inst.kiritzuka_hitting_collateral then
+        return
+    end
+    inst.kiritzuka_hitting_collateral = true
+    local tuning = TUNING.KIRITZUKA_COLLATERAL
+    local x, _, z = target.Transform:GetWorldPosition()
+    for _, victim in ipairs(TheSim:FindEntities(x, 0, z, tuning.RADIUS, SLAM_TARGET_TAGS, COLLATERAL_CANT_TAGS)) do
+        if victim ~= target and victim ~= inst and victim:IsValid() and not victim.components.health:IsDead()
+            and inst.components.combat:CanTarget(victim) then
+            victim.components.combat:GetAttacked(inst, damage * tuning.DAMAGE_MULT)
+        end
+    end
+    inst.kiritzuka_hitting_collateral = nil
+end
+
 local function OnHitOther(inst, data)
     local crit = inst.kiritzuka_crit_hit
     inst.kiritzuka_crit_hit = nil
     local target = data ~= nil and data.target or nil
     if target == nil or not target:IsValid() or target.Transform == nil then
         return
+    end
+    if (data.damage or 0) > 0 and IsPlainSwing(inst, data.weapon) then
+        HitCollateral(inst, target, data.damage)
     end
     if (data.damageresolved or 0) > 0 and HasExclusiveWeapon(inst) and AddArmorBreak(inst, target) then
         -- One sharp burst on the target marks that the armor is fully broken.
@@ -908,12 +1033,12 @@ local function DoSlamBurst(inst, pos, damage)
     DamageSlamArea(inst, pos, damage, TUNING.KIRITZUKA_BOSS_SLAM.BURST_RADIUS)
 end
 
-local function SpawnSlamBursts(inst, center, damage, count)
+local function SpawnSlamBursts(inst, center, damage, count, radius)
     local tuning = TUNING.KIRITZUKA_BOSS_SLAM
     for _ = 1, count do
         local theta = math.random() * 2 * math.pi
         -- The root spreads them evenly over the area rather than bunching at the middle.
-        local distance = tuning.RADIUS * math.sqrt(math.random())
+        local distance = radius * math.sqrt(math.random())
         local x, z = center.x + distance * math.cos(theta), center.z + distance * math.sin(theta)
         if TheWorld.Map:IsPassableAtPoint(x, 0, z) then
             inst:DoTaskInTime(math.random() * tuning.BURST_SPREAD, DoSlamBurst,
@@ -922,21 +1047,31 @@ local function SpawnSlamBursts(inst, center, damage, count)
     end
 end
 
-local function DoSlamImpact(inst, landing, target)
+local function DoSlamImpact(inst, landing, target, tier)
     local pos = GetSlamImpactPoint(inst, landing, target)
     SpawnSlamCrater(inst, pos)
+    if tier == 2 then
+        for _, prefab in ipairs(SLAM_TIER2_IMPACT_FX) do
+            SpawnSlamFx(prefab, pos.x, pos.z)
+        end
+        SpawnSlamOuterCraters(inst, pos)
+    end
     local fx = SpawnPrefab("superjump_fx")
     if fx ~= nil then
         local dx, dz = pos.x - landing.x, pos.z - landing.z
         -- The player faces the target here, so this distance runs along the line between them.
         fx:SetTarget(inst, math.sqrt(dx * dx + dz * dz))
     end
-    SpawnSlamShockwave(inst, pos, SLAM_IMPACT_RINGS, SLAM_IMPACT_DUST)
+    SpawnSlamShockwave(inst, pos, SLAM_IMPACT_RINGS, SLAM_IMPACT_DUST, tier == 2 and SLAM_TIER2_SPREAD or nil)
     -- Harder and wider-reaching than Bearger's own pound.
-    ShakeAllCameras(CAMERASHAKE.VERTICAL, .9, .03, 1.6, inst, 40)
+    if tier == 2 then
+        ShakeAllCameras(CAMERASHAKE.VERTICAL, 1.4, .03, 2.4, inst, 60)
+    else
+        ShakeAllCameras(CAMERASHAKE.VERTICAL, .9, .03, 1.6, inst, 40)
+    end
     inst.SoundEmitter:PlaySound("dontstarve_DLC001/creatures/bearger/groundpound")
     local tuning = TUNING.KIRITZUKA_BOSS_SLAM
-    local damage = tuning.DAMAGE / tuning.HITS
+    local damage = tuning.DAMAGE / tuning.HITS * (tier == 2 and tuning.TIER2.DAMAGE_MULT or 1)
     local momentum = inst.components.momentum
     -- The stage bonus is read before the cost is paid; an empty gauge only forfeits the bonus.
     if momentum ~= nil then
@@ -945,29 +1080,34 @@ local function DoSlamImpact(inst, landing, target)
             damage = damage * bonus
         end
     end
-    DamageSlamArea(inst, pos, damage, tuning.RADIUS, true)
-    SpawnSlamBursts(inst, pos, damage, tuning.IMPACT_BURSTS)
+    local radius = GetSlamValue(tier, "RADIUS")
+    DamageSlamArea(inst, pos, damage, radius, true)
+    SpawnSlamBursts(inst, pos, damage, GetSlamValue(tier, "IMPACT_BURSTS"), radius)
     return pos, damage
 end
 
 -- The follow-up hits strike the same spot for the damage the impact settled on.
-local function DoSlamHit(inst, pos, damage)
-    SpawnSlamShockwave(inst, pos, SLAM_HIT_RINGS, SLAM_HIT_DUST)
+local function DoSlamHit(inst, pos, damage, tier)
+    SpawnSlamShockwave(inst, pos, SLAM_HIT_RINGS, SLAM_HIT_DUST, tier == 2 and SLAM_TIER2_SPREAD or nil)
     ShakeAllCameras(CAMERASHAKE.VERTICAL, .35, .02, .6, inst, 30)
     inst.SoundEmitter:PlaySound("dontstarve/wilson/attack_weapon")
-    local tuning = TUNING.KIRITZUKA_BOSS_SLAM
-    DamageSlamArea(inst, pos, damage, tuning.RADIUS, true)
-    SpawnSlamBursts(inst, pos, damage, tuning.HIT_BURSTS)
+    local radius = GetSlamValue(tier, "RADIUS")
+    if tier == 2 then
+        local theta, distance = math.random() * 2 * math.pi, radius / 2 * math.sqrt(math.random())
+        SpawnSlamDebris(pos.x + distance * math.cos(theta), pos.z + distance * math.sin(theta))
+    end
+    DamageSlamArea(inst, pos, damage, radius, true)
+    SpawnSlamBursts(inst, pos, damage, GetSlamValue(tier, "HIT_BURSTS"), radius)
 end
 
 local function TryReleaseDash(inst, target)
     DisarmSkill(inst)
-    if not HasExclusiveWeapon(inst) then
+    if not HasSkillWeapon(inst) then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE)
         return false
     end
-    if CanCarryOutSlam(inst) and not IsOnCooldown(inst, DASH_COOLDOWN)
-        and CanSlamHit(inst, target) and IsSlamPointSafe(inst, inst:GetPosition()) then
+    if CanCarryOutSlam(inst) and CanSlamHit(inst, target) and IsSlamPointSafe(inst, inst:GetPosition()) then
+        MarkSkillWear(inst)
         return true
     end
     SaySlamLine(inst, STRINGS.SKILL.REFUSE_RELEASE)
@@ -976,10 +1116,6 @@ end
 
 local function CanDashHit(inst, target)
     return CanSlamHit(inst, target)
-end
-
-local function StartDashCooldown(inst)
-    StartSkillCooldown(inst, DASH_COOLDOWN, TUNING.KIRITZUKA_DASH.COOLDOWN)
 end
 
 -- Direction from the target to the player, which the first line runs along.
@@ -1067,7 +1203,7 @@ local function SpawnDashTrail(inst, x, z)
 end
 
 -- Called as the dash moves, so everything along the line takes its hit as the player passes it.
-local function SweepDash(inst, from, to, stage, hit)
+local function SweepDash(inst, from, to, mult, hit)
     local tuning = TUNING.KIRITZUKA_DASH
     local dx, dz = to.x - from.x, to.z - from.z
     local lensq = dx * dx + dz * dz
@@ -1096,7 +1232,7 @@ local function SweepDash(inst, from, to, stage, hit)
             local reach = tuning.WIDTH + target:GetPhysicsRadius(0)
             if near_x * near_x + near_z * near_z <= reach * reach then
                 hit[target] = true
-                combat:DoAttack(target, nil, nil, nil, tuning.DAMAGE_MULT[stage])
+                combat:DoAttack(target, nil, nil, nil, mult)
             end
         end
     end
@@ -1105,19 +1241,19 @@ local function SweepDash(inst, from, to, stage, hit)
 end
 
 -- Lands the last stretch; the locked target is struck whatever it did mid-dash.
-local function FinishDash(inst, from, to, stage, locked, hit)
+local function FinishDash(inst, from, to, mult, locked, hit)
     if locked:IsValid() then
         local x, _, z = locked.Transform:GetWorldPosition()
         SpawnDashFx(inst, "rocky_snip_fx", x, z)
     else
         SpawnDashFx(inst, "rocky_snip_fx", to.x, to.z)
     end
-    SweepDash(inst, from, to, stage, hit)
+    SweepDash(inst, from, to, mult, hit)
     if not hit[locked] and CanSlamHit(inst, locked) then
         hit[locked] = true
         local combat = inst.components.combat
         combat.ignorehitrange = true
-        combat:DoAttack(locked, nil, nil, nil, TUNING.KIRITZUKA_DASH.DAMAGE_MULT[stage])
+        combat:DoAttack(locked, nil, nil, nil, mult)
         combat.ignorehitrange = false
     end
 end
@@ -1169,12 +1305,12 @@ end
 
 local function TryReleaseFlurry(inst, target)
     DisarmSkill(inst)
-    if not HasExclusiveWeapon(inst) then
+    if not HasSkillWeapon(inst) then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE)
         return false
     end
-    if CanCarryOutSlam(inst) and not IsOnCooldown(inst, FLURRY_COOLDOWN) and CanSlamHit(inst, target) then
-        StartSkillCooldown(inst, FLURRY_COOLDOWN, TUNING.KIRITZUKA_FLURRY.COOLDOWN)
+    if CanCarryOutSlam(inst) and CanSlamHit(inst, target) then
+        MarkSkillWear(inst)
         return true
     end
     SaySlamLine(inst, STRINGS.SKILL.REFUSE_RELEASE)
@@ -1204,7 +1340,7 @@ end
 -- The first hit is her own swing; every one after it is an image.
 -- False once there is nothing left to hit, or nothing left to hit it with.
 local function DoFlurryHit(inst, target, hit)
-    if not HasExclusiveWeapon(inst) or not CanSlamHit(inst, target) then
+    if not HasSkillWeapon(inst) or not CanSlamHit(inst, target) then
         return false
     end
     if hit > 1 then
@@ -1225,11 +1361,7 @@ local function StartHomeRun(inst)
         or not CanCarryOutSlam(inst) then
         return false
     end
-    if IsOnCooldown(inst, HOMERUN_COOLDOWN) then
-        SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_HOMERUN_COOLDOWN)
-        return false
-    end
-    if not HasExclusiveWeapon(inst) then
+    if not HasSkillWeapon(inst) then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE)
         return false
     end
@@ -1245,7 +1377,7 @@ local function ReleaseHomeRun(inst)
     end
     local tuning = TUNING.KIRITZUKA_HOMERUN
     local charge = math.clamp((GetTime() - inst.sg.statemem.charge_start) / tuning.CHARGE_TIME, 0, 1)
-    StartSkillCooldown(inst, HOMERUN_COOLDOWN, tuning.COOLDOWN)
+    MarkSkillWear(inst)
     if charge >= 1 then
         SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_HOMERUN_FULL)
     end
@@ -1328,7 +1460,7 @@ local function DoHomeRunHit(inst, charge)
 end
 
 local function StartCounter(inst)
-    -- A second press drops a stance still open. Only a catch or a whiff starts the cooldown.
+    -- A second press drops a stance still open.
     if inst.sg ~= nil and inst.sg.currentstate.name == COUNTER_STATE and not inst.sg.statemem.whiffed then
         inst.sg:GoToState("idle", true)
         return true
@@ -1337,10 +1469,6 @@ local function StartCounter(inst)
         or inst.sg:HasStateTag("dead") or inst.sg:HasStateTag("sleeping")
         or inst.sg:HasStateTag("frozen") or inst.sg:HasStateTag("jumping")
         or not CanCarryOutSlam(inst) then
-        return false
-    end
-    if IsOnCooldown(inst, COUNTER_COOLDOWN) then
-        SaySlamLine(inst, STRINGS.SKILL.KIRITZUKA_COUNTER_COOLDOWN)
         return false
     end
     if not HasExclusiveWeapon(inst) then
@@ -1696,13 +1824,11 @@ local master_postinit = function(inst)
     inst.ReleaseHomeRun = ReleaseHomeRun
     inst.DoHomeRunHit = DoHomeRunHit
     inst.StartCounter = StartCounter
-    inst.StartCounterWhiffCooldown = StartCounterWhiffCooldown
     inst.DoCounterHit = DoCounterHit
     inst.IsDashArmed = IsDashArmed
     inst.ToggleDash = ToggleDash
     inst.TryReleaseDash = TryReleaseDash
     inst.CanDashHit = CanDashHit
-    inst.StartDashCooldown = StartDashCooldown
     inst.GetDashAngle = GetDashAngle
     inst.GetDashPoint = GetDashPoint
     inst.StartDashFx = StartDashFx
@@ -1720,16 +1846,18 @@ local master_postinit = function(inst)
     inst.DoFlurryHit = DoFlurryHit
     inst.IsSlamArmed = IsSlamArmed
     inst.DisarmSkill = DisarmSkill
+    inst.GetArmedTier = GetArmedTier
     inst.ToggleSlam = ToggleSlam
     inst.TryReleaseSlam = TryReleaseSlam
-    inst.StartSlamCooldown = StartSlamCooldown
     inst.GetSlamLanding = GetSlamLanding
     inst.IsSlamPointSafe = IsSlamPointSafe
     inst.SpawnSlamCrater = SpawnSlamCrater
     inst.DoSlamImpact = DoSlamImpact
     inst.DoSlamHit = DoSlamHit
 
+    inst:ListenForEvent("equip", OnEquip)
     inst:ListenForEvent("unequip", OnUnequip)
+    inst:ListenForEvent("newstate", TakeSkillWear)
     inst:ListenForEvent("devoured", OnDevoured)
     inst:ListenForEvent("death", DisarmSkill)
     inst:ListenForEvent("ms_becameghost", DisarmSkill)

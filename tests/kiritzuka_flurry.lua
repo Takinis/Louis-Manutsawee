@@ -3,9 +3,8 @@ package.path = "scripts/?.lua;" .. package.path
 FRAMES = 1 / 30
 TUNING = {
     GAMEMODE_STARTING_ITEMS = { DEFAULT = { KIRITZUKA = {} } },
-    KIRITZUKA_SKILL_COOLDOWNS = true,
     KIRITZUKA_BOSS_SLAM = { HITS = 5 },
-    KIRITZUKA_FLURRY = { COOLDOWN = 10, DAMAGE_MULT = 0.4, IMAGE_DISTANCE = 1.2, IMAGE_ARC = 180 },
+    KIRITZUKA_FLURRY = { DAMAGE_MULT = 0.4, IMAGE_DISTANCE = 1.2, IMAGE_ARC = 180 },
 }
 STRINGS = dofile("strings/common.lua")
 TheNet = { GetServerGameMode = function() return "default" end, IsDedicated = function() return false end }
@@ -130,31 +129,35 @@ local function Target()
     return target
 end
 
+local function InPool(line, pool)
+    if type(pool) ~= "table" then return line == pool end
+    for _, entry in ipairs(pool) do
+        if entry == line then return true end
+    end
+    return false
+end
+
 local function Enter(player, target)
     player.action = { target = target }
     state.onenter(player)
 end
 
--- Armed like the other skills, but with her normal reach; a second press stands down.
+-- Armed like the other skills, but with her normal reach; with no second tier, a second press stands down.
 local player = Player()
 assert(player:ToggleFlurry() and player:IsFlurryArmed())
 assert(player.components.combat.attackrange == 2)
-assert(player.components.talker.line == STRINGS.SKILL.KIRITZUKA_FLURRY_READY)
+assert(InPool(player.components.talker.line, STRINGS.SKILL.KIRITZUKA_FLURRY_READY))
 assert(player:ToggleFlurry() and not player:IsFlurryArmed() and player.components.combat.attackrange == 2)
 player.weapon = { prefab = "spear" }
-assert(not player:ToggleFlurry() and not player:IsFlurryArmed(), "Exclusive weapons only")
-player = Player()
-player.timers.kiritzuka_flurry = 5
-assert(not player:ToggleFlurry())
-assert(player.components.talker.line == STRINGS.SKILL.KIRITZUKA_FLURRY_COOLDOWN)
+assert(not player:ToggleFlurry() and not player:IsFlurryArmed(), "Ordinary weapons can't")
 
--- The attack spends it: she swings once at normal speed, the cooldown starts.
+-- The attack spends it: she swings once at normal speed, with no cooldown after.
 player = Player()
 local target = Target()
 player:ToggleFlurry()
 Enter(player, target)
 assert(not player:IsFlurryArmed() and player.components.combat.attackrange == 2)
-assert(player.timers.kiritzuka_flurry == 10)
+assert(next(player.timers) == nil)
 assert(player.sg.destination == nil and player.sg.statemem.target == target)
 assert(player.components.locomotor.stopped and player.faced ~= nil and player.action == nil)
 assert(player.AnimState.played == "atk_pre" and player.AnimState.pushed == "atk")
@@ -306,27 +309,25 @@ player = Player()
 player:ToggleFlurry()
 Enter(player, nil)
 assert(player.sg.destination == "idle" and player.timers.kiritzuka_flurry == nil)
-assert(player.components.talker.line == STRINGS.SKILL.REFUSE_RELEASE)
+assert(InPool(player.components.talker.line, STRINGS.SKILL.REFUSE_RELEASE))
 player = Player()
 player:ToggleFlurry()
 player.weapon = { prefab = "spear" }
 Enter(player, Target())
 assert(player.sg.destination == "idle" and player.timers.kiritzuka_flurry == nil)
-assert(player.components.talker.line ~= STRINGS.SKILL.REFUSE_RELEASE, "The weapon's own refusal")
-assert(player.components.talker.line ~= STRINGS.SKILL.KIRITZUKA_FLURRY_READY)
+assert(InPool(player.components.talker.line, STRINGS.SKILL.KIRITZUKA_WEAPON_REFUSE), "The weapon's own refusal")
 
 -- The image itself: holds her weapon, fades on every machine that draws it, removes itself on the server.
 do
     local Prefab_ = Prefab
-    local image_fn
-    Prefab = function(name, fn)
-        assert(name == "kiritzuka_flurry_image")
-        image_fn = fn
-    end
+    local fns = {}
+    Prefab = function(name, fn) fns[name] = fn end
+    -- Only the flurry's image lives in this file.
     dofile("scripts/prefabs/kiritzuka_flurry_image.lua")
     Prefab = Prefab_
+    local image_fn = fns.kiritzuka_flurry_image
 
-    local function NewImage()
+    local function NewImage(fn)
         local periodic, delayed = {}, {}
         local anim = {
             mult = {}, add = {}, shown = {}, hidden = {},
@@ -361,7 +362,7 @@ do
                 DoTaskInTime = function(_, time, fn) delayed[#delayed + 1] = { time = time, fn = fn } end,
             }
         end
-        return image_fn(), anim, periodic, delayed
+        return (fn or image_fn)(), anim, periodic, delayed
     end
 
     now = 10
@@ -400,14 +401,13 @@ local function Source(path)
     file:close()
     return source
 end
-assert(Source("modinfo.lua"):find('name = "kiritzuka_flurry_key"', 1, true))
-assert(Source("main/config.lua"):find('KiritzukaFlurryKey = GetModConfigData("kiritzuka_flurry_key")', 1, true))
+assert(Source("scripts/utils/keybinds.lua"):find('name = "kiritzuka_flurry"', 1, true))
 assert(Source("main/RPC.lua"):find("KiritzukaFlurry = function", 1, true))
 assert(Source("main/assets.lua"):find('"kiritzuka_flurry_image"', 1, true))
 for _, po in ipairs({ "chinese_s.po", "chinese_t.po", "strings.pot" }) do
     local source = Source("scripts/languages/" .. po)
-    assert(source:find('msgctxt "STRINGS.SKILL.KIRITZUKA_FLURRY_READY"', 1, true), po)
-    assert(source:find('msgctxt "STRINGS.SKILL.KIRITZUKA_FLURRY_COOLDOWN"', 1, true), po)
+    assert(source:find('msgctxt "STRINGS.SKILL.KIRITZUKA_FLURRY_READY.1"', 1, true), po)
+    assert(not source:find("KIRITZUKA_FLURRY_COOLDOWN", 1, true), po)
 end
 
 print("kiritzuka_flurry: checks passed")

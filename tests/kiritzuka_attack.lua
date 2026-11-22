@@ -357,6 +357,12 @@ for _, name in ipairs({ "wilson", "wilson_client" }) do
         player.dash_armed = nil
         player.flurry_armed = true
         Check(route(player, {}) == "kiritzuka_flurry", "A readied flurry takes the next attack")
+        TUNING = TUNING or {}
+        TUNING.SMALL_ANIMALS = { TAGS = { "prey", "bird", "butterfly" } }
+        local rabbit = { HasAnyTag = function(_, ...) return select("#", ...) == 3 end, HasTag = function() return false end }
+        Check(route(player, { target = rabbit }) == "attack", "Never spent on a small animal")
+        local hound = { HasAnyTag = function() return false end }
+        Check(route(player, { target = hound }) == "kiritzuka_flurry", "But on anything else")
         player.flurry_armed = nil
     end
 end

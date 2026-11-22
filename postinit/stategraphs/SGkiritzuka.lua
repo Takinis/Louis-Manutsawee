@@ -2,6 +2,8 @@ local AddStategraphState = AddStategraphState
 local AddStategraphPostInit = AddStategraphPostInit
 GLOBAL.setfenv(1, GLOBAL)
 
+local SmallAnimalUtil = require("utils/smallanimalutil")
+
 local ATTACK_STATE = "kiritzuka_attack"
 local SLAM_STATE = "kiritzuka_boss_slam"
 local SPECIAL_WEAPON_TAGS = {
@@ -37,7 +39,6 @@ local SUSTAINED_PARRY_SPEED = 1
 -- The attack refreshes the guard every tick; a short gap means it is over.
 local SUSTAINED_PARRY_LINGER = 0.25
 local DASH_STATE = "kiritzuka_dash"
-local DASH_STAGES = 3
 local DASH_SEA_STATE = "kiritzuka_dash_sea"
 -- Damage stages from TUNING.KIRITZUKA_DASH.DAMAGE_MULT: the way out is a normal line, the way home the finisher.
 local DASH_SEA_OUT_STAGE = 1
@@ -304,7 +305,6 @@ local slam_timeline = {
             inst.sg:GoToState("idle")
             return
         end
-        inst:StartSlamCooldown()
         mem.collision_mask = inst.Physics:GetCollisionMask()
         mem.was_invincible = inst.components.health.invincible
         mem.airborne = true
@@ -353,7 +353,7 @@ local slam_timeline = {
         RestoreFlight(inst)
         inst.sg:RemoveStateTag("noattack")
         inst.sg:RemoveStateTag("jumping")
-        mem.impact, mem.hit_damage = inst:DoSlamImpact(mem.landing, mem.target)
+        mem.impact, mem.hit_damage = inst:DoSlamImpact(mem.landing, mem.target, mem.tier)
     end),
 }
 
@@ -361,7 +361,7 @@ local SLAM_HITS = TUNING.KIRITZUKA_BOSS_SLAM.HITS
 for hit = 2, SLAM_HITS do
     table.insert(slam_timeline, TimeEvent((SLAM_IMPACT_FRAME + (hit - 1) * SLAM_HIT_INTERVAL) * FRAMES, function(inst)
         local mem = inst.sg.statemem
-        inst:DoSlamHit(mem.impact, mem.hit_damage)
+        inst:DoSlamHit(mem.impact, mem.hit_damage, mem.tier)
         -- The hits land as one sequence: being struck cannot cut it short.
         if hit == SLAM_HITS then
             mem.finished = true
@@ -379,10 +379,12 @@ local slam_state = State{
         local target = action ~= nil and action.target or nil
         local origin = inst:GetPosition()
         inst:ClearBufferedAction()
-        if not inst:TryReleaseSlam(target, origin) then
+        local tier = inst:TryReleaseSlam(target, origin)
+        if not tier then
             inst.sg:GoToState("idle")
             return
         end
+        inst.sg.statemem.tier = tier
         inst.sg.statemem.target = target
         inst.sg.statemem.origin = origin
         inst.components.locomotor:Stop()
@@ -483,6 +485,7 @@ local dash_state = State{
             data = { stage = 1, target = target, angle = inst:GetDashAngle(target) }
         end
         mem.dash_stage, mem.target, mem.base_angle = data.stage, data.target, data.angle
+        mem.mults = TUNING.KIRITZUKA_DASH.DAMAGE_MULT
         mem.line_angle = data.angle + (data.stage - 1) * DASH_LINE_TURN
         inst.components.locomotor:Stop()
         inst.Physics:Stop()
@@ -513,7 +516,7 @@ local dash_state = State{
         local mem = inst.sg.statemem
         if mem.sweep_from ~= nil then
             local pos = inst:GetPosition()
-            inst:SweepDash(mem.sweep_from, pos, mem.dash_stage, mem.hit)
+            inst:SweepDash(mem.sweep_from, pos, mem.mults[mem.dash_stage], mem.hit)
             mem.sweep_from = pos
         end
     end,
@@ -521,9 +524,6 @@ local dash_state = State{
     timeline = {
         TimeEvent(DASH_LAUNCH_FRAME * FRAMES, function(inst)
             local mem = inst.sg.statemem
-            if mem.dash_stage == 1 then
-                inst:StartDashCooldown()
-            end
             mem.from = inst:GetPosition()
             -- The target may have moved during the wind-up; a lost one keeps the planned end.
             if inst:CanDashHit(mem.target) then
@@ -555,9 +555,9 @@ local dash_state = State{
             inst.Physics:Teleport(mem.to.x, 0, mem.to.z)
             inst.sg:RemoveStateTag("noattack")
             inst.sg:RemoveStateTag("jumping")
-            inst:FinishDash(mem.sweep_from, mem.to, mem.dash_stage, mem.target, mem.hit)
+            inst:FinishDash(mem.sweep_from, mem.to, mem.mults[mem.dash_stage], mem.target, mem.hit)
             mem.sweep_from = nil
-            mem.finished = mem.dash_stage >= DASH_STAGES or not inst:CanDashHit(mem.target)
+            mem.finished = mem.dash_stage >= #mem.mults or not inst:CanDashHit(mem.target)
             if mem.finished then
                 inst.sg:RemoveStateTag("nointerrupt")
             end
@@ -711,7 +711,7 @@ local dash_sea_state = State{
         local mem = inst.sg.statemem
         if mem.sweep_from ~= nil then
             local pos = inst:GetPosition()
-            inst:SweepDash(mem.sweep_from, pos, mem.stage, mem.hit)
+            inst:SweepDash(mem.sweep_from, pos, TUNING.KIRITZUKA_DASH.DAMAGE_MULT[mem.stage], mem.hit)
             mem.sweep_from = pos
         end
     end,
@@ -719,7 +719,6 @@ local dash_sea_state = State{
     timeline = {
         TimeEvent(DASH_LAUNCH_FRAME * FRAMES, function(inst)
             local mem = inst.sg.statemem
-            inst:StartDashCooldown()
             mem.collision_mask = inst.Physics:GetCollisionMask()
             mem.was_invincible = inst.components.health.invincible
             mem.airborne = true
@@ -734,7 +733,7 @@ local dash_sea_state = State{
             local mem = inst.sg.statemem
             inst.Physics:Stop()
             inst.Physics:Teleport(mem.to.x, 0, mem.to.z)
-            inst:FinishDash(mem.sweep_from, mem.to, mem.stage, mem.target, mem.hit)
+            inst:FinishDash(mem.sweep_from, mem.to, TUNING.KIRITZUKA_DASH.DAMAGE_MULT[mem.stage], mem.target, mem.hit)
             inst:SpawnDashSplash(mem.to.x, mem.to.z)
             mem.stage = DASH_SEA_BACK_STAGE
             LaunchDashLeg(inst, inst:ResolveDashHome(mem.home))
@@ -745,7 +744,7 @@ local dash_sea_state = State{
             mem.airborne = nil
             EndDashFlight(inst)
             inst.Physics:Teleport(home.x, 0, home.z)
-            inst:FinishDash(mem.sweep_from, home, mem.stage, mem.target, mem.hit)
+            inst:FinishDash(mem.sweep_from, home, TUNING.KIRITZUKA_DASH.DAMAGE_MULT[mem.stage], mem.target, mem.hit)
             inst:SpawnDashSplash(home.x, home.z)
             mem.sweep_from = nil
             mem.landed = true
@@ -872,7 +871,7 @@ local homerun_state = State{
         local mem = inst.sg.statemem
         if not mem.full and GetTime() - mem.charge_start >= TUNING.KIRITZUKA_HOMERUN.CHARGE_TIME then
             mem.full = true
-            inst.components.talker:Say(STRINGS.SKILL.KIRITZUKA_HOMERUN_READY, 2, true)
+            inst.components.talker:Say(GetRandomItem(STRINGS.SKILL.KIRITZUKA_HOMERUN_READY), 2, true)
         end
     end,
 
@@ -947,7 +946,6 @@ local counter_state = State{
         -- Nothing came: the stance is left open for a moment, and that is the punishment.
         mem.whiffed = true
         inst.sg:AddStateTag("busy")
-        inst:StartCounterWhiffCooldown()
         inst.AnimState:PlayAnimation(GUARD_PST_ANIM)
         inst.sg:SetTimeout(TUNING.KIRITZUKA_COUNTER.WHIFF_TIME)
     end,
@@ -1200,14 +1198,18 @@ AddStategraphPostInit("wilson", function(sg)
         if inst.prefab ~= "kiritzuka" then
             return attack_actionhandler(inst, action, ...)
         end
-        if inst:IsSlamArmed() then
-            return SLAM_STATE
-        end
-        if inst:IsDashArmed() then
-            return DASH_STATE
-        end
-        if inst:IsFlurryArmed() then
-            return FLURRY_STATE
+        -- A readied skill is never spent on a small animal; it waits for a real fight.
+        local target = action.target
+        if target == nil or not SmallAnimalUtil.IsSmallAnimal(target) then
+            if inst:IsSlamArmed() then
+                return SLAM_STATE
+            end
+            if inst:IsDashArmed() then
+                return DASH_STATE
+            end
+            if inst:IsFlurryArmed() then
+                return FLURRY_STATE
+            end
         end
         local destination = attack_actionhandler(inst, action, ...)
         local weapon = inst.components.combat:GetWeapon()
