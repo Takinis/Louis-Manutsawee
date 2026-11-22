@@ -1,10 +1,12 @@
 return {
+    ANNOUNCE_LNCOMPREHENSIBLE = "I can't make sense of these markings.",
     DESCRIBE = {
+        LYCORIS_BACKPACK = "I don't think my field notes count as homework.",
         BOAT_MSURFBOARD = "Very exquisite workmanship.",
         HARAKIRI = "This knife look so good.",
         HITOKIRI = "What a weird sword.",
         HMINGOT = "it's very hot!",
-        KAGE = "",
+        KAGE = "A blade as dark as its own shadow.",
         KATANABLADE = "Is it can use without sword-handle?",
         KATANABODY = "so what?",
         KOSHIRAE = "What a beautyful sword.",
@@ -29,5 +31,11 @@ return {
         TRUE_SHIRASAYA = "What a beautyful sword.",
         VSCODE = "Tools from another world.",
         YARI = "This spear look different.",
+        BAKUSAIGA = "There's an old story behind this blade.",
+        BASEBALLBAT = "I could give it a swing if someone pitched.",
+        CROWBAR = "That'll get the lid off.",
+        DREADSTONE_STACK_TOMB = "Is that a sword hilt sticking out of the stone?",
+        MURASAME = "The blade is damp, but the hilt is dry.",
+        REBAR = "A heavy length of ribbed steel.",
     },
 }

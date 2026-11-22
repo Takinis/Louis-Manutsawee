@@ -1,76 +1,76 @@
---Willow's speech file
+-- Manutsawee's speech for Island Adventures.
 return {
 	ACTIONFAIL =
 	{
 		REPAIRBOAT =
 		{
-			GENERIC = "船还很精神呢，先不用给它包扎啦。",
+			GENERIC = "The boat's still quite sound. No patching it up just yet.",
 		},
 		EMBARK =
 		{
-			INUSE = "哇！那艘船已经有人啦，等一下下。",
+			INUSE = "Oh! There's someone aboard already. I'll wait.",
 		},
 		INSPECTBOAT =
 		{
-			INUSE = "前面有人检查中，露易丝会乖乖排队的。",
+			INUSE = "Someone's inspecting it. I'll be good and wait my turn.",
 		},
 		OPEN_CRAFTING  =
 		{
-			FLOODED = "水漫成这样，手艺再好也会打滑呀……",
+			FLOODED = "Even a practiced hand would slip in all this water...",
 		},
 	},
 
-	ANNOUNCE_MAGIC_FAIL = "咦？术式没听话，像付丧神闹别扭一样。",
+	ANNOUNCE_MAGIC_FAIL = "Huh? That spell's as contrary as a little tsukumogami.",
 
-	ANNOUNCE_SHARX = "海里有东西在闹腾，拔刀前先保持距离。",
+	ANNOUNCE_SHARX = "Something's churning up the sea. I'll keep my distance before I draw.",
 
-	ANNOUNCE_TREASURE = "X 就是宝物的眨眼暗号，haha！",
-	ANNOUNCE_TREASURE_DISCOVER = "找到了！宝藏在这里闪闪发光耶。",
-	ANNOUNCE_MORETREASURE = "今天运气像抽到大吉签一样，超棒。",
-	ANNOUNCE_OTHER_WORLD_TREASURE = "这张图不是这里的海域，像误入隠れ里了。",
-	ANNOUNCE_OTHER_WORLD_PLANT = "它不适合这片土，硬种下去会可怜的。",
+	ANNOUNCE_TREASURE = "An X! That's the treasure giving me a wink. Ha!",
+	ANNOUNCE_TREASURE_DISCOVER = "Found it! The treasure's gleaming right here.",
+	ANNOUNCE_MORETREASURE = "This is my lucky day. I'd have drawn the very best fortune!",
+	ANNOUNCE_OTHER_WORLD_TREASURE = "These islands aren't on the chart. Have I wandered into a hidden village?",
+	ANNOUNCE_OTHER_WORLD_PLANT = "It doesn't like this soil. It seems cruel to plant it here.",
 
 	ANNOUNCE_IA_MESSAGEBOTTLE =
 	{
-		"字被海水亲到糊掉了，读不出来呢。",
+		"Seawater has blurred the letters. I can't read any of them.",
 	},
-	ANNOUNCE_VOLCANO_ERUPT = "火山开口啦，“神明”发怒了！",
-	ANNOUNCE_MAPWRAP_WARN = "雾好厚，剑尖都像被藏起来了。",
-	ANNOUNCE_MAPWRAP_LOSECONTROL = "糟糕，方向感被狸猫偷走了吗？",
-	ANNOUNCE_MAPWRAP_RETURN = "呼，终于出来了，眼睛差点变成蚊香圈。",
-	ANNOUNCE_CRAB_ESCAPE = "哎呀，横着跑掉了，真会耍小聪明。",
-	ANNOUNCE_TRAWL_FULL = "拖网满啦，收获时间到～",
-	ANNOUNCE_BOAT_DAMAGED = "船受伤了，剑士也要会温柔修补。",
-	ANNOUNCE_BOAT_SINKING = "不妙，海面在邀请她下去玩了……！",
-	ANNOUNCE_BOAT_SINKING_IMMINENT = "哇啊，船要沉了！先别写辞世句啦！",
-	ANNOUNCE_WAVE_BOOST = "乘浪一闪，出发～！",
+	ANNOUNCE_VOLCANO_ERUPT = "The volcano speaks! We've angered a god!",
+	ANNOUNCE_MAPWRAP_WARN = "The fog's so thick I've lost sight of the tip of my sword.",
+	ANNOUNCE_MAPWRAP_LOSECONTROL = "Oh dear. Has a tanuki run off with my sense of direction?",
+	ANNOUNCE_MAPWRAP_RETURN = "Out at last! My eyes were starting to spin.",
+	ANNOUNCE_CRAB_ESCAPE = "Oh! A quick little sidestep and it got away.",
+	ANNOUNCE_TRAWL_FULL = "The trawl's full! Time to bring in the catch.",
+	ANNOUNCE_BOAT_DAMAGED = "My boat's hurt. A swordswoman ought to have a gentle hand for repairs too.",
+	ANNOUNCE_BOAT_SINKING = "Oh dear. The sea seems to be inviting me for a swim...",
+	ANNOUNCE_BOAT_SINKING_IMMINENT = "The boat's going down! No time for a farewell poem!",
+	ANNOUNCE_WAVE_BOOST = "Off with the wave! Here we go!",
 
-	ANNOUNCE_WHALE_HUNT_BEAST_NEARBY = "附近有大家伙的气息，像海坊主巡夜呢。",
-	ANNOUNCE_WHALE_HUNT_LOST_TRAIL = "气泡断掉了，追踪失败，呜。",
-	ANNOUNCE_WHALE_HUNT_LOST_TRAIL_SPRING = "春浪太乱，连剑士的眼睛也会被骗过去。",
+	ANNOUNCE_WHALE_HUNT_BEAST_NEARBY = "Something huge is close. It feels like an umibozu on its nightly rounds.",
+	ANNOUNCE_WHALE_HUNT_LOST_TRAIL = "No more bubbles. I've lost the trail.",
+	ANNOUNCE_WHALE_HUNT_LOST_TRAIL_SPRING = "These spring waves could fool even a swordswoman's eyes.",
 
 	DESCRIBE = {
 
-		FLOTSAM = "漂在那里耶，要是剑鞘能变成钩子就好了。",
+		FLOTSAM = "It's floating just out there. If only my scabbard had a hook.",
 		SUNKEN_BOAT =
 		{
-			ABANDONED = "船主不见了……有点像浦岛太郎的后续呢。",
-			GENERIC = "那艘船湿漉漉地等人说话。",
+			ABANDONED = "Nobody left aboard... I wonder if this is how Urashima Taro's story went on.",
+			GENERIC = "That sodden boat looks as if it's waiting for someone to talk to.",
 		},
-		SUNKEN_BOAT_BURNT = "又沉又焦，太惨啦。",
+		SUNKEN_BOAT_BURNT = "Sunk and scorched. Oh, what a sorry sight.",
 
-		BOAT_LOGRAFT = "木头排排站，勉强算船，haha。",
-		BOAT_RAFT = "朴素但是可靠，像练习用竹刀一样。",
-		BOAT_ROW = "要用手臂修行吗？好吧，露易丝不会输。",
-		BOAT_CARGO = "能装好多东西，便当、材料、还有备用的勇气。",
-		BOAT_ARMOURED = "厚实得像穿了胴甲，安心感上升！",
-		BOAT_ENCRUSTED = "贝壳黏得好认真，像小小的海边结界。",
-		CAPTAINHAT = "戴上它，海风都喊她船长大人啦。",
+		BOAT_LOGRAFT = "Logs laid out in a row! I suppose that counts as a boat.",
+		BOAT_RAFT = "Plain and dependable, just like my practice sword.",
+		BOAT_ROW = "An arm workout? Very well. I won't give up.",
+		BOAT_CARGO = "Room for my lunch, my supplies, and a little courage in reserve.",
+		BOAT_ARMOURED = "Stout as a breastplate. I feel safer already!",
+		BOAT_ENCRUSTED = "The shells stick so close together. A little ward against the sea.",
+		CAPTAINHAT = "Put this on, and even the sea breeze calls me Captain.",
 
-		BOAT_TORCH = "夜航的小火苗，别把船吓到哦。",
-		BOAT_LANTERN = "冷冷的光也不错，像狐火借来照路。",
-		BOATREPAIRKIT = "小裂缝交给它，温柔补好。",
-		BOATCANNON = "哇，远距离居合？不对，是大炮啦。",
+		BOAT_TORCH = "A little flame for a night at sea. Easy there, boat.",
+		BOAT_LANTERN = "A cool light's lovely too. A little foxfire to see by.",
+		BOATREPAIRKIT = "Just the thing to patch the little cracks with a gentle hand.",
+		BOATCANNON = "A long-distance sword draw? Oh! It's a cannon.",
 
 		BOTTLELANTERN = "The light is so cold and alien.",
 		BIOLUMINESCENCE = "It's a cold light. Not like a flame at all.",

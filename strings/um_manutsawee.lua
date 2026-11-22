@@ -279,7 +279,9 @@ return {
         SPEAKER_RUSTED = "My mother is going to ask me to collect clothes.",
         SPEAKER_SPECTER = "My mother is going to ask me to collect clothes.",
         SPECTER_SHIPWRECK = "Everything will eventually be destroyed.",
-        SPIDERQUEENCORPSE = "How disgusting!",
+        SPIDERQUEENCORPSE = {
+            GENERIC = "How disgusting!",
+        },
         SPIDER_TRAPDOOR = "Sit back and wait.",
         SPOREHOUND = "It is colonized by fungi.",
         SPOREPACK = "It's so dirty that I can't put items in it.",
