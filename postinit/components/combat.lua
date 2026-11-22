@@ -3,6 +3,19 @@ local AddComponentPostInit = AddComponentPostInit
 local Combat = require("components/combat")
 GLOBAL.setfenv(1, GLOBAL)
 
+local SORYUHA_CHARGE_DAMAGE_TAKEN = 0.5
+
+local function ScaleSpDamage(spdamage, mult)
+    if spdamage == nil then
+        return nil
+    end
+    local scaled = {}
+    for k, v in pairs(spdamage) do
+        scaled[k] = v * mult
+    end
+    return scaled
+end
+
 AddComponentPostInit("combat", function(self, inst)
 
     local _GetAttacked = self.GetAttacked
@@ -20,6 +33,16 @@ AddComponentPostInit("combat", function(self, inst)
         if predictor ~= nil and predictor:ShouldBlockAttack(attacker, weapon) then
             SkillUtil.AddFollowerFx(inst, "electricchargedfx")
             return true
+        end
+
+        -- Soryuha charge: a boss breaks the stance, anything else is halved and shrugged off.
+        if inst.sg:HasStateTag("soryuha_charging") then
+            if attacker ~= nil and attacker:HasTag("epic") then
+                inst:PushEvent("soryuha_interrupted")
+            else
+                damage = damage ~= nil and damage * SORYUHA_CHARGE_DAMAGE_TAKEN or damage
+                spdamage = ScaleSpDamage(spdamage, SORYUHA_CHARGE_DAMAGE_TAKEN)
+            end
         end
         return _GetAttacked(self, attacker, damage, weapon, stimuli, spdamage, ...)
     end

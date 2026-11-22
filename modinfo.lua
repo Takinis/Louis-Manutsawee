@@ -316,6 +316,13 @@ configuration_options = {
         default = 45,
     },
     {
+        name = "immortalslash_cooldown_time",
+        label = en_zh("IMMORTAL SLASH Cooldown time(s).", "不死斩冷却时间", "不死斬冷卻時間"),
+        hover = en_zh("Set IMMORTAL SLASH cooldown time.", "设置不死斩冷却时间", "設定不死斬冷卻時間"),
+        options = skill_cooldown_options,
+        default = 45,
+    },
+    {
         name = "soryuha_cooldown_time",
         label = en_zh("SORYUHA Cooldown time(s).", "苍龙破冷却时间", "雙龍破冷卻時間"),
         hover = en_zh("Set SORYUHA cooldown time.", "设置苍龙破冷却时间", "設定雙龍破冷卻時間"),

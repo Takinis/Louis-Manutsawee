@@ -15,6 +15,7 @@ M_CONFIG = {
     FlipCooldown = GetModConfigData("flip_cooldown_time"),
     ThrustCooldown = GetModConfigData("thrust_cooldown_time"),
     SoryuhaCooldown = GetModConfigData("soryuha_cooldown_time"),
+    ImmortalSlashCooldown = GetModConfigData("immortalslash_cooldown_time"),
     IsshinCooldown = GetModConfigData("isshin_skill_cooldown_time"),
     RyusenSusanooCooldown = GetModConfigData("ryusen_and_susanoo_skill_cooldown_time"),
 

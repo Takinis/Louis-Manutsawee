@@ -1,6 +1,7 @@
 local MakePlayerCharacter = require "prefabs/player_common"
 local SkillUtil = require("utils/skillutil")
 local AfterImageUtil = require("utils/afterimageutil")
+local SmallAnimalUtil = require("utils/smallanimalutil")
 
 local assets = {
     Asset("SCRIPT", "scripts/prefabs/player_common.lua"),
@@ -33,6 +34,8 @@ local assets = {
     Asset("ANIM", "anim/hair_short_ball.zip"),
     Asset("ANIM", "anim/hair_medium_ball.zip"),
     Asset("ANIM", "anim/hair_long_ball.zip"),
+
+    Asset("ANIM", "anim/kiritzuka_guard.zip"),
 
     Asset("ANIM", "anim/eyeglasses.zip"),
     Asset("ANIM", "anim/sunglasses.zip"),
@@ -302,32 +305,7 @@ local function GoToStateLater(inst, state, target, delay)
     end)
 end
 
-local function GetSoryuhaWarningDay()
-    return TheWorld ~= nil and TheWorld.state ~= nil and TheWorld.state.cycles or 0
-end
-
-local function IsSoryuhaCarrier(weapon)
-    return weapon ~= nil and (weapon:HasTag("onikiba") or weapon:HasTag("tokijin") or weapon.prefab == "tokijin")
-end
-
-local function ShouldInterruptSoryuha(inst, weapon)
-    if weapon == nil or not weapon:HasTag("katana") or IsSoryuhaCarrier(weapon) then
-        return false
-    end
-
-    local day = GetSoryuhaWarningDay()
-    if inst._soryuha_fragile_warning_day ~= day then
-        inst._soryuha_fragile_warning_day = day
-        if inst.components.talker ~= nil then
-            inst.components.talker:Say(STRINGS.SKILL.SORYUHA_FRAGILE, 2, true)
-        end
-        inst:ClearBufferedAction()
-        inst.sg:GoToState("idle")
-        return true
-    end
-
-    return false
-end
+local IMMORTALSLASH_HEALTH_COST = 0.1
 
 local function IsSoryuhaLevelReady(inst)
     local kenjutsuka = inst.components.kenjutsuka
@@ -581,36 +559,25 @@ local function CreateSkillData()
             level = UNLOCK_LEVEL.IMMORTALSLASH,
             mindpower = 20,
             cooldown_name = SKILL_ID.IMMORTALSLASH,
-            cooldown_time = M_CONFIG.SoryuhaCooldown,
+            cooldown_time = M_CONFIG.ImmortalSlashCooldown,
             cooldown_effect = "ghostlyelixir_retaliation_dripfx",
-            range = 10,
+            range = 8,
             start_message = STRINGS.SKILL.SKILL8START,
             release = function(inst, target)
-                inst:DoTaskInTime(.1, function(inst)
-                    if not inst:IsValid() then
-                        return
+                if inst.components.talker ~= nil then
+                    inst.components.talker:Say(STRINGS.SKILL.SKILL8ATTACK, 2, true)
+                end
+
+                -- Drawing the blade costs blood: 10% of current health, never lethal.
+                local health = inst.components.health
+                if health ~= nil and not health:IsInvincible() then
+                    local cost = math.min(health.currenthealth * IMMORTALSLASH_HEALTH_COST, health.currenthealth - 1)
+                    if cost > 0 then
+                        health:DoDelta(-cost, false, SKILL_ID.IMMORTALSLASH, true, nil, true)
                     end
+                end
 
-                    if inst.components.talker ~= nil then
-                        inst.components.talker:Say(STRINGS.SKILL.SKILL8ATTACK, 2, true)
-                    end
-
-                    local weapon = inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
-                    if weapon ~= nil and weapon.components.spellcaster ~= nil and weapon.IsUnsheath ~= nil and weapon:IsUnsheath() then
-                        weapon.components.spellcaster:CastSpell(inst)
-                    end
-
-                    local sharkboi_swipe_fx = SpawnPrefab("sharkboi_swipe_fx")
-                    sharkboi_swipe_fx.AnimState:SetScale(5, 5, 5)
-                    sharkboi_swipe_fx.AnimState:SetDeltaTimeMultiplier(0.2)
-                    sharkboi_swipe_fx.entity:SetParent(inst.entity)
-                    sharkboi_swipe_fx.Transform:SetPosition(1, 0, 0)
-                    sharkboi_swipe_fx.AnimState:SetMultColour(0, 0, 0, 1)
-                    sharkboi_swipe_fx:Reverse()
-
-                    SkillUtil.SlashFx(inst, target, "shadowstrike_slash_fx", 3)
-                    SkillUtil.AoeAttack(inst, 1, 4)
-                end)
+                GoToStateLater(inst, SKILL_ID.IMMORTALSLASH, target, .1)
                 return true
             end,
         },
@@ -625,26 +592,23 @@ local function CreateSkillData()
             cooldown_name = SKILL_ID.SORYUHA,
             cooldown_time = M_CONFIG.SoryuhaCooldown,
             cooldown_effect = "thunderbird_fx_idle",
-            range = 12,
+            range = 32, -- 8 tiles
             start_message = STRINGS.SKILL.SKILL9START,
             release = function(inst, target)
                 if not IsSoryuhaLevelReady(inst) then
                     if inst.components.talker ~= nil then
-                        inst.components.talker:Say("需要满级才能释放苍龙破。", 2, true)
+                        inst.components.talker:Say(STRINGS.SKILL.SORYUHA_NEED_MAX_LEVEL, 2, true)
                     end
                     return false
                 end
 
                 local weapon = inst.components.inventory ~= nil and inst.components.inventory:GetEquippedItem(EQUIPSLOTS.HANDS) or nil
-                if ShouldInterruptSoryuha(inst, weapon) then
-                    return false
-                end
 
                 inst:DoTaskInTime(.1, function(inst)
                     if inst:IsValid() then
                         if inst.components.talker ~= nil then
-                            if weapon ~= nil and weapon:HasTag("katana") and not IsSoryuhaCarrier(weapon) then
-                                inst.components.talker:Say("奥义·苍龙破！！！", 2, true)
+                            if weapon ~= nil and weapon:HasTag("katana") and not SkillUtil.IsSoryuhaCarrier(weapon) then
+                                inst.components.talker:Say(STRINGS.SKILL.SORYUHA_OUGI_ATTACK, 2, true)
                             else
                                 inst.components.talker:Say(STRINGS.SKILL.SKILL9ATTACK, 2, true)
                             end
@@ -1203,6 +1167,7 @@ local master_postinit = function(inst)
     inst.components.hunger:SetRate(TUNING.WILSON_HUNGER_RATE * 1.3)
 
     inst.components.combat.damagemultiplier = 1
+    inst.components.combat.customdamagemultfn = SmallAnimalUtil.GetDamageMult
     inst.components.combat:SetStartAttack(OnStartAttack)
     inst.components.grogginess.decayrate = TUNING.WES_GROGGINESS_DECAY_RATE
     inst.components.temperature.inherentinsulation = -TUNING.INSULATION_TINY

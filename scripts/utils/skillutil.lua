@@ -17,6 +17,25 @@ local function SlashFx(inst, target, prefab, scale)
     end
 end
 
+local PROTECTED_TAGS = { "player", "structure", "companion", "abigail", "wall" }
+
+-- Skill AoE must not hit allies: players, their companions/followers, Abigail, walls and structures.
+local function IsProtectedTarget(inst, target)
+    for _, tag in ipairs(PROTECTED_TAGS) do
+        if target:HasTag(tag) then
+            return true
+        end
+    end
+
+    local leader = target.components.follower ~= nil and target.components.follower:GetLeader() or nil
+    return leader ~= nil and (leader == inst or leader:HasTag("player"))
+end
+
+-- Tokijin and Onikiba were forged to carry Soryuha; other katanas strain under it.
+local function IsSoryuhaCarrier(weapon)
+    return weapon ~= nil and (weapon:HasTag("onikiba") or weapon:HasTag("tokijin") or weapon.prefab == "tokijin")
+end
+
 local function AoeAttack(inst, damage, range)
     local CANT_TAGS = { "INLIMBO", "invisible", "NOCLICK",}
     local x, y, z = inst.Transform:GetWorldPosition()
@@ -30,7 +49,7 @@ local function AoeAttack(inst, damage, range)
             end
 
             if v.components.health ~= nil and v.components.combat ~= nil and not v.components.health:IsDead() then
-                if not (v:HasTag("player") or v:HasTag("structure") or v:HasTag("companion") or v:HasTag("abigial") or v:HasTag("wall")) then
+                if not IsProtectedTarget(inst, v) then
                     if weapon ~= nil then
                         v.components.combat:GetAttacked(inst, weapon.components.weapon.damage*damage)
                     end
@@ -124,6 +143,8 @@ return {
     SlashFx = SlashFx,
     GroundPoundFx = GroundPoundFx,
     AoeAttack = AoeAttack,
+    IsProtectedTarget = IsProtectedTarget,
+    IsSoryuhaCarrier = IsSoryuhaCarrier,
     AddFollowerFx = AddFollowerFx,
     Skill_Data = Skill_Data,
 }

@@ -42,6 +42,7 @@ local postinit = {
         "mightydumbbell",
         "wisecracker",
         "combat",
+        "combat_replica",
         "lunarsupernovaburning",
         "cursable",
         "trader",
@@ -50,6 +51,7 @@ local postinit = {
         "teacher",
         "playerlightningtarget",
         "skinner",
+        "health",
         "porkland_undertile",
     },
     widgets = {

@@ -392,6 +392,7 @@ local skill_state_modules = {
     "quicksheath",
     "ryusen",
     "soryuha",
+    "immortalslash",
     "flip",
     "thrust",
     "ichimonji",
