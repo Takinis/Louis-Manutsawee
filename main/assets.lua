@@ -71,12 +71,23 @@ Assets = {
     Asset("IMAGE", "images/hud/lycoris_backpack.tex"),
     Asset("ATLAS", "images/hud/lycoris_backpack.xml"),
     Asset("ATLAS_BUILD", "images/hud/lycoris_backpack.xml", 64),
+
     Asset("IMAGE", "images/hud/oinc1000000.tex"),
     Asset("ATLAS", "images/hud/oinc1000000.xml"),
     Asset("ATLAS_BUILD", "images/hud/oinc1000000.xml", 64),
+
     Asset("IMAGE", "images/hud/oinc1000000_engraved.tex"),
     Asset("ATLAS", "images/hud/oinc1000000_engraved.xml"),
     Asset("ATLAS_BUILD", "images/hud/oinc1000000_engraved.xml", 64),
+
+    Asset("IMAGE", "images/hud/voidcloth_scythe_death.tex"),
+    Asset("ATLAS", "images/hud/voidcloth_scythe_death.xml"),
+    Asset("ATLAS_BUILD", "images/hud/voidcloth_scythe_death.xml", 64),
+
+    Asset("IMAGE", "images/hud/ruinshat_dreadstone.tex"),
+    Asset("ATLAS", "images/hud/ruinshat_dreadstone.xml"),
+    Asset("ATLAS_BUILD", "images/hud/ruinshat_dreadstone.xml", 64),  -- for minisign
+
     Asset("IMAGE", "images/saveslot_portraits/manutsawee.tex"),
     Asset("ATLAS", "images/saveslot_portraits/manutsawee.xml"),
 
@@ -106,6 +117,20 @@ Assets = {
     Asset("ATLAS", "bigportraits/kiritzuka.xml"),
     Asset("IMAGE", "bigportraits/kiritzuka_none.tex"),
     Asset("ATLAS", "bigportraits/kiritzuka_none.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_classic.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_classic.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_kimono.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_kimono.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_victorian.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_victorian.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_highcollar.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_highcollar.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_cape_cardigan.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_cape_cardigan.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_shirt_tie.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_shirt_tie.xml"),
     Asset("IMAGE", "images/names_kiritzuka.tex"),
     Asset("ATLAS", "images/names_kiritzuka.xml"),
     Asset("IMAGE", "images/names_gold_kiritzuka.tex"),
@@ -183,6 +208,8 @@ Assets = {
     Asset("ATLAS", "bigportraits/manutsawee_bocchi.xml"),
     Asset("IMAGE", "bigportraits/manutsawee_lycoris.tex"),
     Asset("ATLAS", "bigportraits/manutsawee_lycoris.xml"),
+    Asset("IMAGE", "bigportraits/manutsawee_maid_m.tex"),
+    Asset("ATLAS", "bigportraits/manutsawee_maid_m.xml"),
 
     Asset("DYNAMIC_ATLAS", "images/bg_loading_loading_dev_cemetery.xml"),
 	Asset("PKGREF", "images/bg_loading_loading_dev_cemetery.tex"),
@@ -205,5 +232,7 @@ AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/rebar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/baseballbat.xml")
 AssetUtil.RegisterImageAtlas("images/hud/lycoris_backpack.xml")
+AssetUtil.RegisterImageAtlas("images/hud/voidcloth_scythe_death.xml")
+AssetUtil.RegisterImageAtlas("images/hud/ruinshat_dreadstone.xml")
 AssetUtil.RegisterImageAtlas("images/hud/oinc1000000.xml")
 AssetUtil.RegisterImageAtlas("images/hud/oinc1000000_engraved.xml")

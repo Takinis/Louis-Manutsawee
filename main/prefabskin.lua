@@ -1,6 +1,10 @@
 local Assets = Assets
 GLOBAL.setfenv(1, GLOBAL)
 
+if rawget(_G, "voidcloth_scythe_clear_fn") == nil then
+    rawset(_G, "voidcloth_scythe_clear_fn", require("utils/deathsickleskin").Clear)
+end
+
 -- huh?
 -- TheInventory:AddRestrictedBuildFromLua("loading_dev_cemetery", "loading_dev_cemetery", true)
 -- TheInventory:AddRestrictedBuildFromLua("loading_night_for_four", "loading_night_for_four", true)
@@ -87,10 +91,19 @@ GlassicAPI.SkinHandler.AddModSkins({
     },
     kiritzuka = {
         "kiritzuka_none",
+        "kiritzuka_maid",
+        "kiritzuka_maid_kimono",
+        "kiritzuka_maid_victorian",
+        "kiritzuka_maid_classic",
+        "kiritzuka_maid_highcollar",
+        "kiritzuka_cape_cardigan",
+        "kiritzuka_shirt_tie",
     },
     inoue = {
         "inoue_none",
     },
     cane = {"lcane"},
     yari = {"mnaginata"},
+    voidcloth_scythe = {"voidcloth_scythe_death"},
+    ruinshat = {"ruinshat_dreadstone"},
 })

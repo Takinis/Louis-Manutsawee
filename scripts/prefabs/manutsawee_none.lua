@@ -1,3 +1,5 @@
+local DeathSickleSkin = require("utils/deathsickleskin")
+
 local prefabs = {}
 
 table.insert(prefabs, CreatePrefabSkin("manutsawee_none", {
@@ -82,6 +84,36 @@ table.insert(prefabs, CreatePrefabSkin("mnaginata", {
         GlassicAPI.UpdateFloaterAnim(inst)
     end,
     skin_tags = { "MNAGINATA", "Glassic" },
+}))
+
+local death_sickle = CreatePrefabSkin("voidcloth_scythe_death", {
+    base_prefab = "voidcloth_scythe",
+    type = "item",
+    rarity = "Glassic",
+    assets = {
+        Asset("DYNAMIC_ANIM", "anim/dynamic/voidcloth_scythe_death.zip"),
+        Asset("PKGREF", "anim/dynamic/voidcloth_scythe_death.dyn"),
+        Asset("IMAGE", "images/hud/voidcloth_scythe_death.tex"),
+        Asset("ATLAS", "images/hud/voidcloth_scythe_death.xml"),
+    },
+    init_fn = DeathSickleSkin.Init,
+    skin_tags = { "VOIDCLOTH_SCYTHE", "CRAFTABLE", "Glassic" },
+})
+death_sickle.clear_fn = DeathSickleSkin.Clear
+table.insert(prefabs, death_sickle)
+
+table.insert(prefabs, CreatePrefabSkin("ruinshat_dreadstone", {
+    base_prefab = "ruinshat",
+    type = "item",
+    rarity = "Glassic",
+    assets = {
+        Asset("DYNAMIC_ANIM", "anim/dynamic/ruinshat_dreadstone.zip"),
+        Asset("PKGREF", "anim/dynamic/ruinshat_dreadstone.dyn"),
+    },
+    init_fn = function(inst)
+        ruinshat_init_fn(inst, "ruinshat_dreadstone")
+    end,
+    skin_tags = { "RUINSHAT", "CRAFTABLE", "Glassic" },
 }))
 
 return unpack(prefabs)

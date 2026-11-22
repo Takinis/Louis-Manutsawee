@@ -5,6 +5,15 @@ if not GLOBAL.IsInFrontEnd() then return end
 
 local AssetUtil = require("utils/assetutil")
 
+modimport("main/constants")
+modimport("main/config")
+modimport("main/strings")
+modimport("main/tuning")
+modimport("main/characters")
+modimport("main/prefabskin")
+modimport("postinit/screens/optionsscreen")
+modimport("postinit/screens/playersummaryscreen")
+
 PrefabFiles = {
 	"manutsawee_none",
 	"kiritzuka_none",
@@ -49,6 +58,20 @@ Assets = {
     Asset("ATLAS", "bigportraits/kiritzuka.xml"),
     Asset("IMAGE", "bigportraits/kiritzuka_none.tex"),
     Asset("ATLAS", "bigportraits/kiritzuka_none.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_classic.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_classic.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_kimono.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_kimono.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_victorian.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_victorian.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_maid_highcollar.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_maid_highcollar.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_cape_cardigan.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_cape_cardigan.xml"),
+    Asset("IMAGE", "bigportraits/kiritzuka_shirt_tie.tex"),
+    Asset("ATLAS", "bigportraits/kiritzuka_shirt_tie.xml"),
 
     Asset("IMAGE", "images/saveslot_portraits/inoue.tex"),
     Asset("ATLAS", "images/saveslot_portraits/inoue.xml"),
@@ -113,14 +136,6 @@ Assets = {
 }
 
 PreloadAssets = {}
-
-modimport("main/constants")
-modimport("main/config")
-modimport("main/strings")
-modimport("main/tuning")
-modimport("main/characters")
-modimport("main/prefabskin")
-modimport("postinit/screens/optionsscreen")
 
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
 AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")

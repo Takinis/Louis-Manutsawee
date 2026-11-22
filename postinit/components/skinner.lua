@@ -22,12 +22,35 @@ ValidatePreviewItems = function(character, skins, ...)
 end
 
 local Skinner = require("components/skinner")
+local SideSkirtUtil = require("utils/sideskirtutil")
 local set_clothing = Skinner.SetClothing
 function Skinner:SetClothing(name, ...)
 	if not does_character_have_skin(name, self.inst.prefab) then
 		return
 	end
 	return set_clothing(self, name, ...)
+end
+
+local function UpdateSideSkirt(inst)
+	SideSkirtUtil.Update(inst, inst.AnimState, inst.AnimState:GetCurrentFacing())
+end
+
+local function RefreshSideSkirt(self)
+	local inst = self.inst
+	local base_skin = self.skin_data ~= nil and self.skin_data[self.skintype] or nil
+	local enabled = SideSkirtUtil.HasSideSkirt(base_skin)
+		and table.contains(SKIN_TYPES_THAT_RECEIVE_CLOTHING, self.skintype)
+		and not SideSkirtUtil.IsSkirtClothed(self.clothing, inst.prefab)
+
+	if SideSkirtUtil.Reset(inst, enabled and base_skin or nil, self.clothing, inst.prefab) then
+		if inst._side_skirt_task == nil then
+			inst._side_skirt_task = inst:DoPeriodicTask(0, UpdateSideSkirt)
+		end
+		UpdateSideSkirt(inst)
+	elseif inst._side_skirt_task ~= nil then
+		inst._side_skirt_task:Cancel()
+		inst._side_skirt_task = nil
+	end
 end
 
 local set_skin_mode = Skinner.SetSkinMode
@@ -39,7 +62,12 @@ function Skinner:SetSkinMode(...)
 			self.inst:PushEvent("unequipskinneditem", skin)
 		end
 	end
-	return set_skin_mode(self, ...)
+	set_skin_mode(self, ...)
+	RefreshSideSkirt(self)
+	if self.inst.prefab == "inoue" or self.inst.prefab == "takina" then
+		local build = self.skin_data ~= nil and self.skin_data[self.skintype] or nil
+		require("utils/takinavisuals").Refresh(self.inst, build)
+	end
 end
 
 local ClothingExplorerPanel = require("widgets/redux/clothingexplorerpanel")
