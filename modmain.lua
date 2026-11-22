@@ -1,4 +1,5 @@
 local modimport = modimport
+local modname = modname
 
 local modules = {
     "config",
@@ -24,6 +25,11 @@ for i = 1, #modules do
 end
 
 GLOBAL.setfenv(1, GLOBAL)
+
+-- A local (non-workshop) copy is the dev build, same as the " - Dev" name in modinfo.
+if not modname:find("^workshop%-") then
+    require("utils/hangwatchdog").Start()
+end
 
 if IsRail() then
     error("Ban WeGame");
