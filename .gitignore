@@ -11,8 +11,11 @@ tool
 *.txt
 *.log
 *.png
+!workspace/lycoris_backpack/painted-master.png
+!workspace/lycoris_backpack/ground-master.png
 *.jpg
 *.py
+!workspace/lycoris_backpack/build_assets.py
 *.mp3
 *.ogg
 *.wav

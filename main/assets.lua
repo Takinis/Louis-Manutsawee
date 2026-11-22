@@ -28,6 +28,7 @@ PrefabFiles = {
     "crowbar",
     "rebar",
     "baseballbat",
+    "lycoris_backpack",
 }
 
 Assets = {
@@ -63,6 +64,9 @@ Assets = {
     Asset("ATLAS", "images/hud/baseballbat.xml"),
     Asset("ATLAS_BUILD", "images/hud/baseballbat.xml", 256),  -- for minisign
 
+    Asset("IMAGE", "images/hud/lycoris_backpack.tex"),
+    Asset("ATLAS", "images/hud/lycoris_backpack.xml"),
+    Asset("ATLAS_BUILD", "images/hud/lycoris_backpack.xml", 64),
     Asset("IMAGE", "images/saveslot_portraits/manutsawee.tex"),
     Asset("ATLAS", "images/saveslot_portraits/manutsawee.xml"),
 
@@ -190,3 +194,4 @@ AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
 AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/rebar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/baseballbat.xml")
+AssetUtil.RegisterImageAtlas("images/hud/lycoris_backpack.xml")

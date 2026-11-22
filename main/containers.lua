@@ -1,6 +1,8 @@
 GLOBAL.setfenv(1, GLOBAL)
 local params = require("containers").params
 
+params.lycoris_backpack = params.backpack
+
 local boat_msurfboard = {
     widget = {
         slotpos = {},

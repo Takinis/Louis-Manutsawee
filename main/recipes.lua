@@ -4,6 +4,12 @@ local AddRecipe2 = AddRecipe2
 GLOBAL.setfenv(1, GLOBAL)
 
 local recipes = {
+    lycoris_backpack = {
+        ingredients = {Ingredient("silk", 4), Ingredient("rope", 2), Ingredient("goldnugget", 1)},
+        tech = TECH.SCIENCE_ONE,
+        filters = {"CONTAINERS", "CLOTHING"},
+    },
+
     mingot = {
         ingredients = {Ingredient("moonrocknugget", 8), Ingredient("moonglass", 8), Ingredient("thulecite", 4)},
         tech = TECH.SCIENCE_TWO,

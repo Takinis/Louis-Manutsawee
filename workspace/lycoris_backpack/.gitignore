@@ -1,0 +1,4 @@
+*.zip
+*.pack.json
+.pack-backups/
+inventory-before-darkening.tex
