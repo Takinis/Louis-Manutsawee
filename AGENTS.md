@@ -1,5 +1,9 @@
 # Project Overview: Louis Manutsawee (Don't Starve Together Mod)
 
+## Terminology Requirements
+- Never use the Chinese term formed by ASCII `Q` followed by U+7248 in responses or generated content.
+- Treat the current Kiritzuka clothing work as game texture work. Preserve the character's existing game proportions and use the latest `exported/kiritzuka` template as the production reference.
+
 ## General Information
 - **Name:** Louis Manutsawee
 - **Author:** Sydney
@@ -23,7 +27,7 @@
   - Wide variety of character skins and outfits (maid, miko, qipao, sailor, shinsengumi, yukata, etc.).
 
 ## Directory Structure & Assets
-- **`modinfo.lua`**: Contains mod configuration, metadata, keybindings, and gameplay options.
+- **`modinfo.lua`**: Contains mod configuration, metadata, and gameplay options. Key bindings are not here: they live in `scripts/utils/keybinds.lua` and are edited in the game's Options > Controls tab (`postinit/screens/optionsscreen.lua`).
 - **`anim/`**: Packed animation files (`.zip`) for the character, weapons, hair, faces, and special effects.
 - **`bigportraits/`**: Character portrait XML/TEX files for the character selection screen.
 - **`scripts/`**: Lua scripts containing the core logic, prefabs, stategraphs, and UI elements.
@@ -36,7 +40,6 @@
 - **Gameplay Toggles:** 
   - Limiter ("is_tatsujin") toggle.
   - Starting Weapon selection.
-  - Customizable hotkeys for all skills and actions.
   - Adjustable cooldowns, Mind Power regeneration, and EXP rates.
 
 ## Code Style & Conventions
