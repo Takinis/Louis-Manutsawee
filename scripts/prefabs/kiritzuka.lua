@@ -1491,6 +1491,79 @@ local function OnAttacked(inst, data)
     end
 end
 
+-- Native code reads most speech as plain strings, so extra lines live in their own table and are swapped in when she talks.
+local speech_variants = nil
+local formatted_speech_variants = nil
+
+local function CollectSpeechVariants(speech, variants)
+    for k, v in pairs(variants) do
+        local line = speech ~= nil and speech[k] or nil
+        if type(line) == "string" then
+            -- Lines such as ANNOUNCE_CANFIX are appended to another with a leading break.
+            line = line:gsub("^\n+", "")
+            local pool = speech_variants[line] or { line }
+            for _, variant in ipairs(v) do
+                table.insert(pool, variant)
+            end
+            speech_variants[line] = pool
+        elseif type(line) == "table" then
+            CollectSpeechVariants(line, v)
+        end
+    end
+end
+
+local function EscapeSpeechPattern(text)
+    return (text:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"))
+end
+
+local function AddUncompromisingSpeechAliases(speech, generic)
+    for key, line in pairs(speech) do
+        local inherited = generic[key]
+        if type(line) == "table" and type(inherited) == "table" then
+            AddUncompromisingSpeechAliases(line, inherited)
+        elseif type(line) == "string" and type(inherited) == "string" then
+            speech_variants[inherited] = speech_variants[line]
+        end
+    end
+end
+
+local function GetSpeechVariant(line)
+    if speech_variants == nil then
+        speech_variants = {}
+        local speech = STRINGS.CHARACTERS.KIRITZUKA
+        CollectSpeechVariants(speech, STRINGS.KIRITZUKA_SPEECH_VARIANTS or {})
+        if UM_ENABLED then
+            -- Uncompromising Mode appends these inspection lines from its generic speech table.
+            AddUncompromisingSpeechAliases({
+                DURABILITY_LEVEL = speech.DESCRIBE.DURABILITY_LEVEL,
+                HEATROCK_LEVEL = speech.DESCRIBE.HEATROCK_LEVEL,
+                VETSITEM = speech.DESCRIBE.VETSITEM,
+            }, STRINGS.CHARACTERS.GENERIC.DESCRIBE)
+        end
+        formatted_speech_variants = {}
+        for original, pool in pairs(speech_variants) do
+            local before, after = original:match("^([^%%]*)%%s([^%%]*)$")
+            if before ~= nil and (before ~= "" or after ~= "") then
+                -- Player descriptions can be formatted with a display name before Talker:Say.
+                local pattern = "^" .. EscapeSpeechPattern(before) .. "(.+)" .. EscapeSpeechPattern(after) .. "$"
+                table.insert(formatted_speech_variants, { pattern = pattern, pool = pool })
+            end
+        end
+    end
+    local pool = speech_variants[line]
+    if pool ~= nil then
+        return pool[math.random(#pool)]
+    end
+    for _, entry in ipairs(formatted_speech_variants) do
+        local name = line:match(entry.pattern)
+        if name ~= nil then
+            local variant = entry.pool[math.random(#entry.pool)]
+            return (variant:gsub("%%s", function() return name end))
+        end
+    end
+    return line
+end
+
 local function UpdateLowHealthDamage(inst)
     local health = inst.components.health
     if not health:IsDead() and not inst:HasTag("playerghost") then
@@ -1554,6 +1627,15 @@ local common_postinit = function(inst)
         inst:ListenForEvent("kiritzuka.dash_after_image", OnDashAfterImage)
     end
     inst:ListenForEvent("setowner", OnSetOwner)
+
+    local say = inst.components.talker.Say
+    function inst.components.talker:Say(script, time, noanim, force, nobroadcast, ...)
+        -- Lines echoed from the server arrive with nobroadcast and were already picked there.
+        if type(script) == "string" and not nobroadcast then
+            script = script:gsub("[^\n]+", GetSpeechVariant)
+        end
+        return say(self, script, time, noanim, force, nobroadcast, ...)
+    end
 end
 
 local master_postinit = function(inst)
@@ -1585,6 +1667,7 @@ local master_postinit = function(inst)
     inst:AddComponent("enemytracker")
     inst:AddComponent("momentum")
     inst:AddComponent("dumbbelllifter")
+    inst:AddComponent("stalkerinspectable")
 
     local get_battle_cry_string = inst.components.combat.GetBattleCryString
     function inst.components.combat:GetBattleCryString(target)

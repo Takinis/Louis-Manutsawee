@@ -891,6 +891,132 @@ local function OnDodgeTimeDirty(inst)
     end
 end
 
+-- Native speech reaches the talker after player names and measured weights have been filled in.
+local speech_lines, formatted_lines
+
+local function EscapePattern(text)
+    return (text:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"))
+end
+
+local function IndexSpeech(base, extra)
+    if type(base) == "table" then
+        for key, variants in pairs(extra) do
+            if base[key] ~= nil then
+                IndexSpeech(base[key], variants)
+            end
+        end
+        return
+    end
+
+    local line = base:gsub("^\n", "")
+    local entry = speech_lines[line]
+    if entry then
+        if entry.pool and (entry.pool[1] ~= extra[1] or entry.pool[2] ~= extra[2]) then
+            entry.pool = nil -- Identical originals need their inspection or action context.
+        end
+        return
+    end
+
+    entry = { original = line, pool = extra }
+    speech_lines[line] = entry
+    local token = line:find("%%s") and "%%s" or "{[%w_]+}"
+    local first, last = line:find(token)
+    if first then
+        local parts, pos = { "^" }, 1
+        repeat
+            parts[#parts + 1] = EscapePattern(line:sub(pos, first - 1)) .. "([^\n]-)"
+            pos = last + 1
+            first, last = line:find(token, pos)
+        until not first
+        entry.token = token
+        entry.pattern = table.concat(parts) .. EscapePattern(line:sub(pos)) .. "$"
+        formatted_lines[#formatted_lines + 1] = entry
+    end
+end
+
+local function FindSpeechPool(original, base, variants)
+    if base == original then
+        return variants
+    elseif type(base) == "table" and variants then
+        local found, matches = nil, 0
+        for key, child in pairs(base) do
+            local pool, ambiguous = FindSpeechPool(original, child, variants[key])
+            if ambiguous then return nil, true end
+            if pool then
+                if found and type(key) ~= "number" then return nil, true end
+                matches = matches + 1
+                if matches == 1 or math.random(matches) == 1 then found = pool end
+            end
+        end
+        return found
+    end
+end
+
+local function GetSpeechPool(entry, context)
+    if entry.pool or not context then return entry.pool end
+    local pool, ambiguous = FindSpeechPool(entry.original, context.base, context.extra)
+    if ambiguous and context.target then
+        local status = context.target.components.inspectable:GetStatus(context.viewer) or "GENERIC"
+        local base, extra = context.base, context.extra
+        for _, key in ipairs(type(status) == "table" and status or { status }) do
+            if type(base) ~= "table" or not extra then return end
+            base, extra = base[key], extra[key]
+        end
+        return FindSpeechPool(entry.original, base, extra)
+    end
+    return pool
+end
+
+local function VarySpeech(text, context)
+    if not speech_lines then
+        speech_lines, formatted_lines = {}, {}
+        local speech = STRINGS.CHARACTERS.MANUTSAWEE
+        IndexSpeech(speech, STRINGS.MANUTSAWEE_SPEECH_VARIANTS)
+        if UM_ENABLED and speech.DESCRIBE.VETSITEM then
+            local generic = STRINGS.CHARACTERS.GENERIC.DESCRIBE.VETSITEM
+            if generic then speech_lines[generic] = speech_lines[speech.DESCRIBE.VETSITEM] end
+        end
+        -- Prefer the full, specific template over a shorter greeting or weight report.
+        table.sort(formatted_lines, function(a, b) return #a.original > #b.original end)
+    end
+
+    local entry = speech_lines[text]
+    local fields, pool
+    if entry then
+        pool = GetSpeechPool(entry, context)
+    else
+        for _, template in ipairs(formatted_lines) do
+            if text:find(template.pattern) then
+                pool = GetSpeechPool(template, context)
+                if pool then
+                    entry, fields = template, { text:match(template.pattern) }
+                    break
+                end
+            end
+        end
+    end
+
+    if pool then
+        local index = math.random(3)
+        local line = index == 1 and entry.original or pool[index - 1]:gsub("^\n", "")
+        if fields then
+            local i = 0
+            return (line:gsub(entry.token, function()
+                i = i + 1
+                return fields[i]
+            end))
+        end
+        return line
+    end
+
+    -- An inspection can append a repair note or a mod description to a multiline base.
+    local description, note = text:match("^(.*)\n([^\n]*)$")
+    if description then
+        return VarySpeech(description, context) .. "\n" .. VarySpeech(note)
+    end
+    return text
+end
+
 local common_postinit = function(inst)
     inst.MiniMapEntity:SetIcon("manutsawee.tex")
 
@@ -960,6 +1086,51 @@ local common_postinit = function(inst)
         keyhandler:AddKeyListener(LouisManutsawee, "counter_attack", SKILL_RPC.COUNTER_ATTACK)
     end
 
+    -- LOOKAT is instant. Its target may never be assigned to inst.bufferedaction.
+    local speech_context
+    inst:ListenForEvent("performaction", function(_, data)
+        speech_context = nil
+        local act = data and data.action
+        if act and act.action == ACTIONS.LOOKAT then
+            local target = act.target or act.invobject
+            local inspectable = target and target.components.inspectable
+            if inspectable then
+                local key = string.upper(target.nameoverride or inspectable.nameoverride or target.prefab)
+                local descriptions = STRINGS.CHARACTERS.MANUTSAWEE.DESCRIBE
+                if not descriptions[key] and target:HasTag("player") then key = "PLAYER" end
+                speech_context = { base = descriptions[key], extra = STRINGS.MANUTSAWEE_SPEECH_VARIANTS.DESCRIBE[key],
+                    target = target, viewer = inst, tick = GetTick() }
+            end
+        end
+    end)
+    inst:ListenForEvent("actionfailed", function(_, data)
+        local speech = STRINGS.CHARACTERS.MANUTSAWEE
+        local variants = STRINGS.MANUTSAWEE_SPEECH_VARIANTS
+        local key = data.reason == "ITEMMIMIC" and "GENERIC" or data.action.action.id
+        local base, extra = speech.ACTIONFAIL[key], variants.ACTIONFAIL[key]
+        if type(base) == "table" and #base == 0 then
+            local reason = base[data.reason] and data.reason or "GENERIC"
+            base, extra = base[reason], extra and extra[reason]
+        end
+        if not base then
+            base = speech.ACTIONFAIL.GENERIC[data.reason] or speech.ACTIONFAIL_GENERIC
+            extra = variants.ACTIONFAIL.GENERIC[data.reason] or variants.ACTIONFAIL_GENERIC
+        end
+        speech_context = { base = base, extra = extra, tick = GetTick() }
+    end)
+
+    local say = inst.components.talker.Say
+    function inst.components.talker:Say(script, time, noanim, force, nobroadcast, colour, filter, ...)
+        if type(script) == "string" and not nobroadcast and not filter
+            and not inst:HasTag("playerghost") and not inst:HasTag("mime")
+            and (self.speechproxy == nil or self.speechproxy == "manutsawee") then
+            local context = speech_context
+            speech_context = nil
+            script = VarySpeech(script, context and context.tick == GetTick() and context or nil)
+        end
+        return say(self, script, time, noanim, force, nobroadcast, colour, filter, ...)
+    end
+
     inst:ListenForEvent("setowner", OnSetOwner)
 end
 
@@ -1008,6 +1179,8 @@ local master_postinit = function(inst)
     inst.components.kenjutsuka:AddOnLevelUp(OnLevelUp)
     inst.components.kenjutsuka:AddSpawnFx(OnLevelUpSpawnFx)
     inst.components.kenjutsuka:OnPostInit()
+
+    inst:AddComponent("stalkerinspectable")
 
     inst:AddComponent("houndedtarget")
     inst.components.houndedtarget.target_weight_mult:SetModifier(inst, TUNING.WES_HOUND_TARGET_MULT, "misfortune")

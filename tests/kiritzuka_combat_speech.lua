@@ -40,7 +40,7 @@ local function NewPlayer()
     local listeners = {}
     local inst = {
         AddComponent = function(_, name)
-            assert(name == "enemytracker" or name == "momentum" or name == "dumbbelllifter")
+            assert(name == "enemytracker" or name == "momentum" or name == "dumbbelllifter" or name == "stalkerinspectable")
         end,
         prefab = "kiritzuka",
         GUID = 1,

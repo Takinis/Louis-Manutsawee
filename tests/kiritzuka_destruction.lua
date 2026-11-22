@@ -90,6 +90,15 @@ local function Workable(x, z, action, tags, components)
     return thing
 end
 
+local function ContainsLine(lines, spoken)
+    for _, line in ipairs(lines) do
+        if line == spoken then
+            return true
+        end
+    end
+    return false
+end
+
 -- Off until asked for, with a line each way.
 local player = Player()
 assert(not player.kiritzuka_destruction)
@@ -98,9 +107,9 @@ world = { tree }
 player:DoSlamHit({ x = 0, y = 0, z = 0 }, 100)
 assert(tree.destroyed_by == nil, "Nothing breaks while off")
 assert(player:ToggleDestruction() and player.kiritzuka_destruction)
-assert(player.said == STRINGS.SKILL.KIRITZUKA_DESTROY_ON)
+assert(ContainsLine(STRINGS.SKILL.KIRITZUKA_DESTROY_ON, player.said))
 assert(player:ToggleDestruction() and not player.kiritzuka_destruction)
-assert(player.said == STRINGS.SKILL.KIRITZUKA_DESTROY_OFF)
+assert(ContainsLine(STRINGS.SKILL.KIRITZUKA_DESTROY_OFF, player.said))
 assert(player:ToggleDestruction())
 
 -- The slam levels what is in its radius, of every kind the list names, and asks by the right tags.
