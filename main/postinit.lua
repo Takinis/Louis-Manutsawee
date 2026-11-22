@@ -3,6 +3,7 @@ GLOBAL.setfenv(1, GLOBAL)
 
 modimport("postinit/entityscript")
 modimport("postinit/input")
+modimport("postinit/screens/optionsscreen")
 
 if PL_ENABLED then
     modimport("postinit/components/shopper")

@@ -1508,53 +1508,35 @@ local function OnSetOwner(inst)
 
     inst:AddComponent("playerkeyhandler")
     local handler = inst.components.playerkeyhandler
-    local function AddSkillKey(skill_key, fn)
+    -- Bindings come from Options > Controls and are re-registered when they change.
+    local function AddSkillKey(bind, action)
         local held = false
-        local function OnKey(key, down)
-            if key ~= skill_key or inst ~= ThePlayer then
-                return false
-            end
+        handler:AddRawKeyListener(bind, function(down)
             if not down then
                 held = false
                 return false
-            elseif held then
+            elseif held or inst ~= ThePlayer then
                 return false
             end
             held = true
-            return fn()
-        end
-        local listener = TheInput:AddSpecialKeyHandler(skill_key, OnKey)
-        handler:RememberHandler(TheInput.onspecialkey, "onspecialkey", listener, nil, TheInput.onspecialkey.RemoveHandler)
+            return handler:HandleKeyAction("LouisManutsawee", action)
+        end)
     end
 
-    AddSkillKey(M_CONFIG.KiritzukaSlamKey, function()
-        return handler:HandleKeyAction("LouisManutsawee", "KiritzukaBossSlam")
-    end)
+    AddSkillKey("kiritzuka_slam", "KiritzukaBossSlam")
     -- Unlike the others this one needs the key's release as well.
-    local homerun_key = M_CONFIG.KiritzukaHomeRunKey
     local homerun_held = false
-    local function OnHomeRunKey(key, down)
-        if key ~= homerun_key or inst ~= ThePlayer or down == homerun_held then
+    handler:AddRawKeyListener("kiritzuka_homerun", function(down)
+        if inst ~= ThePlayer or down == homerun_held then
             return false
         end
         homerun_held = down
         return handler:HandleKeyAction("LouisManutsawee", down and "KiritzukaHomeRunStart" or "KiritzukaHomeRunRelease")
-    end
-    local homerun_listener = TheInput:AddSpecialKeyHandler(homerun_key, OnHomeRunKey)
-    handler:RememberHandler(TheInput.onspecialkey, "onspecialkey", homerun_listener, nil, TheInput.onspecialkey.RemoveHandler)
-
-    AddSkillKey(M_CONFIG.KiritzukaDestroyKey, function()
-        return handler:HandleKeyAction("LouisManutsawee", "KiritzukaDestruction")
     end)
-    AddSkillKey(M_CONFIG.KiritzukaCounterKey, function()
-        return handler:HandleKeyAction("LouisManutsawee", "KiritzukaCounter")
-    end)
-    AddSkillKey(M_CONFIG.KiritzukaDashKey, function()
-        return handler:HandleKeyAction("LouisManutsawee", "KiritzukaDash")
-    end)
-    AddSkillKey(M_CONFIG.KiritzukaFlurryKey, function()
-        return handler:HandleKeyAction("LouisManutsawee", "KiritzukaFlurry")
-    end)
+    AddSkillKey("kiritzuka_destroy", "KiritzukaDestruction")
+    AddSkillKey("kiritzuka_counter", "KiritzukaCounter")
+    AddSkillKey("kiritzuka_dash", "KiritzukaDash")
+    AddSkillKey("kiritzuka_flurry", "KiritzukaFlurry")
 end
 
 local common_postinit = function(inst)

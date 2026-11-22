@@ -921,10 +921,10 @@ local common_postinit = function(inst)
 
     inst:AddComponent("playerkeyhandler")
     local keyhandler = inst.components.playerkeyhandler
-    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.LevelCheckKey, SKILL_RPC.LEVEL_CHECK)
-    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.PutGlassesKey, SKILL_RPC.PUT_GLASSES)
-    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ChangeHairStyleKey, SKILL_RPC.CHANGE_HAIR_STYLE)
-    keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.QuickSheathKey, SKILL_RPC.QUICK_SHEATH)
+    keyhandler:AddKeyListener(LouisManutsawee, "level_check", SKILL_RPC.LEVEL_CHECK)
+    keyhandler:AddKeyListener(LouisManutsawee, "put_glasses", SKILL_RPC.PUT_GLASSES)
+    keyhandler:AddKeyListener(LouisManutsawee, "change_hair_style", SKILL_RPC.CHANGE_HAIR_STYLE)
+    keyhandler:AddKeyListener(LouisManutsawee, "quick_sheath", SKILL_RPC.QUICK_SHEATH)
 
     --[[
         V = ICHIMONJI
@@ -940,24 +940,24 @@ local common_postinit = function(inst)
     ]]
     if M_CONFIG.EnableSkill then
         if M_CONFIG.SkillControlMode == SKILL_CONTROL_MODE.HOLD then
-            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.ICHIMONJI)
-            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.FLIP)
-            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.THRUST)
-            keyhandler:AddHoldKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.IMMORTALSLASH)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, "ichimonji", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.ICHIMONJI)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, "flip", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.FLIP)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, "thrust", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.THRUST)
+            keyhandler:AddHoldKeyListener(LouisManutsawee, "immortalslash", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillHoldTime, SKILL_INPUT.IMMORTALSLASH)
         elseif M_CONFIG.SkillControlMode == SKILL_CONTROL_MODE.SEQUENCE then
-            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.ICHIMONJI, "pressed"}, {SKILL_INPUT.ICHIMONJI, "sequence"})
-            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.FlipKey, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.FLIP, "pressed"}, {SKILL_INPUT.FLIP, "sequence"})
-            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.THRUST, "pressed"}, {SKILL_INPUT.THRUST, "sequence"})
-            keyhandler:AddSequenceKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.IMMORTALSLASH, "pressed"}, {SKILL_INPUT.IMMORTALSLASH, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, "ichimonji", "ichimonji", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.ICHIMONJI, "pressed"}, {SKILL_INPUT.ICHIMONJI, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, "flip", "flip", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.FLIP, "pressed"}, {SKILL_INPUT.FLIP, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, "thrust", "thrust", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.THRUST, "pressed"}, {SKILL_INPUT.THRUST, "sequence"})
+            keyhandler:AddSequenceKeyListener(LouisManutsawee, "immortalslash", "immortalslash", SKILL_RPC.SKILL_INPUT, M_CONFIG.SkillInputTimeout, {SKILL_INPUT.IMMORTALSLASH, "pressed"}, {SKILL_INPUT.IMMORTALSLASH, "sequence"})
         else
-            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.IchimonjiKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.ICHIMONJI, "pressed")
-            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.FlipKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.FLIP, "pressed")
-            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ThrustKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.THRUST, "pressed")
-            keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.ImmortalslashKey, SKILL_RPC.SKILL_INPUT, SKILL_INPUT.IMMORTALSLASH, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, "ichimonji", SKILL_RPC.SKILL_INPUT, SKILL_INPUT.ICHIMONJI, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, "flip", SKILL_RPC.SKILL_INPUT, SKILL_INPUT.FLIP, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, "thrust", SKILL_RPC.SKILL_INPUT, SKILL_INPUT.THRUST, "pressed")
+            keyhandler:AddKeyListener(LouisManutsawee, "immortalslash", SKILL_RPC.SKILL_INPUT, SKILL_INPUT.IMMORTALSLASH, "pressed")
         end
 
-        keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.SkillCancelKey, SKILL_RPC.SKILL_CANCEL)
-        keyhandler:AddKeyListener(LouisManutsawee, M_CONFIG.CounterAttackKey, SKILL_RPC.COUNTER_ATTACK)
+        keyhandler:AddKeyListener(LouisManutsawee, "skill_cancel", SKILL_RPC.SKILL_CANCEL)
+        keyhandler:AddKeyListener(LouisManutsawee, "counter_attack", SKILL_RPC.COUNTER_ATTACK)
     end
 
     inst:ListenForEvent("setowner", OnSetOwner)

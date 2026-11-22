@@ -120,6 +120,7 @@ modimport("main/strings")
 modimport("main/tuning")
 modimport("main/characters")
 modimport("main/prefabskin")
+modimport("postinit/screens/optionsscreen")
 
 AssetUtil.RegisterImageAtlas("images/hud/m_inventoryimages.xml")
 AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")

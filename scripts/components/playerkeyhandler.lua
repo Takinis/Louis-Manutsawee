@@ -1,6 +1,16 @@
+local Keybinds = require("utils/keybinds")
+
+local function OnKeybindsChanged(self)
+    self:RefreshKeyListeners()
+end
+
 local PlayerKeyHandler = Class(function(self, inst)
     self.inst = inst
     self.handlers = {}
+    self.key_listeners = {}
+
+    self._onkeybindschanged = function() OnKeybindsChanged(self) end
+    Keybinds.AddListener(self._onkeybindschanged)
 end)
 
 local unpack = unpack
@@ -16,6 +26,14 @@ local function CopyArgs(args, extra)
     end
 
     return copied
+end
+
+-- Bindings are named in utils/keybinds; a raw key code is still accepted.
+local function ResolveKey(bind)
+    if type(bind) == "string" then
+        return Keybinds.Get(bind)
+    end
+    return bind
 end
 
 local function IsActiveHUDScreen()
@@ -39,6 +57,10 @@ local function IsHUDInputBlocked(inst)
     return TheFrontEnd ~= nil and TheFrontEnd.textProcessorWidget ~= nil
 end
 
+function PlayerKeyHandler:IsLocalPlayer()
+    return self.inst == ThePlayer
+end
+
 function PlayerKeyHandler:HandleKeyAction(namespace, action, ...)
     if IsActiveHUDScreen() and not IsHUDInputBlocked(self.inst) then
         if TheWorld.ismastersim then
@@ -58,49 +80,129 @@ function PlayerKeyHandler:RememberHandler(processor, event, fn, state, remover, 
     table.insert(self.handlers, {event = event, fn = fn, processor = processor, state = state, remover = remover, remover_args = remover_args})
 end
 
-function PlayerKeyHandler:AddKeyListener(namespace, key, action, ...)
-    local args = {...}
-    local fn = function(_key, down)
-        if down and key == _key then
-            return self:HandleKeyAction(namespace, action, unpack(args)) or false
-        end
-    end
-
-    TheInput:AddSpecialKeyHandler(key, fn)
-    self:RememberHandler(TheInput.onspecialkey, "onspecialkey", fn)
+-- register returns the native handles for the currently bound keys; they are rebuilt when bindings change.
+function PlayerKeyHandler:AddRebindableListener(register)
+    local listener = { register = register, handles = register() or {} }
+    table.insert(self.key_listeners, listener)
+    return listener
 end
 
-function PlayerKeyHandler:AddSequenceKeyListener(namespace, key, next_key, action, timeout, pressed_args, sequence_args)
-    if pressed_args ~= nil then
-        self:AddKeyListener(namespace, key, action, unpack(pressed_args))
+local function RemoveHandles(listener)
+    for _, handle in ipairs(listener.handles) do
+        handle:Remove()
     end
+    listener.handles = {}
+end
 
-    local args = sequence_args or pressed_args or {}
-    local fn = function(k1, k2)
-        return self:HandleKeyAction(namespace, action, unpack(args)) or false
+function PlayerKeyHandler:RefreshKeyListeners()
+    for _, listener in ipairs(self.key_listeners) do
+        RemoveHandles(listener)
+        listener.handles = listener.register() or {}
+    end
+end
+
+-- fn(down) gets both edges of the bound key. A key held while it is rebound gets its release.
+function PlayerKeyHandler:AddRawKeyListener(bind, fn)
+    return self:AddRebindableListener(function()
+        local key = ResolveKey(bind)
+        if key == nil then
+            return
+        end
+
+        local is_down = false
+        local handler = TheInput:AddSpecialKeyHandler(key, function(_key, down)
+            if _key ~= key or not self:IsLocalPlayer() then
+                return false
+            end
+            is_down = down
+            return fn(down)
+        end)
+
+        return {
+            {
+                Remove = function()
+                    handler:Remove()
+                    if is_down then
+                        is_down = false
+                        fn(false)
+                    end
+                end,
+            },
+        }
+    end)
+end
+
+function PlayerKeyHandler:AddKeyListener(namespace, bind, action, ...)
+    local args = {...}
+    return self:AddRebindableListener(function()
+        local key = ResolveKey(bind)
+        if key == nil then
+            return
+        end
+
+        return {
+            TheInput:AddSpecialKeyHandler(key, function(_key, down)
+                if down and key == _key and self:IsLocalPlayer() then
+                    return self:HandleKeyAction(namespace, action, unpack(args)) or false
+                end
+            end),
+        }
+    end)
+end
+
+function PlayerKeyHandler:AddSequenceKeyListener(namespace, bind, next_bind, action, timeout, pressed_args, sequence_args)
+    if pressed_args ~= nil then
+        self:AddKeyListener(namespace, bind, action, unpack(pressed_args))
     end
 
     if TheInput.SetSequenceTimeout ~= nil then
         TheInput:SetSequenceTimeout(timeout or .5)
     end
 
-    TheInput:AddSequentialKeyHandler(key, next_key or key, fn)
+    local args = sequence_args or pressed_args or {}
+    return self:AddRebindableListener(function()
+        local key = ResolveKey(bind)
+        local next_key = ResolveKey(next_bind or bind)
+        if key == nil or next_key == nil then
+            return
+        end
 
-    local event_name = "seq_" .. tostring(key) .. "_" .. tostring(next_key or key)
-    self:RememberHandler(TheInput.onkeysequence, event_name, fn)
+        return {
+            TheInput:AddSequentialKeyHandler(key, next_key, function()
+                if self:IsLocalPlayer() then
+                    return self:HandleKeyAction(namespace, action, unpack(args)) or false
+                end
+            end),
+        }
+    end)
 end
 
-function PlayerKeyHandler:AddHoldKeyListener(namespace, key, action, hold_time, ...)
+function PlayerKeyHandler:AddHoldKeyListener(namespace, bind, action, hold_time, ...)
     local args = {...}
-    local fn = function(_key, phase)
-        return self:HandleKeyAction(namespace, action, unpack(CopyArgs(args, phase))) or false
-    end
+    return self:AddRebindableListener(function()
+        local key = ResolveKey(bind)
+        if key == nil then
+            return
+        end
 
-    local raw_fn, event_name, hold_fn, state = TheInput:AddHoldKeyHandler(key, hold_time, fn)
-    self:RememberHandler(TheInput, nil, raw_fn, state, TheInput.RemoveHoldKeyHandler, {event_name, hold_fn})
+        return {
+            TheInput:AddHoldKeyHandler(key, hold_time, function(_key, phase)
+                if self:IsLocalPlayer() then
+                    return self:HandleKeyAction(namespace, action, unpack(CopyArgs(args, phase))) or false
+                end
+            end),
+        }
+    end)
 end
 
 function PlayerKeyHandler:OnRemoveEntity()
+    Keybinds.RemoveListener(self._onkeybindschanged)
+
+    for _, listener in ipairs(self.key_listeners) do
+        RemoveHandles(listener)
+    end
+    self.key_listeners = {}
+
     for _, handler in ipairs(self.handlers) do
         if handler.state ~= nil and handler.state.task ~= nil then
             handler.state.task:Cancel()
@@ -113,8 +215,8 @@ function PlayerKeyHandler:OnRemoveEntity()
             else
                 handler.remover(handler.processor, handler.fn)
             end
-        elseif handler.processor and handler.processor.RemoveEventHandler then
-            handler.processor:RemoveEventHandler(handler.event, handler.fn)
+        elseif handler.fn ~= nil and type(handler.fn) == "table" and handler.fn.Remove ~= nil then
+            handler.fn:Remove()
         end
     end
     self.handlers = {}

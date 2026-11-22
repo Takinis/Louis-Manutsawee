@@ -130,10 +130,25 @@ function TheInput:AddHoldKeyHandler(key, hold_time, fn)
         return true
     end
 
-    self.onholdrawkey:AddEventHandler("onholdrawkey", raw_fn)
-    self.onkeyhold:AddEventHandler(event_name, fn)
+    local raw_handler = self.onholdrawkey:AddEventHandler("onholdrawkey", raw_fn)
+    local hold_handler = self.onkeyhold:AddEventHandler(event_name, fn)
 
-    return raw_fn, event_name, fn, state
+    -- Removing a held key reports its release, so routes waiting on it are not left hanging.
+    return {
+        Remove = function()
+            if state.task ~= nil then
+                state.task:Cancel()
+                state.task = nil
+            end
+            if state.is_down then
+                state.is_down = false
+                self.onkeyhold:HandleEvent(event_name, key, "released")
+            end
+            raw_handler:Remove()
+            hold_handler:Remove()
+            self.hold_key_states[event_name] = nil
+        end,
+    }
 end
 
 function TheInput:AddCombinationKeyHandler(key1, key2, fn)
