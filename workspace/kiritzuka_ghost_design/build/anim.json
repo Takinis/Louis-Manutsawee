@@ -1,0 +1,51 @@
+{
+"type": "Anim", "version": 4, 
+"banks": [
+    {
+        "name": "BUILD_PLAYER",
+        "animations": [
+            {
+                "name": "anim", "frameRate": 40,
+                "frames": [
+                    {
+                        "idx": 0, "x": 5.574660778045654, "y": -274.5320129394531, "width": 503, "height": 812,
+                        "elements": [
+                            {"zIndex": 0, "symbol": "ghost_hairpigtails", "frameNum": 0, "layerName": "ghost_hairpigtails", "a": 0.9848780035972595, "b": -0.16999800503253937, "c": 0.16999800503253937, "d": 0.9848780035972595, "tx": -74.8489990234375, "ty": -243.5489959716797},
+                            {"zIndex": 1, "symbol": "ghost_hairpigtails", "frameNum": 1, "layerName": "ghost_hairpigtails", "a": 0.9659860134124756, "b": 0.25542300939559937, "c": -0.25542300939559937, "d": 0.9659860134124756, "tx": 103.25, "ty": -248.24899291992188},
+                            {"zIndex": 2, "symbol": "ghost_eyes", "frameNum": 0, "layerName": "ghost_eyes", "a": 0.9994199872016907, "b": -0.030791999772191048, "c": 0.030791999772191048, "d": 0.9994199872016907, "tx": 6.75, "ty": -401.7489929199219},
+                            {"zIndex": 3, "symbol": "ghost_tail", "frameNum": 0, "layerName": "ghost_tail", "a": 1, "b": 0, "c": 0, "d": 1, "tx": 0, "ty": 19.950000762939453}
+                        ]
+                    },
+                    {
+                        "idx": 1, "x": 5.574660778045654, "y": -274.5320129394531, "width": 503, "height": 812,
+                        "elements": [
+                            {"zIndex": 0, "symbol": "ghost_hairpigtails", "frameNum": 0, "layerName": "ghost_hairpigtails", "a": 0.9848780035972595, "b": -0.16999800503253937, "c": 0.16999800503253937, "d": 0.9848780035972595, "tx": -74.8489990234375, "ty": -243.5489959716797},
+                            {"zIndex": 1, "symbol": "ghost_hairpigtails", "frameNum": 1, "layerName": "ghost_hairpigtails", "a": 0.9659860134124756, "b": 0.25542300939559937, "c": -0.25542300939559937, "d": 0.9659860134124756, "tx": 103.25, "ty": -248.24899291992188},
+                            {"zIndex": 2, "symbol": "ghost_eyes", "frameNum": 0, "layerName": "ghost_eyes", "a": 0.9994199872016907, "b": -0.030791999772191048, "c": 0.030791999772191048, "d": 0.9994199872016907, "tx": 6.75, "ty": -401.7489929199219},
+                            {"zIndex": 3, "symbol": "ghost_tail", "frameNum": 0, "layerName": "ghost_tail", "a": 1, "b": 0, "c": 0, "d": 1, "tx": 0, "ty": 19.950000762939453}
+                        ]
+                    },
+                    {
+                        "idx": 2, "x": 5.574660778045654, "y": -274.5320129394531, "width": 503, "height": 812,
+                        "elements": [
+                            {"zIndex": 0, "symbol": "ghost_hairpigtails", "frameNum": 0, "layerName": "ghost_hairpigtails", "a": 0.9848780035972595, "b": -0.16999800503253937, "c": 0.16999800503253937, "d": 0.9848780035972595, "tx": -74.8489990234375, "ty": -243.5489959716797},
+                            {"zIndex": 1, "symbol": "ghost_hairpigtails", "frameNum": 1, "layerName": "ghost_hairpigtails", "a": 0.9659860134124756, "b": 0.25542300939559937, "c": -0.25542300939559937, "d": 0.9659860134124756, "tx": 103.25, "ty": -248.24899291992188},
+                            {"zIndex": 2, "symbol": "ghost_eyes", "frameNum": 0, "layerName": "ghost_eyes", "a": 0.9994199872016907, "b": -0.030791999772191048, "c": 0.030791999772191048, "d": 0.9994199872016907, "tx": 6.75, "ty": -401.7489929199219},
+                            {"zIndex": 3, "symbol": "ghost_tail", "frameNum": 0, "layerName": "ghost_tail", "a": 1, "b": 0, "c": 0, "d": 1, "tx": 0, "ty": 19.950000762939453}
+                        ]
+                    },
+                    {
+                        "idx": 3, "x": 5.574660778045654, "y": -274.5320129394531, "width": 503, "height": 812,
+                        "elements": [
+                            {"zIndex": 0, "symbol": "ghost_hairpigtails", "frameNum": 0, "layerName": "ghost_hairpigtails", "a": 0.9848780035972595, "b": -0.16999800503253937, "c": 0.16999800503253937, "d": 0.9848780035972595, "tx": -74.8489990234375, "ty": -243.5489959716797},
+                            {"zIndex": 1, "symbol": "ghost_hairpigtails", "frameNum": 1, "layerName": "ghost_hairpigtails", "a": 0.9659860134124756, "b": 0.25542300939559937, "c": -0.25542300939559937, "d": 0.9659860134124756, "tx": 103.25, "ty": -248.24899291992188},
+                            {"zIndex": 2, "symbol": "ghost_eyes", "frameNum": 0, "layerName": "ghost_eyes", "a": 0.9994199872016907, "b": -0.030791999772191048, "c": 0.030791999772191048, "d": 0.9994199872016907, "tx": 6.75, "ty": -401.7489929199219},
+                            {"zIndex": 3, "symbol": "ghost_tail", "frameNum": 0, "layerName": "ghost_tail", "a": 1, "b": 0, "c": 0, "d": 1, "tx": 0, "ty": 19.950000762939453}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+] 
+}

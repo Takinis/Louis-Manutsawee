@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+tool_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
+if [[ -n "${DST_PYTHON:-}" ]]; then
+    python="$DST_PYTHON"
+elif [[ -x "$HOME/.pyenv/versions/3.10.14/bin/python" ]]; then
+    python="$HOME/.pyenv/versions/3.10.14/bin/python"
+else
+    python="python3"
+fi
+exec "$python" "$tool_dir/pack_anim.py" "$@"
