@@ -4,6 +4,10 @@ GLOBAL.setfenv(1, GLOBAL)
 modimport("postinit/entityscript")
 modimport("postinit/input")
 
+if PL_ENABLED then
+    modimport("postinit/components/shopper")
+end
+
 local postinit = {
     prefabs = {
         "nightmarefissure",
@@ -18,6 +22,7 @@ local postinit = {
         "blueprint",
         "wagboss_beam_fx",
         "slurper",
+        "pig_ruins_entrance",
     },
     stategraphs = {
         "SGwilson",
@@ -44,6 +49,7 @@ local postinit = {
         "teacher",
         "playerlightningtarget",
         "skinner",
+        "porkland_undertile",
     },
     widgets = {
         "skinspuppet",

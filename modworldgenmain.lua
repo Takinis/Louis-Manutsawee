@@ -1,4 +1,6 @@
 local modimport = modimport
+local AddRoom = AddRoom
+local AddTask = AddTask
 local AddLevelPreInitAny = AddLevelPreInitAny
 local AddRoomPreInit = AddRoomPreInit
 local AddTaskPreInit = AddTaskPreInit
@@ -60,6 +62,66 @@ local function InstallShipwreckedWorldSizeHook()
 end
 
 InstallShipwreckedWorldSizeHook()
+
+if AddLevelPreInitAny ~= nil and KnownModIndex:IsModEnabledAny("workshop-3322803908") then
+    local peak_room = "ManutsaweePorklandPeak"
+
+    if AddRoomPreInit ~= nil then
+        local function IncreaseTeaTreeSpawns(room)
+            local contents = room.contents
+            local weights = contents and contents.distributeprefabs
+            if not (weights and weights.teatree and weights.teatree > 0 and contents.distributepercent) then
+                return
+            end
+
+            local total = 0
+            for _, weight in pairs(weights) do
+                total = total + weight
+            end
+            -- Increase total density so other prefabs keep their original spawn probability.
+            contents.distributepercent = math.min(1, contents.distributepercent * (total + weights.teatree) / total)
+            weights.teatree = weights.teatree * 2
+
+            local counts = contents.countprefabs
+            if counts and counts.teatree_piko_nest_patch then
+                counts.teatree_piko_nest_patch = counts.teatree_piko_nest_patch + 1
+            end
+        end
+
+        for _, name in ipairs({ "BG_cultivated_base", "cultivated_base_1", "cultivated_base_2", "piko_land" }) do
+            AddRoomPreInit(name, IncreaseTeaTreeSpawns)
+        end
+    end
+
+    AddLevelPreInitAny(function(level)
+        if level.location ~= "porkland" or level.overrides.task_set ~= "porkland" then
+            return
+        end
+
+        local Layout = require("map/manutsawee_porkland_layout")
+        require("map/manutsawee_porkland_city").Install()
+        Layout.InstallBranching()
+        Layout.AddTuberTask(level, AddTask)
+        Layout.AddLilypondRoom(AddRoom)
+
+        local rooms = require("map/rooms")
+        if rooms.GetRoomByName(peak_room) == nil then
+            local room = deepcopy(rooms.GetRoomByName("BG_pinacle_base"))
+            -- Keep the scepter in the original peak room.
+            room.contents.countprefabs.pig_scepter = nil
+            AddRoom(peak_room, room)
+        end
+
+        level.overrides.world_size = "huge"
+
+        local ApplyModsToTasks = level.ApplyModsToTasks
+        function level:ApplyModsToTasks(tasklist)
+            ApplyModsToTasks(self, tasklist)
+            -- The copy keeps the scepter in the original peak room.
+            Layout.EqualizeTasks(tasklist, { pincale = peak_room })
+        end
+    end)
+end
 
 if AddLevelPreInitAny ~= nil then
     AddLevelPreInitAny(function(level)

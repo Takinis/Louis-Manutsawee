@@ -45,7 +45,12 @@ M_CONFIG = {
 }
 
 IA_ENABLED = rawget(_G, "IA_CONFIG") ~= nil
+-- Mods with the same priority load in name order, which follows the game language, so PL_CONFIG may not exist yet.
 PL_ENABLED = rawget(_G, "PL_CONFIG") ~= nil
+    or KnownModIndex:IsModEnabledAny("workshop-3322803908")
+    or KnownModIndex:IsModEnabledAny("PorkLand")
 AD_ENABLED = KnownModIndex:IsModEnabled("workshop-1847959350")
-UM_ENABLED = KnownModIndex:IsModEnabled("workshop-2039181790")
+UM_ENABLED = KnownModIndex:IsModEnabledAny("workshop-2039181790")
 HOF_ENABLED = KnownModIndex:IsModEnabled("workshop-2334209327")
+
+ENV.PL_ENABLED = PL_ENABLED

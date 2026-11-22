@@ -31,6 +31,10 @@ PrefabFiles = {
     "lycoris_backpack",
 }
 
+if PL_ENABLED then
+    table.insert(PrefabFiles, "oinc1000000")
+end
+
 Assets = {
     -- player_lunge_blue.zip from The Combat Overhaul
     -- https://steamcommunity.com/sharedfiles/filedetails/?id=2317339651
@@ -67,6 +71,12 @@ Assets = {
     Asset("IMAGE", "images/hud/lycoris_backpack.tex"),
     Asset("ATLAS", "images/hud/lycoris_backpack.xml"),
     Asset("ATLAS_BUILD", "images/hud/lycoris_backpack.xml", 64),
+    Asset("IMAGE", "images/hud/oinc1000000.tex"),
+    Asset("ATLAS", "images/hud/oinc1000000.xml"),
+    Asset("ATLAS_BUILD", "images/hud/oinc1000000.xml", 64),
+    Asset("IMAGE", "images/hud/oinc1000000_engraved.tex"),
+    Asset("ATLAS", "images/hud/oinc1000000_engraved.xml"),
+    Asset("ATLAS_BUILD", "images/hud/oinc1000000_engraved.xml", 64),
     Asset("IMAGE", "images/saveslot_portraits/manutsawee.tex"),
     Asset("ATLAS", "images/saveslot_portraits/manutsawee.xml"),
 
@@ -195,3 +205,5 @@ AssetUtil.RegisterImageAtlas("images/hud/crowbar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/rebar.xml")
 AssetUtil.RegisterImageAtlas("images/hud/baseballbat.xml")
 AssetUtil.RegisterImageAtlas("images/hud/lycoris_backpack.xml")
+AssetUtil.RegisterImageAtlas("images/hud/oinc1000000.xml")
+AssetUtil.RegisterImageAtlas("images/hud/oinc1000000_engraved.xml")

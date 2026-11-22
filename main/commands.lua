@@ -1,5 +1,26 @@
 GLOBAL.setfenv(1, GLOBAL)
 
+-- Rebuilds every Porkland pig ruin now so it can be looted again. Players, their followers and
+-- items they left inside are moved to the ruin's entrance; unclaimed ruin loot is removed.
+-- This is the only way to reset the ruins.
+function c_resetpigruins()
+    if TheWorld == nil or not TheWorld.ismastersim then
+        print("c_resetpigruins: run this on the server.")
+        return
+    end
+    if not PL_ENABLED or TheWorld.components.interiorspawner == nil then
+        print("c_resetpigruins: this world has no Porkland pig ruins.")
+        return
+    end
+
+    local count = require("utils/pigruinsutil").ResetAll(1)
+    if count == nil then
+        print("c_resetpigruins: a reset is already running.")
+    else
+        print(string.format("c_resetpigruins: resetting %d pig ruins, one per second.", count))
+    end
+end
+
 function c_getkatana()
     d_spawnlist(ALL_KATANA)
 end
